@@ -15,22 +15,19 @@
   align-items: center;
   margin: 0 18px;
   padding: 20px 30px 0 0;
-  border-radius: 12px;
+  border-radius: 24px;
   border-top: 1.6px solid #303030;
   transition: border 0.5s ease;
 }
 .navbar::before {
   position: absolute;
   inset: 0;
-  margin: 0 16px;
+  margin: 20px 16px 0 16px;
   content: "";
-  border-radius: 24px;
   border-left: 1.6px solid #303030;
   border-right: 1.6px solid #303030;
-  height: 120px;
-  mask-image: radial-gradient(
-                ellipse 80% 130px at center, black 60%, transparent 70%
-              );
+  height: 100px;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 90%);
   pointer-events: none;
   transition: border 0.5s ease;
 }
@@ -63,7 +60,7 @@
 }
 
 .nav-links {
-  width: 500px;
+  width: 600px;
   display: flex;
   justify-content: space-evenly;
   gap: 2rem;
@@ -91,21 +88,32 @@
   align-items: center;
   font-weight: 700;
   font-size: 1.4rem;
+  height: 100px;
+  width: 200px;
   text-shadow: rgba(25, 25, 25, 0.9) 0px 0px 2px;
 }
 
 .logo .logoInitials {
-  color: #303030;
+  color: #5865f2;
+  font-size: 32px;
   -webkit-text-stroke: 0px transparent;
 }
 .logo span:nth-child(2) {
+  transform: translate(0, -30%);
+  font-size: 16px;
   -webkit-text-stroke: 1px #0066B2;
 }
 .logo span:nth-child(3) {
-  -webkit-text-stroke: 1px #F26F21;
+  transform: translate(-185%, 25%);
+  font-size: 16px;
+  -webkit-text-stroke: 1px #e07c1f;
 }
 .logo span:nth-child(4) {
-  -webkit-text-stroke: 1px #0db04b;
+  color: #9894db;
+  transform: translate(-250%, 25%);
+}
+.logo span:nth-child(4) svg {
+  font-size: 30px;
 }
 
 body:has(#side-bar) .navbar {

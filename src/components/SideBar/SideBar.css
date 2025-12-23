@@ -120,7 +120,7 @@ body:has(#side-bar-toggle:checked) #side-bar-outer {
 }
 
 .rebound-animation {
-  animation: revolve .8s ease;
+  animation: revolve .7s ease;
 }
 .retract-animation {
   animation: revolve2 .8s ease;
@@ -138,7 +138,7 @@ body:has(#side-bar-toggle:checked) #side-bar-outer {
   0%, 10%, 100% {
     transform: translateX(0);
   }
-  60% {
+  50% {
     transform: translateX(-300px);
   }
 }
@@ -329,7 +329,6 @@ label[for=side-bar-toggle] {
   padding-left: 10px;
   opacity: 1;
   transition: opacity 1s;
-  transition-delay: 0.4s;
 }
 
 .side-bar-button:nth-of-type(1):hover,

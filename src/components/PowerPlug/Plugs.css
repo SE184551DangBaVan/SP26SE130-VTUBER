@@ -1,7 +1,6 @@
 .plugs-wrapper {
     position: absolute;
-    inset: 0;
-    top: 135vh;
+    transform: translateY(1080px);
 }
 
 .plugs {

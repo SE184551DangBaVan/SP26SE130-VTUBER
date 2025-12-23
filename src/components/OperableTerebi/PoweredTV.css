@@ -130,7 +130,7 @@
   height: 100px;
   top: 100px;
   left: 95px;
-  border-radius: 8px;
+  border-radius: 6px;
   
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
   overflow: hidden;
@@ -139,7 +139,7 @@
   align-items: center;
   position: relative;
 
-  background: url("../../assets/male-employee-coming-to-work-late-in-office_55785183.gif");
+  background: url("../../assets/example.gif");
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -230,7 +230,7 @@
   z-index: 1;
   animation: flicker 100ms infinite;
 }
-.broadcast  .video-overlay:after {
+.broadcast .video-overlay:after {
   content: "";
   position: absolute;
   top: 0;

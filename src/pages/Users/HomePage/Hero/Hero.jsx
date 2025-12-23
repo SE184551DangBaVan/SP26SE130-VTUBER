@@ -68,7 +68,7 @@ export default function Hero() {
       plugRef.current.style.left = `${x}px`;
       plugRef.current.style.top = `${y - 10}px`;
       cordRef.current.style.width = `${window.innerWidth - x - 22}px`;
-      cordRef.current.style.height = `${window.innerHeight - y}px`;
+      cordRef.current.style.height = `${window.innerHeight - y + 50}px`;
     }
   };
 
@@ -98,7 +98,7 @@ export default function Hero() {
 
       <div className="halftone"></div>
       <div className="hero-content">
-        <h1>Exam Operations Control <br/>& Incident Management<span>FPT</span></h1><div className="paper">Support!!</div>
+        <h1>Backend WebSocket <br/>Meassaging Clone    <span>Discord</span></h1><div className="paper">DM Me!!</div>
         <div className="misc"></div>
         <div className="misc2"></div>
         <div className="misc3"></div>
@@ -109,20 +109,20 @@ export default function Hero() {
             <img src={Portrait} alt='FPT University'></img>
             <div className="descriptor">
               <p>
-                <span className="fancy">Empowering</span> teams with a <span className='emphasis-color'>smarter</span> way to collaborate, manage exam procedures,
-                and drive <span className="fancy">results</span> at FPT University.
+                <span className="fancy">Empowering</span> teams with a <span className='emphasis-color'>smarter</span> way to message each other,
+                and attempt to <span className="fancy">mimic</span> Discord.
               </p>
               <GlowButton children={'Learn More'} />
             </div>
             <div className="typing-block-showcase">
               <div className="typing-block-showcase_container">
-                <h3 className="form-header">Report An Issue</h3>
+                <h3 className="form-header">Direct Messages: </h3>
                 <div className="wrapper">
                   <div className="typing-demo">
-                    Exam Room 2: Login Error
+                    Hey man!
                   </div>
                   <div className="typing-demo2">
-                    Exam Room 7: No Connection
+                    Yo! What's good?
                   </div>
                 </div>
               </div>
