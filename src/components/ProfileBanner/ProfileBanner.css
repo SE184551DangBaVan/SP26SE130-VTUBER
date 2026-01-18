@@ -1,0 +1,244 @@
+#profile-banner {
+  font-family: "Segoe Ui Variable", sans-serif;
+  box-shadow: 0 0 20px var(--ui-discord-shadow);
+  background: var(--ui-discord-bg);
+  border-radius: 10px;
+  min-height: 400px;
+  min-width: 300px;
+  margin: 8% auto;
+  height: 450px;
+  width: 350px;
+}
+
+#profile-banner #profile-banner-header {
+  background: var(--ui-discord-head);
+  border-radius: 10px 10px 0 0;
+  height: 65px;
+  width: 100%;
+}
+
+#profile-banner #profile-banner-header #profile-banner-banner {
+  border-radius: 10px 10px 0 0;
+  height: 65px;
+  width: 100%;
+}
+
+#profile-banner #profile-banner-content #profile-banner-pfp {
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: -45px 20px;
+  width: 100px;
+  height: 100px;
+  z-index: -9;
+  float: left;
+}
+
+/* Activity and Status */
+#profile-banner #profile-banner-content #profile-banner-status-online {
+  background: var(--ui-discord-status-online);
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: 20px -53px;
+  height: 30px;
+  width: 30px;
+  z-index: 999;
+  float: left;
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-dnd {
+  background: var(--ui-discord-status-dnd);
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: 20px -53px;
+  height: 30px;
+  width: 30px;
+  z-index: 99;
+  float: left;
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-idle {
+  background: var(--ui-discord-status-idle);
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: 20px -53px;
+  height: 30px;
+  width: 30px;
+  z-index: 99;
+  float: left;
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-offline {
+  background: var(--ui-discord-bg);
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: 20px -53px;
+  height: 30px;
+  width: 30px;
+  z-index: 99;
+  float: left;
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-streaming {
+  background: var(--ui-discord-status-streaming);
+  border: 6px solid var(--ui-discord-bg);
+  border-radius: 50%;
+  margin: 20px -53px;
+  height: 30px;
+  width: 30px;
+  z-index: 99;
+  float: left;
+}
+
+/* Activity and Status :before */
+#profile-banner #profile-banner-content #profile-banner-status-streaming:before {
+  content: "";
+  margin: 4px 6px;
+  width: 8px;
+  height: 10px;
+  position: absolute;
+  clip-path: polygon(100% 45%, 0 0, 0 90%);
+  background: var(--ui-discord-bg);
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-offline:before {
+  content: "";
+  margin: -1px;
+  width: 19px;
+  height: 19px;
+  position: absolute;
+  border-color: var(--ui-discord-status-offline);
+  border-width: 5px;
+  border-style: solid;
+  border-radius: 50%;
+  background: var(--ui-discord-bg);
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-dnd:before {
+  content: " ";
+  width: 14px;
+  height: 4px;
+  margin: 6.5px 2px;
+  position: absolute;
+  border-bottom-color: var(--ui-discord-bg);
+  border-bottom-width: 0.3em;
+  border-bottom-style: solid;
+  border-radius: 4px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-status-idle:before {
+  content: "";
+  width: 10px;
+  margin: -3px;
+  position: absolute;
+  border-color: var(--ui-discord-bg);
+  border-width: 0.5em;
+  border-style: solid;
+  border-radius: 50%;
+  background: var(--ui-discord-bg);
+}
+
+/* Profile Badges */
+#profile-banner #profile-banner-content #profile-banner-badges {
+  display: flex;
+  margin: 20px;
+  float: right;
+
+  background: var(--ui-discord-fore);
+  border-radius: 7px;
+  padding: 7px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-badges #profile-banner-badge {
+  width: 15px;
+  height: 15px;
+  margin: 0px 0px 0px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-badges #profile-banner-badge:nth-child(2),
+#profile-banner #profile-banner-content #profile-banner-badges #profile-banner-badge:nth-child(3),
+#profile-banner #profile-banner-content #profile-banner-badges #profile-banner-badge:nth-child(4),
+#profile-banner #profile-banner-content #profile-banner-badges #profile-banner-badge:nth-child(5) {
+  margin: 0px 0px 0px 9px;
+}
+
+#profile-banner-user-info {
+  position: absolute;
+  margin: 65px 20px;
+  background: var(--ui-discord-fore);
+  padding: 10px 15px;
+  width: 310px;
+  border-radius: 7px;
+  height: 300px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-user-status {
+  color: #d3d4d5;
+  font-size: 13px;
+  padding-bottom: 13px;
+  max-width: 310px;
+  border-bottom-width: 1px;
+  border-bottom-color: #32353b;
+  border-bottom-style: solid;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-username {
+  font-weight: 700;
+  font-size: 21px;
+  color: #fff;
+  margin: 0;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-username #profile-banner-descrim {
+  color: #b9bbbe;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-label-aboutme {
+  margin: 0;
+  text-transform: uppercase;
+  color: #fff;
+  font-size: 13px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-label-note {
+  margin: 5px 0;
+  text-transform: uppercase;
+  color: #fff;
+  font-size: 13px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-label-content {
+  margin: 10px 0;
+  color: #d3d4d5;
+  font-size: 14px;
+  word-wrap: break-word;
+  max-height: 100px;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-label-content a {
+  color: #00a8ec;
+  text-decoration: none;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-label-content a:hover {
+  text-decoration: underline;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-note-content {
+  font-family: "Segoe UI Variable", sans-serif;
+  background: transparent;
+  word-wrap: break-word;
+  margin: 7px 5px;
+  color: #d3d4d5;
+  font-size: 13px;
+  height: 70px;
+  width: 270px;
+  max-height: 70px;
+  max-width: 270px;
+  resize: none;
+  border: 0;
+  outline: 0;
+}
+
+#profile-banner #profile-banner-content #profile-banner-user-info #profile-banner-note-content::-webkit-scrollbar {
+  opacity: 0;
+}

@@ -26,6 +26,17 @@
   --border-hover: hsl(var(--hue),10%,50%);
   --trans-dur: 0.3s;
   --trans-timing: cubic-bezier(0.65,0,0.35,1);
+
+  --ui-bg: #363940;
+  --ui-discord-bg: #313337;
+  --ui-discord-head: #000;
+  --ui-discord-fore: #18191c;
+  --ui-discord-shadow: rgba(0, 0, 0, 0.1);
+
+  --ui-discord-status-dnd: #ed4245;
+  --ui-discord-status-idle: #faa81a;
+  --ui-discord-status-online: #3ba55d;
+  --ui-discord-status-offline: #747f8d;
 }
 
 a {

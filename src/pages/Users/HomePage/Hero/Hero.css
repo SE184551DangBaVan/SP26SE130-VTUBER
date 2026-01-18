@@ -81,11 +81,6 @@
   text-align: center;
   color: transparent;
   font-family: "Meta", sans-serif;
-  text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
-    35px 35px 10px #3c3c3c5e;
   -webkit-animation: text-jitter .5s linear infinite;
   animation: text-jitter .5s linear infinite;
 }
@@ -149,19 +144,12 @@
 .hero-content .content-body .content-body-right .television {
   z-index: 10;
   width: 100%;
-  min-width: 470px;
+  min-width: 420px;
   height: 92%;
   margin: 10px;
-  padding-top: 30px;
-  padding-right: unset;
-  padding-bottom: 0px;
-  padding-left: 50px;
   pointer-events: none;
   border-radius: 18px;
-  border: 1.6px solid #303030;
-  background-size: 120% 120%;
-  background-position: -40px -15px;
-  background-image: url('../../../../assets/istockphoto-TV.jpg');
+  border: 2px solid #303030;
 }
 
 .hero-content .content-body .content-body-right .power-source {
@@ -175,7 +163,7 @@
   height:50px;
   font-size:48px;
   position:absolute;
-  bottom: -4%;
+  top: calc(100% + 22px);
   right: 29%;
   text-align:center;
   line-height:100px;
@@ -235,7 +223,7 @@
   width: none;
   box-sizing:border-box;
   position:absolute;
-  bottom: -10%;
+  bottom: calc(-10% - 40px);
   right: 0;
   border-left:4px solid #111;
   border-bottom:4px solid #111;
@@ -248,7 +236,7 @@
 }
 
 .content-body-right .power-source .plugged {
-  top: calc(100% + 4px) !important;
+  top: calc(100% + 48px) !important;
   left:69% !important;
   transform:translate(-50%, -50%);
   background:radial-gradient(circle, #111 20%, #222 30%) !important;
@@ -470,94 +458,94 @@
 
 @-webkit-keyframes text-jitter {
   0% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
     transform: translate(0);
   }
   20% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 37px 10px #3c3c3c5e;
   }
   40% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
   }
   60% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       37px 37px 10px #3c3c3c5e;
   }
   80% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       37px 33px 10px #3c3c3c5e;
     transform: translate(2px, -2px);
   }
   100% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
   }
 }
 
 @keyframes text-jitter {
   0% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
     transform: translate(0);
   }
   20% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 37px 10px #3c3c3c5e;
   }
   40% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
   }
   60% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       37px 37px 10px #3c3c3c5e;
   }
   80% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       37px 33px 10px #3c3c3c5e;
     transform: translate(2px, -2px);
   }
   100% {
-    text-shadow: 5px 5px 0px #75FBC0,
-    10px 10px 0px #0db04b,
-    15px 15px 0px #F26F21,
-    20px 20px 0px #0066B2,
+  text-shadow: 5px 5px 0px #59b9dc,
+    10px 10px 0px #b4bdd0,
+    15px 15px 0px #0d158d,
+    20px 20px 0px #6c4ece,
       35px 35px 10px #3c3c3c5e;
   }
 }
@@ -566,7 +554,7 @@
   font-family: "Indie Flower", cursive;
   font-weight: 400;
   font-size: 20px;
-  rotate: 2deg;
+  rotate: 4deg;
   position: absolute;
   display: flex;
   z-index: 10;
@@ -574,8 +562,8 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  top: 100px;
-  right: 40px;
+  top: 80px;
+  right: 150px;
   width: 10vw;
   height: 140px;
   border-radius: 12px;
@@ -778,6 +766,7 @@
   color: #848080;
   border-radius: 24px;
   padding: 5px;
+  padding-left: 20px;
   transform: translateY(-10px);
 }
 
@@ -789,8 +778,8 @@
 
 .typing-demo,
 .typing-demo2 {
-  width: 24ch;
-  animation: typing 2s steps(24);
+  width: 12ch;
+  animation: typing 1.5s steps(12);
   white-space: nowrap;
   text-overflow: wrap;
   overflow: hidden;
@@ -803,7 +792,7 @@
   content: "‎";
   position: absolute;
   border-right: 3px solid;
-  width: 24ch;
+  width: 12ch;
   margin-left: 0.5px;
   white-space: nowrap;
   text-overflow: wrap;
@@ -812,16 +801,16 @@
   font-size: 16px;
   user-select: none;
   pointer-events: none;
-  animation: typing 2s steps(22), blink .5s step-end infinite alternate;
+  animation: typing 1.5s steps(12), blink .5s step-end infinite alternate;
 }
 
-.typing-demo::before { animation: typing 2s steps(22), blink .5s step-end infinite alternate, disappear 4s forwards; }
+.typing-demo::before { animation: typing 1.5s steps(12), blink .5s step-end infinite alternate, disappear 4s forwards; }
 
-.typing-demo2 { opacity: 0; animation: appear 0.1s forwards, typing 2s steps(24); }
+.typing-demo2 { opacity: 0; animation: appear 0.1s forwards, typing 1.5s steps(16); }
 .typing-demo2,
 .typing-demo2::before {
   animation-delay: 4s;
-  width: 26ch;
+  width: 16ch;
 }
 
 @keyframes typing {
@@ -911,6 +900,18 @@
   font-style: normal;
 }
 
+.rowsOfLogo li:nth-child(4) {
+  mix-blend-mode: unset !important;
+}
+
+.rowsOfLogo li:nth-child(4) .image-icon {
+  filter: unset !important;
+  mix-blend-mode: exclusion;
+  background-color: #ececec;
+  padding: 2px;
+  border-radius: 50%;
+}
+
 .rowsOfLogo li:nth-child(4) .registered-trademark {
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   font-size: 8px;
@@ -919,7 +920,7 @@
   justify-content: center;
   align-items: center;
   position: absolute;
-  transform: translate(-75px, 10px);
+  transform: translate(-60px, 20px);
   width: 10px;
   height: 10px;
   color: #555;
@@ -947,8 +948,9 @@
   justify-content: center;
   align-items: center;
   width: 98%;
-  height: 1015px;
+  height: 1050px;
   padding-top: 180px;
+  padding-bottom: 40px;
   font-size: 100px;
   top: calc(0% - 100px);
   border: 1.6px double #303030;
@@ -959,7 +961,8 @@
   opacity: 0;
   top: -30px;
   width: 78%;
-  filter: blur(5px);
+  border-radius: 16px;
+  border: double 6px #909090;
   animation: flickering 0.8s forwards;
   animation-delay: 0.8s;
 }
@@ -970,9 +973,8 @@
   text-align: center;
   color: #303030;
   width: 98%;
-  height: 800px;
+  height: 850px;
   border: 1.6px solid #303030;
-  border-bottom: none;
   opacity: 0;
   animation: flickering 0.8s forwards;
   animation-delay: 0.8s;

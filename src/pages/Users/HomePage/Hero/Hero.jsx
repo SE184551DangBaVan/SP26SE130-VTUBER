@@ -1,12 +1,12 @@
 import './Hero.css'
 import GlowButton from '../../../../components/GlowButton/GlowButton'
-import Portrait from '../../../../assets/FB_IMG_1743873494953.jpg'
-import Showcase from '../../../../assets/hero-illustration.7100a376.jpg'
+import Portrait from '../../../../assets/style-retro-wave-and-vaporwave-vintage-compute.jpg'
+import Showcase from '../../../../assets/Discord_UI_Components_Mockup.png'
 import PoweredTV from '../../../../components/OperableTerebi/PoweredTV';
 import React, { useEffect, useRef, useState } from "react"
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import ReactIcon from '../../../../assets/react.svg'
-import FPTIcon from '../../../../assets/FPT_logo_2010.svg'
+import WebSocket from '../../../../assets/WebSocket_colored_logo.svg'
 import GitHubIcon from '@mui/icons-material/GitHub';
 import JavascriptIcon from '@mui/icons-material/Javascript';
 import Plugs from '../../../../components/PowerPlug/Plugs';
@@ -55,7 +55,7 @@ export default function Hero() {
       plugRef.current.style.left = `${x}px`;
       plugRef.current.style.top = `${y - 10}px`;
       cordRef.current.style.width = `${window.innerWidth - x - 22}px`;
-      cordRef.current.style.height = `${window.innerHeight - y}px`;
+      cordRef.current.style.height = `${window.innerHeight - y }px`;
     }
   };
 
@@ -68,7 +68,7 @@ export default function Hero() {
       plugRef.current.style.left = `${x}px`;
       plugRef.current.style.top = `${y - 10}px`;
       cordRef.current.style.width = `${window.innerWidth - x - 22}px`;
-      cordRef.current.style.height = `${window.innerHeight - y + 50}px`;
+      cordRef.current.style.height = `${window.innerHeight - y + 100}px`;
     }
   };
 
@@ -106,7 +106,7 @@ export default function Hero() {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}>
           <div className="content-body-left">
-            <img src={Portrait} alt='FPT University'></img>
+            <img src={Portrait} alt='Computer app'></img>
             <div className="descriptor">
               <p>
                 <span className="fancy">Empowering</span> teams with a <span className='emphasis-color'>smarter</span> way to message each other,
@@ -119,10 +119,10 @@ export default function Hero() {
                 <h3 className="form-header">Direct Messages: </h3>
                 <div className="wrapper">
                   <div className="typing-demo">
-                    Hey man!
+                    Hello friend!
                   </div>
                   <div className="typing-demo2">
-                    Yo! What's good?
+                    Hey! What's up?
                   </div>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function Hero() {
           <li><GitHubIcon /> <span>GitHub</span></li>
           <li><img className='image-icon' src={ReactIcon} /> <span>ReactJS</span></li>
           <li><JavascriptIcon /> <span>JavaScript</span></li>
-          <li><img className='image-icon' src={FPTIcon} /><span className='registered-trademark'>R</span> <span>FPT Software</span></li>
+          <li><img className='image-icon' src={WebSocket} /><span className='registered-trademark'>R</span> <span>WebSocket</span></li>
         </ul>
       </div>
       <Plugs isOn={powerPlug} />
@@ -193,7 +193,7 @@ export default function Hero() {
       <div className='showcaseBox'>
         {powerPlug &&
           <div className="showcaseContainer">
-            <span>Functional Showcase</span>
+            <span>Mockup Showcase</span>
             <img src={Showcase} alt="" className="chatBoxDemo" />
           </div>
         }

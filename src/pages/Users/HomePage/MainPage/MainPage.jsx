@@ -1,15 +1,26 @@
-import ScissorLift from '../../../../components/ExtensionJoint/ScissorLift'
 import SideBar from '../../../../components/SideBar/SideBar'
 import './MainPage.css'
-import { useEffect, useRef, useState } from "react"
 
 export default function MainPage() {
-  const [selectedContent, setSelectedContent] = useState("staff");
   return (
-    <div className='main-home-page'>
+    <div className='page-main-content'>
       <SideBar />
-      <div className='main-home-page-content-container'>
-        
+      <div className='page-main-content-container'>
+        <div className='page-main-content-container-inner'>
+          <div className='discord-ui-container'>
+            <ul id='server-list-container'>
+              <li className='serever__icon'></li>
+              <li className='serever__icon'></li>
+              <li className='serever__icon'></li>
+              <li className='serever__icon'></li>
+              <li className='serever__icon'></li>
+              <li className='serever__icon'></li>
+            </ul>
+            <div className='messaging-function__container'>
+
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -85,7 +85,7 @@
 #side-bar {
   position: fixed;
   z-index: 99;
-  left: 80px;
+  left: 70px;
   top: 14vh;
   height: calc(82%);
   background: var(--sidebar-dark-primary);
@@ -101,7 +101,7 @@
 
 #side-bar-outer {
   position: fixed;
-  left: 58px;
+  left: 48px;
   top: 11vh;
   z-index: 98;
   height: calc(82% + 40px);
@@ -644,7 +644,7 @@ label[for=side-bar-footer-toggle] .dial .selector {
   position: fixed;
   z-index: 98;
   top: 5px;
-  left: -110px;
+  left: -120px;
   transform: rotate(-90deg) scale(0.8);
 }
 
@@ -652,6 +652,6 @@ label[for=side-bar-footer-toggle] .dial .selector {
   position: fixed;
   z-index: 98;
   top: 380px;
-  left: -110px;
+  left: -120px;
   transform: rotate(-90deg) scale(0.8);
 }

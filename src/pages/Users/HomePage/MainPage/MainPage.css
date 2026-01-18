@@ -1,26 +1,67 @@
-.main-home-page {
+#root:has(.page-main-content) {
+  min-height: 100vh;
+}
+
+.page-main-content {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 200vmax;
+  height: calc(50vmax - 40px);
   display: flex;
+  z-index: 10;
   justify-content: right;
+  overflow: hidden;
 }
 
-.main-home-page .extended-joint-container {
-  position: fixed;
-  z-index: 100;
-  top: 20px;
-  left: 20px;
-  width: 200px;
-  height: 600px;
-}
-
-.main-home-page-content-container {
+.page-main-content-container {
   position: relative;
-  margin: 100px 40px 0 0;
-  width: 72vw;
-  min-width: 500px;
+  margin: 69px 30px 0 30px;
+  width: 96%;
   display: flex;
-  background-color: rgb(228, 228, 228);
+  justify-content: flex-end;
+}
+.page-main-content-container-inner {
+  right: 0;
+  width: 90%;
+  height: 100%;
+  border-radius: 6px;
+  background-color: var(--ui-bg);
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, .8);
+  overflow: hidden;
+}
+
+.page-main-content .discord-ui-container {
+  height: 100%;
+  width: 100%;
+  background-color: var(--ui-discord-bg);
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+}
+
+.discord-ui-container #server-list-container {
+  height: 100%;
+  width: 5%;
+  min-width: 60px;
+  max-width: 80px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 2px 20px 2px;
+}
+
+#server-list-container .serever__icon {
+  width: 38px;
+  height: 38px;
+  background-color: gray;
+  border-radius: 12px;
+}
+
+.discord-ui-container .messaging-function__container {
+  width: 100%;
+  height: calc(100% - 20px);
+  background-color: var(--ui-bg);
+  border-radius: 6px;
 }

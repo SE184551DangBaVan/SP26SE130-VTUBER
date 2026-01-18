@@ -2,11 +2,17 @@ import { ArticleOutlined, BallotOutlined, ChairAltOutlined, DvrOutlined, Groups2
 import './SideBar.css'
 import ScissorLift from '../../components/ExtensionJoint/ScissorLift'
 import { useEffect, useState } from "react"
+import axios from 'axios';
 
-export default function SideBar() {
+export default function SideBar({displayName}) {
   const [sideBarSelected, setSideBarSelected] = useState("staff");
   const [retract, setRetract] = useState(1);
   const [sideBarRetractor, setSideBarRetractor] = useState(true);
+  const [userProfile, setUserProfile] = useState({
+    username: "",
+    displayName: "",
+    email: ""
+  });
 
   useEffect(() => {
     setRetract(0);
@@ -16,6 +22,33 @@ export default function SideBar() {
 
     return () => clearTimeout(timer);
   }, [sideBarRetractor]);
+
+  const fetchProfile = async (userID) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await axios.get("https://pleasant-grace-production.up.railway.app/pulse/api/v1/user", 
+      {  headers: {
+          'Authorization': `Bearer ${token}` 
+        },
+        params: { userID }
+      });
+      if (response.data) {
+        setUserProfile({ 
+          username: response.data.data.username, 
+          displayName: response.data.data.displayName,
+          email: response.data.data.email});
+      }
+    } catch (error) {
+      console.error("Error when fetching profile.", error);
+    }
+  };
+
+  useEffect(() => {
+    const userID = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+    if (userID) {
+      fetchProfile(userID);
+    }
+  }, []);
   
   return (
     <>
@@ -26,7 +59,6 @@ export default function SideBar() {
         <ScissorLift toggled={retract}/>
       </div>
       <div id="side-bar-outer" className={ sideBarRetractor ? 'retract-animation' : 'rebound-animation'}/>
-      <div id="side-bar-inner-mask" />
       <div id="side-bar" className={ sideBarRetractor ? 'retract-animation' : 'rebound-animation'}>
         <input id="side-bar-toggle" type="checkbox" onClick={() => setSideBarRetractor(!sideBarRetractor)} />
         <div id="side-bar-header">
@@ -55,26 +87,26 @@ export default function SideBar() {
         <div id="side-bar-footer">
           <div id="side-bar-footer-heading">
             <div id="side-bar-footer-avatar"><img src="https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2281862025.jpg"/></div>
-            <div id="side-bar-footer-titlebox"><a id="side-bar-footer-title" href="" target="_blank">Jonh A. </a><span id="side-bar-footer-subtitle">Admin</span></div>
+            <div id="side-bar-footer-titlebox"><a id="side-bar-footer-title" href="" target="_blank"> {userProfile.displayName} </a><span id="side-bar-footer-subtitle">{userProfile.email}</span></div>
             <label htmlFor="side-bar-footer-toggle">
               <div className="dial volume-button" style={{"--value": "0deg"}}>
-                    <div className="data-container">
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                      <div className="data">#</div>
-                    </div>
-                    <div className="dial-core"></div>
-                    <div className="selector"></div>
-                  </div>
+                <div className="data-container">
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                  <div className="data">#</div>
+                </div>
+                <div className="dial-core"></div>
+                <div className="selector"></div>
+              </div>
             </label>
           </div>
           <div id="side-bar-footer-content">
