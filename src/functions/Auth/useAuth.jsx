@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     const date = new Date(isoString);
     if (isNaN(date)) return ""; // Invalid date
     const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       if (response) {
         if (rememberMe) {
           localStorage.setItem("userID", response.data.data.userId);
-          sessionStorage.setItem("email", response.data.data.email);
+          localStorage.setItem("email", response.data.data.email);
           localStorage.setItem("token", response.data.data.token);
         }
         else {

@@ -94,23 +94,23 @@
 }
 
 .logo .logoInitials {
-  color: #5865f2;
+  color: #6b9fcd;
   font-size: 32px;
   -webkit-text-stroke: 0px transparent;
 }
 .logo span:nth-child(2) {
-  transform: translate(0, -30%);
-  font-size: 16px;
+  transform: translate(10%, -40%);
+  font-size: 20px;
   -webkit-text-stroke: 1px #0066B2;
 }
 .logo span:nth-child(3) {
-  transform: translate(-185%, 25%);
-  font-size: 16px;
+  transform: translate(-82%, 20%);
+  font-size: 20px;
   -webkit-text-stroke: 1px #e07c1f;
 }
 .logo span:nth-child(4) {
-  color: #9894db;
-  transform: translate(-250%, 25%);
+  color: #2ac3d7;
+  transform: translate(-100%, 0%) rotate(-2deg);
 }
 .logo span:nth-child(4) svg {
   font-size: 30px;

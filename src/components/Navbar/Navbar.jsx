@@ -1,6 +1,6 @@
 import './Navbar.css'
 import {useNavigate} from "react-router-dom";
-import { Telegram } from '@mui/icons-material';
+import { LiveTvRounded } from '@mui/icons-material';
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from 'react';
 
@@ -18,7 +18,7 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="nav-container" style={{border: `${navScrollOffset > 20 ? '2px solid #303030' : '2px solid transparent' }`,
                                                   backgroundColor: `${navScrollOffset > 20 ? 'rgb(255, 255, 255)' : 'transparent'}`}}>
-              <div className="logo"><span className='logoInitials'>Discord</span><span>Messaging</span><span>Clone</span><span><Telegram /></span></div>
+              <div className="logo"><span className='logoInitials'>VTuber</span><span>Fan</span><span>Hub</span><span><LiveTvRounded /></span></div>
               <ul className="nav-links">
                   <li><a href=""onClick={() => navigate('/')}>Introduction</a></li>
                   <li><a href="#demo">Demo</a></li>

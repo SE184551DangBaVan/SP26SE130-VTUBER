@@ -98,7 +98,7 @@ export default function Hero() {
 
       <div className="halftone"></div>
       <div className="hero-content">
-        <h1>Backend WebSocket <br/>Meassaging Clone    <span>Discord</span></h1><div className="paper">DM Me!!</div>
+        <h1>Dedicated Vtuber <br/>Community Center   <span>FanHub</span></h1><div className="paper">{'My Oshi <3'}</div>
         <div className="misc"></div>
         <div className="misc2"></div>
         <div className="misc3"></div>
@@ -109,20 +109,20 @@ export default function Hero() {
             <img src={Portrait} alt='Computer app'></img>
             <div className="descriptor">
               <p>
-                <span className="fancy">Empowering</span> teams with a <span className='emphasis-color'>smarter</span> way to message each other,
-                and attempt to <span className="fancy">mimic</span> Discord.
+                <span className="fancy">Empowering</span> fans with a <span className='emphasis-color'>better</span> way to interact with the community,
+                and attempt to <span className="fancy">mimic</span> Reddit.
               </p>
               <GlowButton children={'Learn More'} />
             </div>
             <div className="typing-block-showcase">
               <div className="typing-block-showcase_container">
-                <h3 className="form-header">Direct Messages: </h3>
+                <h3 className="form-header">Announcement Board: </h3>
                 <div className="wrapper">
                   <div className="typing-demo">
-                    Hello friend!
+                    Stream Now!
                   </div>
                   <div className="typing-demo2">
-                    Hey! What's up?
+                    New Merch is out~
                   </div>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function Hero() {
         {powerPlug &&
           <div className="showcaseContainer">
             <span>Mockup Showcase</span>
-            <img src={Showcase} alt="" className="chatBoxDemo" />
+            
           </div>
         }
       </div>
