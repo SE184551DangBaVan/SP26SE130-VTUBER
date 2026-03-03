@@ -1,0 +1,26 @@
+.pet {
+  position: fixed;
+  z-index: 10000;
+  width: 350px;
+  height: 350px;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  image-rendering: pixelated !important;
+
+  left: 600px;
+  bottom: 200px;
+  
+  transform: scale(0.8);
+
+  /* animation: sheet-row 1.2s steps(9, end) infinite; */
+}
+
+/* @keyframes sheet-row {
+  0% {
+    background-position: 0px 0px;
+  }
+
+  100% {
+    background-position: -3150px 0px;
+  }
+} */

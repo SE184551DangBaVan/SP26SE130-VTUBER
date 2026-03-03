@@ -10,6 +10,7 @@ import WebSocket from '../../../../assets/WebSocket_colored_logo.svg'
 import GitHubIcon from '@mui/icons-material/GitHub';
 import JavascriptIcon from '@mui/icons-material/Javascript';
 import Plugs from '../../../../components/PowerPlug/Plugs';
+import VirtualGremlin from '../../../../components/Gremlin_V-Pet/VirtualGremlin';
 
 export default function Hero() {
   const outletRef = useRef(null);
@@ -95,6 +96,8 @@ export default function Hero() {
 
   return (
     <main className="hero">
+
+      <VirtualGremlin />
 
       <div className="halftone"></div>
       <div className="hero-content">
