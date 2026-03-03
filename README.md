@@ -1,4 +1,4 @@
-# FA2525SE200-GFA135-Capstone_Project-EOCIMS-FPTUHCM
+# SP26SE130-VTUBER
 Exam Operations Control and Incident Management System for FPT University Ho Chi Minh City
 
 # React + Vite
