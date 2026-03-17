@@ -1,0 +1,72 @@
+.retro-window-container {
+    z-index: 2;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    border: 3px solid #000000;
+    box-shadow: 10px 10px 0 0 #000000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 350px;
+    min-height: 200px;
+}
+
+.window-border {
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 3px solid #000000;
+}
+
+.retro-window-container.red .window-border {
+    background-color: #F75F00;
+}
+.retro-window-container.blue .window-border {
+    background-color: #C7D5FF;
+}
+.retro-window-container.yellow .window-border {
+    background-color: #FDCB96;
+}
+
+
+.window-border .window-title {
+    max-height: 80%;
+    font-size: 26px;
+    font-family: "Monda", sans-serif;
+    font-weight: 800;
+    color: #555555;
+    text-align: left;
+    min-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    flex: 0.7;
+}
+
+.window-border .window-buttons {
+    flex: 0.2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: row;
+    gap: 2px;
+}
+
+
+.window-border .window-buttons button {
+    background-color: transparent;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+.window-border .window-buttons button:hover {
+    border: 0.5px dotted #555555;
+}
+
+.window-border .window-buttons button img {
+    width: 10px;
+}

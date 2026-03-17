@@ -1,3 +1,7 @@
+body:has(.login-wrapper) {
+    height: 100vh;
+}
+
 .login-wrapper {
     --input-focus: #2d8cf0;
     --font-color: #323232;
@@ -9,7 +13,6 @@
     inset: 0;
     width: 100vw;
     height: 100vh;
-
     display: flex;
     justify-content: center;
     align-items: center;
@@ -229,4 +232,111 @@
     align-items: center;
     font-size: 16px;
     font-weight: 600;
+}
+
+.input-field .select {
+  width: fit-content;
+  cursor: pointer;
+  position: relative;
+  margin-bottom: -100px;
+  transition: 300ms;
+  color: #555555;
+  overflow: hidden;
+  padding: 0 5px 8px 80px;
+}
+
+.input-field .selected {
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  padding: 5px;
+  margin-bottom: 3px;
+  border-radius: 5px;
+  position: relative;
+  z-index: 100000;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input-field .arrow {
+  position: relative;
+  right: 0px;
+  height: 10px;
+  transform: rotate(-90deg);
+  width: 25px;
+  fill: var(--main-color);
+  z-index: 100000;
+  transition: 300ms;
+}
+
+.input-field .options {
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+  padding: 5px;
+  background-color: #FFFFFF;
+  border: 3px solid #000000;
+  box-shadow: 5px 5px 0 0 #000000;
+  position: relative;
+  top: -100px;
+  opacity: 0;
+  transition: 300ms;
+}
+
+.input-field .select:hover > .options {
+  opacity: 1;
+  top: 3px;
+}
+
+.input-field .select:hover > .selected .arrow {
+  transform: rotate(0deg);
+}
+
+.input-field .option {
+  border-radius: 5px;
+  padding: 5px;
+  transition: 300ms;
+  background-color: var(--bg-color);
+  width: 150px;
+  font-size: 15px;
+}
+.input-field .option:hover {
+  background-color: #3237415f;
+}
+
+.input-field .options input[type="radio"] {
+  display: none;
+}
+
+.input-field .options label {
+  display: inline-block;
+}
+.input-field .options label::before {
+  content: attr(data-txt);
+}
+
+.input-field .options input[type="radio"]:checked + label {
+  display: none;
+}
+
+.input-field .options input[type="radio"]#all:checked + label {
+  display: none;
+}
+
+.input-field .select:has(.options input[type="radio"]#EN:checked) .selected::before {
+  content: attr(data-default);
+}
+.input-field .select:has(.options input[type="radio"]#VN:checked) .selected::before {
+  content: attr(data-one);
+}
+.input-field .select:has(.options input[type="radio"]#EN:checked) .selected::before {
+  content: attr(data-two);
+}
+.input-field .select:has(.options input[type="radio"]#CN:checked) .selected::before {
+  content: attr(data-three);
+}
+.input-field .select:has(.options input[type="radio"]#JP:checked) .selected::before {
+  content: attr(data-four);
 }

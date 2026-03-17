@@ -12,6 +12,9 @@ import { ToastContainer } from 'react-toastify';
 import "react-toastify/ReactToastify.css";
 import Login from './pages/Login/Login';
 import ProtectedRoutes from './utils/ProtectedRoute';
+import LandingPage from './pages/LandingPage/LandingPage';
+import VirtualGremlin from './components/Gremlin_V-Pet/VirtualGremlin';
+import ExplorePage from './pages/Users/ExplorePage/ExplorePage';
 
 function App() {
   return (
@@ -66,8 +69,8 @@ function AppRoutes() {
           path="/"
           element={
             <>
-            <Navbar />
-            <Hero />
+            {userAuth ? (<Navbar LoggedIn={true}/>) : (<Navbar LoggedIn={false}/>)}
+            <LandingPage />
             </>
           }
         />
@@ -79,8 +82,10 @@ function AppRoutes() {
             path="/home"
             element={
               <>
-              <Navbar />
-              <MainPage />
+              <Navbar LoggedIn={true}/>
+              <ExplorePage />
+              <VirtualGremlin />
+              {/* <MainPage /> */}
               </>
             }
           />

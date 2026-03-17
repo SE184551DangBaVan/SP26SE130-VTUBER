@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const savedEmail = sessionStorage.getItem("email") || localStorage.getItem("email");
+    const savedEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
 
     if (savedEmail) {
       setUserAuth({ email: savedEmail });
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const updatedEmail = sessionStorage.getItem("email") || localStorage.getItem("email");
+      const updatedEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
 
       if (updatedEmail) {
         setUserAuth({ email: updatedEmail });
@@ -45,21 +45,23 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  const login = async (email, password, rememberMe) => {
+  const login = async (username, password, rememberMe) => {
     try {
-      const response = await axios.post("https://pleasant-grace-production.up.railway.app/pulse/api/v1/auth/login", 
-        { email, password }
+      const response = await axios.post("https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/auth/login", 
+        { username, password }
       );
       if (response) {
         if (rememberMe) {
-          localStorage.setItem("userID", response.data.data.userId);
-          localStorage.setItem("email", response.data.data.email);
+          localStorage.setItem("userID", response.data.data.id);
+          localStorage.setItem("username", response.data.data.username);
           localStorage.setItem("token", response.data.data.token);
+          localStorage.setItem("refreshToken", response.data.data.refreshToken);
         }
         else {
           sessionStorage.setItem("userID", response.data.data.userId);
-          sessionStorage.setItem("email", response.data.data.email);
+          sessionStorage.setItem("username", response.data.data.username);
           sessionStorage.setItem("token", response.data.data.token);
+          sessionStorage.setItem("refreshToken", response.data.data.refreshToken);
         }
         
         window.dispatchEvent(new Event("storage"));

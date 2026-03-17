@@ -1,0 +1,139 @@
+.landing-page-container {
+    margin-top: 80px;
+    width: 100%;
+    height: 400vh;
+}
+
+.landing-page-container .website-banner {
+    width: 100%;
+    height: 110vh;
+    overflow: hidden;
+    background-image: linear-gradient(to left bottom, #808080, #9a9a9a, #b5b5b5, #d1d1d1, #eeeeee);
+    box-shadow: inset 0 -4px 12px 0 rgba(0, 0, 0, 0.5);
+}
+
+.landing-page-container .website-banner .desktop-wallpaper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.landing-page-container .website-banner .desktop-wallpaper .desktop-wallpaper-Fumo {
+    position: absolute;
+    z-index: 3;
+    bottom: 0;
+    left: 0;
+    filter: drop-shadow(5px -5px 10px #000000);
+    width: 600px;
+}
+
+.landing-page-container .website-banner .desktop-wallpaper .desktop-wallpaper-Fumo-Bigger {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    filter: drop-shadow(10px 5px 10px #000000);
+    width: 950px;
+}
+
+.landing-page-container .website-banner .retro-window-container:nth-last-child(2) {
+    position: absolute;
+    top: 260px;
+    left: 160px;
+}
+
+.website-banner .retro-window-container:nth-last-child(2) .retro-window-content {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.website-banner .retro-window-container:nth-last-child(2) .retro-window-content .retro-window-message {
+    width: 100%;
+    height: 70%;
+    font-family: "Monda", sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    line-height: 40px;
+    color: #000000;
+    text-align: center;
+    padding-top: 50px;
+}
+
+.website-banner .retro-window-container:nth-last-child(2) .retro-window-content .retro-window-button {
+    width: 160px;
+    height: 50px;
+    font-size: 18px;
+    font-family: "Monda", sans-serif;
+    font-weight: 900;
+    background-color: #D9D9D9;
+    border: 3px solid #000000;
+    color: #555555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.website-banner .retro-window-container:nth-last-child(2) .retro-window-content .retro-window-button::before {
+    position: absolute;
+    content: "";
+    width: 140px;
+    height: 30px;
+    background-color: transparent;
+    border: 2px dotted #000000;
+    color: #555555;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.website-banner .retro-window-container:nth-last-child(1):has(.retro-window-content.move) {
+    position: fixed;
+    z-index: 3;
+    bottom: 20px;
+    right: 20px;
+}
+.website-banner .retro-window-container:nth-last-child(1):has(.retro-window-content.stay) {
+    position: absolute;
+    z-index: 3;
+    bottom: -120px;
+    right: 20px;
+}
+
+.website-banner .retro-window-container:nth-last-child(1) .retro-window-content {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.retro-window-container:nth-last-child(1) .retro-window-content .music-controller {
+    height: 50%;
+    width: 100%;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.retro-window-container:nth-last-child(1) .retro-window-content .music-controller button {
+    padding: 0;
+    border-radius: 50%;
+}
+
+.retro-window-container:nth-last-child(1) .retro-window-content .music-timeline {
+    width: 80%;
+    height: 10px;
+    margin-top: 10px;
+    background-color: #FFFFFF;
+    border: 3px solid #000000;
+    border-radius: 24px;
+}

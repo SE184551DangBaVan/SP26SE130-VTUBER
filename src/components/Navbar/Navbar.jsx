@@ -3,8 +3,9 @@ import {useNavigate} from "react-router-dom";
 import { LiveTvRounded } from '@mui/icons-material';
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from 'react';
+import Logo from "/Nav -_ Logo.svg"; 
 
-export default function Navbar() {
+const Navbar = ({LoggedIn}) => {
   const navigate = useNavigate();
   const [navScrollOffset, setNavScrollOffset] = useState(0);
 
@@ -14,21 +15,26 @@ export default function Navbar() {
   });
 
   return (
-    <header className="header">
+    <header className={`header ${navScrollOffset > 20 ? 'away' : 'return' }`} >
         <nav className="navbar">
-            <div className="nav-container" style={{border: `${navScrollOffset > 20 ? '2px solid #303030' : '2px solid transparent' }`,
-                                                  backgroundColor: `${navScrollOffset > 20 ? 'rgb(255, 255, 255)' : 'transparent'}`}}>
-              <div className="logo"><span className='logoInitials'>VTuber</span><span>Fan</span><span>Hub</span><span><LiveTvRounded /></span></div>
+            <div className="nav-container">
+              <div className="logo"><img src={Logo} alt=''/></div>
               <ul className="nav-links">
-                  <li><a href=""onClick={() => navigate('/')}>Introduction</a></li>
-                  <li><a href="#demo">Demo</a></li>
-                  <li><a href="">About</a></li>
+                  <li className="nav-selected"><a href="" onClick={() => navigate('/')}>Home</a></li>
+                  <li><a href="" >Hubs</a></li>
+                  <li><a href="" >Store</a></li>
+                  <li><a href="" >About</a></li>
               </ul>
-              <button className="button-primary" onClick={() => navigate('/home')}>
+              {LoggedIn ?
+              (<div className='navbar-profile-pic'>Pfp</div>)
+              :
+              (<button className="button-primary" onClick={() => navigate('/home')}>
                 Login
-              </button>
+              </button>)}
             </div>
         </nav>
     </header>
   )
 }
+
+export default Navbar;
