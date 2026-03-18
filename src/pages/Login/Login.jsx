@@ -98,7 +98,7 @@ export default function Login() {
               </div>
               <div className="flip-card__back">
                 <div className="title">Sign up</div>
-                {!otp ? (
+                {otp ? (
                   <form onSubmit={handleSignup} className="flip-card__form">
                     <div className='input-field'><input className="flip-card__input" name="displayName" placeholder="Display Name" type="text" 
                     value={displayName} onChange={(e) => setDisplayName(e.target.value)} required /></div>
