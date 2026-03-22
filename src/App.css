@@ -5,6 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bitcount+Prop+Single:wght@100..900&family=Tilt+Neon&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=WDXL+Lubrifont+TC&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Just+Another+Hand&display=swap');
 
 * {
   margin: 0;
@@ -22,10 +23,6 @@
 
 body::-webkit-scrollbar {
   width: 5px;
-}
-
-body::-webkit-scrollbar:hover {
-  width: 10px;
 }
 
 body::-webkit-scrollbar-track {
@@ -134,4 +131,12 @@ body {
 .emphasis-color {
   font-style: italic;
   color: #75FBC0;
+}
+
+.incorrect {
+  color: red;
+}
+
+.correct {
+  color: #00c05a;
 }

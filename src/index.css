@@ -37,6 +37,12 @@
   --ui-discord-status-idle: #faa81a;
   --ui-discord-status-online: #3ba55d;
   --ui-discord-status-offline: #747f8d;
+
+  --paper-color: #ccc;
+  --paper-dark: #39393947;
+  --tape-gray: #dbd8be;
+  --tape-edge-gray: #b7b49d;
+  --shadow-size: 3px;
 }
 
 a {

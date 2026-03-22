@@ -19,7 +19,7 @@
   /*background-image: linear-gradient(to bottom, #000000, #121212, #1d1d1d, #282828, #333333);*/
 }
 
-.halftone {
+.hero .halftone {
   z-index: 9;
   position: fixed;
   color: #222;
@@ -32,7 +32,7 @@
   pointer-events: none;
 }
 
-.halftone::after {
+.hero .halftone::after {
   content: "";
   position: absolute;
   width: 100%;
@@ -550,7 +550,7 @@
   }
 }
 
-.paper {
+.hero .paper {
   font-family: "Indie Flower", cursive;
   font-weight: 400;
   font-size: 20px;

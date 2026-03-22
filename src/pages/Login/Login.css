@@ -227,25 +227,156 @@ body:has(.login-wrapper) {
     display: flex;
     flex-direction: row;
     color: #323232;
-    gap: 5px;
     justify-content: flex-end;
     align-items: center;
     font-size: 16px;
     font-weight: 600;
 }
 
-.input-field .select {
-  width: fit-content;
-  cursor: pointer;
+.login-wrapper .retro-window-container:has(.signIn-OTP) {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  animation: pop-out-left 0.3s ease forwards;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 0 0;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP p {
+  position: absolute;
+  left: 30px;
+  transform: translateY(35px);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .signIn-OTP-themed-btn {
+  --bg-color: #fff;
+  --main-color: #323232;
   position: relative;
-  margin-bottom: -100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 10px;
+  background-color: var(--bg-color);
+  border-radius: 100%;
+  border: 2px solid var(--main-color);
+  box-shadow: 4px 4px var(--main-color);
+}
+
+.signIn-OTP-themed-input {
+  cursor: pointer;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  opacity: 0;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .icon {
+  position: absolute;
+  top: calc(50% -13px);
+  left: calc(50% -13px);
+  width: 26px;
+  height: 26px;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .signIn-OTP-themed-btn:active {
+  box-shadow: 0px 0px var(--main-color);
+  transform: translate(3px, 3px);
+}
+
+.login-wrapper .retro-window-container:has(.signIn-Info) {
+  position: absolute;
+  top: 26%;
+  left: calc(50% - 180px);
+  animation: pop-up 0.3s ease forwards;
+}
+
+@keyframes pop-up {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pop-out-left {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info .signIn-Info-ico {
+  position: absolute;
+  top: 60px;
+  left: 60px;
+  height: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: swing 5s ease infinite;
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(15deg)
+  }
+  100% {
+    transform: rotate(-10deg);
+  }
+}
+
+.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info-ico img {
+  width: 80px;
+  margin-top: 100%;
+}
+
+.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info {
+  padding: 40px 50px;
+}
+
+.input-field:has(.select) {
+  width: 100%;
+  height: 40px;
+  z-index: 1;
+  display: flex;
+  align-items: first baseline;
+}
+
+.input-field .select {
+  width: 100px;
+  height: 45px;
+  cursor: pointer;
+  position: absolute;
   transition: 300ms;
-  color: #555555;
+  color: var(--font-color-sub);
   overflow: hidden;
-  padding: 0 5px 8px 80px;
+  padding: 0 5px 8px 0;
+}
+
+.input-field .select:hover {
+  height: unset;
 }
 
 .input-field .selected {
+  height: 40px;
   border: 2px solid var(--main-color);
   background-color: var(--bg-color);
   box-shadow: 4px 4px var(--main-color);
@@ -267,7 +398,7 @@ body:has(.login-wrapper) {
   transform: rotate(-90deg);
   width: 25px;
   fill: var(--main-color);
-  z-index: 100000;
+  z-index: 1;
   transition: 300ms;
 }
 
@@ -299,11 +430,8 @@ body:has(.login-wrapper) {
   padding: 5px;
   transition: 300ms;
   background-color: var(--bg-color);
-  width: 150px;
+  width: 100%;
   font-size: 15px;
-}
-.input-field .option:hover {
-  background-color: #3237415f;
 }
 
 .input-field .options input[type="radio"] {
@@ -321,22 +449,47 @@ body:has(.login-wrapper) {
   display: none;
 }
 
-.input-field .options input[type="radio"]#all:checked + label {
+.input-field .options input[type="radio"]#en:checked + label {
   display: none;
 }
 
-.input-field .select:has(.options input[type="radio"]#EN:checked) .selected::before {
+.input-field .select:has(.options input[type="radio"]#en:checked) .selected::before {
   content: attr(data-default);
 }
-.input-field .select:has(.options input[type="radio"]#VN:checked) .selected::before {
+.input-field .select:has(.options input[type="radio"]#vn:checked) .selected::before {
   content: attr(data-one);
 }
-.input-field .select:has(.options input[type="radio"]#EN:checked) .selected::before {
+.input-field .select:has(.options input[type="radio"]#cn:checked) .selected::before {
   content: attr(data-two);
 }
-.input-field .select:has(.options input[type="radio"]#CN:checked) .selected::before {
+.input-field .select:has(.options input[type="radio"]#jp:checked) .selected::before {
   content: attr(data-three);
 }
-.input-field .select:has(.options input[type="radio"]#JP:checked) .selected::before {
-  content: attr(data-four);
+
+.input-field .select .options div:has(input[type="radio"]#en) .option:hover {
+  color: var(--bg-color);
+  background-color: rgb(30, 118, 205);
+}
+.input-field .select .options div:has(input[type="radio"]#vn) .option:hover {
+  color: rgb(255, 242, 0);
+  background-color: rgb(170, 0, 0);
+}
+.input-field .select .options div:has(input[type="radio"]#cn) .option:hover {
+  color: rgb(255, 244, 40);
+  background-color: rgb(200, 0, 0);
+}
+.input-field .select .options div:has(input[type="radio"]#jp) .option:hover {
+  color: rgb(220, 0, 0);
+  background-color: #ffffff;
+  outline: 0.1px solid #000000;
+}
+
+.input-field:has(textarea.text-big) {
+  height: 40px;
+}
+
+.input-field textarea.text-big:focus {
+  position: absolute;
+  transform: translate(120px, 60px);
+  height: 160px;
 }
