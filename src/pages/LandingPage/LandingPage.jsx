@@ -53,7 +53,7 @@ export default function LandingPage() {
                         <div className='retro-window-message'>
                             Ready For Your Journey
                             <br/>To Discover More
-                            <br/>Communities For Your
+                            <br/>Communities Of Your
                             <br/>Favorite Vtuber?
                         </div>
 
@@ -79,7 +79,7 @@ export default function LandingPage() {
             />
         </div>
         <div className='landing-page-hero' >
-            <h1>Nugger</h1>
+            
         </div>
     </div>
   )

@@ -7,8 +7,8 @@
   overflow: hidden;
   image-rendering: pixelated !important;
 
-  left: 600px;
-  bottom: 200px;
+  left: -100px;
+  bottom: -40px;
   
   transform: scale(0.8);
 

@@ -15,6 +15,9 @@ import ProtectedRoutes from './utils/ProtectedRoute';
 import LandingPage from './pages/LandingPage/LandingPage';
 import VirtualGremlin from './components/Gremlin_V-Pet/VirtualGremlin';
 import ExplorePage from './pages/Users/ExplorePage/ExplorePage';
+import SideBar from './components/SideBar/SideBar';
+import AdminLogin from './pages/Admin/AdminLogin/AdminLogin';
+import AdminMainPage from './pages/Admin/AdminControlCenter/AdminMainPage/AdminMainPage';
 
 function App() {
   return (
@@ -77,15 +80,37 @@ function AppRoutes() {
 
         <Route path="/login" element={<Login />} />
 
-        <Route element={<ProtectedRoutes user={userAuth} />}>
+        <Route path="/login/admin" element={<AdminLogin />} />
+
+        <Route element={<><ProtectedRoutes user={userAuth} />
+          <SideBar />
+          <VirtualGremlin /></>}>
+          
           <Route
             path="/home"
             element={
               <>
               <Navbar LoggedIn={true}/>
-              <ExplorePage />
-              <VirtualGremlin />
               {/* <MainPage /> */}
+              </>
+            }
+          />
+          
+          <Route
+            path="/explore"
+            element={
+              <>
+              <Navbar LoggedIn={true}/>
+              <ExplorePage />
+              {/* <MainPage /> */}
+              </>
+            }
+          />
+          <Route
+            path="/Admin_MainPage"
+            element={
+              <>
+              <AdminMainPage />
               </>
             }
           />
