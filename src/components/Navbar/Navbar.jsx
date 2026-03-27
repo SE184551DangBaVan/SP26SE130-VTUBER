@@ -1,12 +1,13 @@
+'use client';
+
 import './Navbar.css'
-import {useNavigate} from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { ExpandMoreRounded, LiveTvRounded } from '@mui/icons-material';
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from 'react';
-import Logo from "/Nav -_ Logo.svg"; 
 
 const Navbar = ({LoggedIn}) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const [open, setOpen] = useState(true);
   const [userProfile, setUserProfile] = useState({
@@ -24,7 +25,7 @@ const Navbar = ({LoggedIn}) => {
     <header className={`header ${navScrollOffset > 20 ? 'away' : 'return' }`} >
         <nav className="navbar">
             <div className="nav-container">
-              <div className="logo"><img src={Logo} alt=''/></div>
+              <div className="logo"><img src="/Nav -_ Logo.svg" alt=''/></div>
               
               {LoggedIn ?
               (<>
@@ -78,12 +79,12 @@ const Navbar = ({LoggedIn}) => {
               :
               (<>
                 <ul className="nav-links">
-                    <li className="nav-selected"><a href="" onClick={() => navigate('/')}>Home</a></li>
+                    <li className="nav-selected"><a href="" onClick={(e) => {e.preventDefault(); router.push('/');}}>Home</a></li>
                     <li><a href="" >Hubs</a></li>
                     <li><a href="" >Store</a></li>
                     <li><a href="" >About</a></li>
                 </ul>
-                <button className="button-primary" onClick={() => navigate('/login')}>
+                <button className="button-primary" onClick={() => router.push('/login')}>
                   Login
                 </button>
               </>)}

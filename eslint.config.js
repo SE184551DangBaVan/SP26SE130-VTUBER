@@ -1,21 +1,26 @@
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import next from '@next/eslint-plugin-next'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', '.next', 'node_modules']),
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
     extends: [
       js.configs.recommended,
       reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
     ],
+    plugins: {
+      '@next/next': next,
+    },
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -23,6 +28,7 @@ export default defineConfig([
       },
     },
     rules: {
+      ...next.configs.recommended.rules,
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },

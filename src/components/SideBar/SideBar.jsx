@@ -1,3 +1,5 @@
+'use client';
+
 import { ArticleOutlined, BallotOutlined, ChairAltOutlined, DvrOutlined, Groups2, Groups2Outlined, KeyboardArrowUp, RecentActorsOutlined, School, SubjectOutlined } from '@mui/icons-material'
 import HomeIco from '../../assets/UI-Elements/home.svg'
 import ExploreIco from '../../assets/UI-Elements/search.svg'
@@ -6,13 +8,13 @@ import './SideBar.css'
 import ScissorLift from '../../components/ExtensionJoint/ScissorLift'
 import { useEffect, useState } from "react"
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 
 export default function SideBar({displayName}) {
   const [sideBarSelected, setSideBarSelected] = useState("home");
   const [retract, setRetract] = useState(1);
   const [sideBarRetractor, setSideBarRetractor] = useState(true);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <>
@@ -22,9 +24,9 @@ export default function SideBar({displayName}) {
           <label htmlFor="side-bar-toggle"><span id="side-bar-toggle-burger"></span></label>
         </div>
         <div id="side-bar-content">
-          <div className={`side-bar-button ${sideBarSelected === 'home' ? 'home' : ''}`} onClick={() => {setSideBarSelected("home"); navigate("/home");}}><img src={HomeIco} alt='' className="fas"/><span>Home</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => {setSideBarSelected("explore"); navigate("/explore");}}><img src={ExploreIco} alt='' className="fas"/><span>Explore</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => {setSideBarSelected("posts"); navigate("/posts");}}><img src={PostsIco} alt='' className="fas"/><span>Posts</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'home' ? 'home' : ''}`} onClick={() => {setSideBarSelected("home"); router.push("/home");}}><img src={HomeIco.src} alt='' className="fas"/><span>Home</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => {setSideBarSelected("explore"); router.push("/explore");}}><img src={ExploreIco.src} alt='' className="fas"/><span>Explore</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => {setSideBarSelected("posts"); router.push("/posts");}}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
           <hr/>
           <div className={`side-bar-button ${sideBarSelected === 'room' ? 'room' : ''}`} onClick={() => setSideBarSelected("room")}><ChairAltOutlined className="fas fa-room"/><span>Gacha</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'student' ? 'student' : ''}`} onClick={() => setSideBarSelected("student")}><Groups2 className="fas fa-student"/><span>Agenda</span></div>
