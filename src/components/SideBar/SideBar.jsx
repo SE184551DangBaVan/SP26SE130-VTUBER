@@ -1,6 +1,7 @@
 import { ArticleOutlined, BallotOutlined, ChairAltOutlined, DvrOutlined, Groups2, Groups2Outlined, KeyboardArrowUp, RecentActorsOutlined, School, SubjectOutlined } from '@mui/icons-material'
 import HomeIco from '../../assets/UI-Elements/home.svg'
 import ExploreIco from '../../assets/UI-Elements/search.svg'
+import PostsIco from '../../assets/UI-Elements/post.svg'
 import './SideBar.css'
 import ScissorLift from '../../components/ExtensionJoint/ScissorLift'
 import { useEffect, useState } from "react"
@@ -23,7 +24,7 @@ export default function SideBar({displayName}) {
         <div id="side-bar-content">
           <div className={`side-bar-button ${sideBarSelected === 'home' ? 'home' : ''}`} onClick={() => {setSideBarSelected("home"); navigate("/home");}}><img src={HomeIco} alt='' className="fas"/><span>Home</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => {setSideBarSelected("explore"); navigate("/explore");}}><img src={ExploreIco} alt='' className="fas"/><span>Explore</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => setSideBarSelected("posts")}><BallotOutlined className="fas fa-semester"/><span>Posts</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => {setSideBarSelected("posts"); navigate("/posts");}}><img src={PostsIco} alt='' className="fas"/><span>Posts</span></div>
           <hr/>
           <div className={`side-bar-button ${sideBarSelected === 'room' ? 'room' : ''}`} onClick={() => setSideBarSelected("room")}><ChairAltOutlined className="fas fa-room"/><span>Gacha</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'student' ? 'student' : ''}`} onClick={() => setSideBarSelected("student")}><Groups2 className="fas fa-student"/><span>Agenda</span></div>

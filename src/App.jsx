@@ -18,6 +18,7 @@ import ExplorePage from './pages/Users/ExplorePage/ExplorePage';
 import SideBar from './components/SideBar/SideBar';
 import AdminLogin from './pages/Admin/AdminLogin/AdminLogin';
 import AdminMainPage from './pages/Admin/AdminControlCenter/AdminMainPage/AdminMainPage';
+import UserAuthenticated from './utils/UserAuthenticated';
 
 function App() {
   return (
@@ -78,9 +79,11 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/login" element={<Login />} />
+        <Route element={<><UserAuthenticated user={userAuth} /></>}>
+          <Route path="/login" element={<Login />} />
 
-        <Route path="/login/admin" element={<AdminLogin />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
+        </Route>
 
         <Route element={<><ProtectedRoutes user={userAuth} />
           <SideBar />
@@ -106,6 +109,8 @@ function AppRoutes() {
               </>
             }
           />
+        </Route>
+        <Route element={<><ProtectedRoutes user={userAuth} /></>}>
           <Route
             path="/Admin_MainPage"
             element={

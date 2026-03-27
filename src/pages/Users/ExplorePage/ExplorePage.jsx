@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import './ExplorePage.css'
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css'
 
 export default function ExplorePage() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selecetedCategory, setSelecetedCategory] = useState(null);
+  const [expandCategory, setExpandCategory] = useState(false);
+  const [hubOwnerPfp, setHubOwnerPfp] = useState(null);
+  const [hubBanner, setHubBanner] = useState(null);
+  const [hubImage, setHubImage] = useState(null);
 
   const CommunityCard = () => {
     return (
@@ -12,13 +18,13 @@ export default function ExplorePage() {
           Since you are a member of <b>Forsaken Pebbles</b>,
         </p>
 
-        <div className="banner red">
-          <div className="banner-left">
+        <div className="explore-banner" style={{background: `${hubBanner ? color : '#75a4c8'}`}}>
+          <div className="explore-banner-left">
             <h2>CALAMITAS' HEARTH</h2>
-            <button>Visit Fanhub →</button>
+            <button className='explore-visit-btn'>Visit Fanhub →</button>
           </div>
 
-          <div className="banner-right">
+          <div className="explore-banner-right">
             {[1,2,3,4].map((i) => (
               <img key={i} src={`/assets/community-${i}.jpg`} />
             ))}
@@ -30,21 +36,40 @@ export default function ExplorePage() {
 
   const Section = ({ title, color }) => {
     return (
-      <div className="section">
-        <div className="section-header">
-          <h3>{title}</h3>
-          <span>See more of {title} &gt;&gt;</span>
+      <div className="explore-section">
+        <div className="explore-section-header">
+          <h3>{title} Hubs</h3>
+          <span>See more &gt;&gt;</span>
         </div>
 
-        <div className={`banner ${color}`}>
-          <div className="banner-left">
-            <h2>{title.toUpperCase()} FEATURE</h2>
-            <button>Visit Fanhub →</button>
+        <div className="explore-banner" style={{background: `${hubBanner ? color : '#333'}`}}>
+          <div className="explore-banner-left">
+            <div className='hub-info'>
+              <div className='hub-owner-info'>
+                {hubOwnerPfp ? <img className='hub-owner-pfp' src={hubOwnerPfp} alt=''></img> 
+                  : 
+                <img className='hub-owner-pfp' src='/profile-pic-undefined.gif' alt=''
+                style={{objectFit: 'cover'}}></img>}
+                <div className='hub-owner-info-display'>
+                  <div className='hub-owner-display-name'>
+                    <span>Owned by:</span>
+                    <span>Owner Name</span>
+                  </div>
+                </div>
+              </div>
+              <h2>{title.toUpperCase()}</h2>
+            </div>
+            <button className='explore-visit-btn'>Visit Fanhub →</button>
           </div>
 
-          <div className="banner-right">
+          <div className="explore-banner-right">
             {[1,2,3,4].map((i) => (
-              <img key={i} src={`/assets/${title}-${i}.jpg`} />
+              hubImage ?
+                <img key={i} src={`/assets/featured-${i}.jpg`} />
+                :
+                <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
+                  <Skeleton />
+                </SkeletonTheme>
             ))}
           </div>
         </div>
@@ -61,10 +86,10 @@ export default function ExplorePage() {
             <input placeholder="Search" type="search" className="category-search-bar-input" />
           </div>
           <div className='see-more-category'>
-            <button className='see-more-category-btn'>See More <span>{">>"}</span></button>
+            <button className='see-more-category-btn' onClick={() => setExpandCategory(!expandCategory)}>See More <span>&gt;&gt;</span></button>
           </div>
         </div>
-        <div className="category-row">
+        <div className={`category-row ${expandCategory ? 'expand' : ''}`} >
           {["Gaming", "Just Chatting", "Singing", "ASMR"].map((cat, i) => (
           <div
             key={i}
@@ -77,39 +102,54 @@ export default function ExplorePage() {
               src={hoveredIndex === i 
                 ? `/category-${i + 1}.gif` 
                 : `/category-${i + 1}.png`}
-              alt={cat}
+              alt={cat} 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/WompWomp.png";
+              }}
             />
             <span>{cat}</span>
           </div>
         ))}
         </div>
 
-        <div className="section">
-          <h3>⭐ Top {selecetedCategory} Hubs</h3>
-          <div className="banner">
-            <div className="banner-left">
+        <div className="explore-section top-hubs">
+          <h3>⭐ Top {selecetedCategory} Hub</h3>
+          <div className="explore-banner" style={{background: `${hubBanner ? color : '#999999'}`}}>
+            <div className="explore-banner-left">
               <div className='hub-info'>
                 <div className='hub-owner-info'>
-                  <img className='hub-owner-pfp' src='' alt=''></img>
+                  {hubOwnerPfp ? <img className='hub-owner-pfp' src={hubOwnerPfp} alt=''></img> 
+                    : 
+                  <img className='hub-owner-pfp' src='/profile-pic-undefined.gif' alt=''
+                  style={{objectFit: 'cover'}}></img>}
                   <div className='hub-owner-info-display'>
-                    <div className='hub-owner-display-name'>Owned by:<span></span></div>
+                    <div className='hub-owner-display-name'>
+                      <span>Owned by:</span>
+                      <span>WE ARE CHARLIE KIRK</span>
+                    </div>
                   </div>
                 </div>
                 <h2>Hub Name</h2>
               </div>
-              <button>Visit Fanhub →</button>
+              <button className='explore-visit-btn'>Visit Fanhub →</button>
             </div>
 
-            <div className="banner-right">
+            <div className="explore-banner-right">
               {[1,2,3,4].map((i) => (
+                hubBanner ?
                 <img key={i} src={`/assets/featured-${i}.jpg`} />
+                :
+                <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
+                  <Skeleton />
+                </SkeletonTheme>
               ))}
             </div>
           </div>
         </div>
 
-        <Section title="Gaming" color="red" />
-        <Section title="Singing" color="mint" />
+        <Section title="Gaming" color="gray" />
+        <Section title="Singing" color="gold" />
 
         <div className="more-divider">
           <span>More by categories</span>

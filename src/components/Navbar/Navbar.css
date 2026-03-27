@@ -229,6 +229,7 @@ body:has(.page-main-content) .nav-container .button-primary {
   display: flex;
   justify-content: center;
   align-items: center;
+  user-select: none;
 }
 
 #root:has(.explore-page-container) .nav-container .search-bar .search-categories {
@@ -336,7 +337,7 @@ body:has(.page-main-content) .nav-container .button-primary {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100px;
+  width: 70px;
   height: 42px;
   border: none;
   border-radius: 0 30px 30px 0;
