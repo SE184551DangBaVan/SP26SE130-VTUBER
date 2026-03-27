@@ -32,7 +32,7 @@ export default function LandingPage() {
         <div className='website-banner' >
             <div className='desktop-apps'></div>
             <div className='desktop-wallpaper'>
-                <img className='desktop-wallpaper-Fumo' src="" alt=""></img>
+                <img className='desktop-wallpaper-Fumo' src={FumoImage.src} alt=""></img>
                 <a href="https://www.pixiv.net/en/users/73548147" target="_blank" rel="noopener noreferrer">Art by: 是水鬼吗。</a>
             </div>
             <RetroWindow
@@ -71,7 +71,7 @@ export default function LandingPage() {
             />
         </div>
         <div className='landing-page-hero' >
-            
+            <h1>Under Construction</h1>
         </div>
     </div>
   )
