@@ -21,7 +21,7 @@ export default function ExplorePage() {
         <div className="explore-banner" style={{background: `${hubBanner ? color : '#75a4c8'}`}}>
           <div className="explore-banner-left">
             <h2>CALAMITAS' HEARTH</h2>
-            <button className='explore-visit-btn'>Visit Fanhub →</button>
+            <button className='explore-visit-btn'>Visit Fanhub <span className='ico'>→</span></button>
           </div>
 
           <div className="explore-banner-right">
@@ -63,7 +63,7 @@ export default function ExplorePage() {
               </div>
               <h2>{title.toUpperCase()}</h2>
             </div>
-            <button className='explore-visit-btn'>Visit Fanhub →</button>
+            <button className='explore-visit-btn'>Visit Fanhub <span className='ico'>→</span></button>
           </div>
 
           <div className="explore-banner-right">
@@ -140,7 +140,7 @@ export default function ExplorePage() {
                 </div>
                 <h2>Hub Name</h2>
               </div>
-              <button className='explore-visit-btn'>Visit Fanhub →</button>
+              <button className='explore-visit-btn'>Visit Fanhub <span className='ico'>→</span></button>
             </div>
 
             <div className="explore-banner-right">

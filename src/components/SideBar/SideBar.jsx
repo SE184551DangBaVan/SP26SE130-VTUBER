@@ -8,13 +8,23 @@ import './SideBar.css'
 import ScissorLift from '../../components/ExtensionJoint/ScissorLift'
 import { useEffect, useState } from "react"
 import axios from 'axios';
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useSideBar } from '@/contexts/SideBarContext'
 
-export default function SideBar({displayName}) {
-  const [sideBarSelected, setSideBarSelected] = useState("home");
+export default function SideBar() {
+  const { sideBarSelected, setSideBarSelected } = useSideBar();
   const [retract, setRetract] = useState(1);
   const [sideBarRetractor, setSideBarRetractor] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Sync sidebar selection with current route
+  useEffect(() => {
+    const currentRoute = pathname.replace('/', '') || 'home';
+    if (sideBarSelected !== currentRoute) {
+      setSideBarSelected(currentRoute);
+    }
+  }, [pathname]);
 
   return (
     <>

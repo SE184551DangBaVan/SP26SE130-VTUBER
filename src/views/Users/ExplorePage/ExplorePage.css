@@ -2,7 +2,7 @@
     width: 100%;
     min-height: 100vh;
     padding-left: 260px;
-    margin-top: 100px;
+    margin-top: 80px;
     transition: padding 0.2s ease;
 }
 
@@ -172,7 +172,7 @@
 
 .explore-banner {
   display: flex;
-  height: 320px;
+  height: 340px;
   border-radius: 16px;
   overflow: hidden;
   color: white;
@@ -246,7 +246,27 @@
   align-items: center;
   border-radius: 24px;
   margin-top: 100px;
+  margin-left: 30px;
+  padding: 10px 20px;
+  font-weight: 600;
+  border: 2px solid #000000;
+  text-overflow: clip;
+  flex-wrap: nowrap;
+  transition: all 0.3s ease;
+}
+
+.explore-banner-left .explore-visit-btn .ico {
+  margin: 0;
+  margin-left: 10px;
+  transition: margin 0.4s ease;
+}
+
+.explore-banner-left .explore-visit-btn:hover {
+  padding-right: 40px;
+}
+.explore-banner-left .explore-visit-btn:hover .ico {
   margin-left: 20px;
+  margin-right: -20px;
 }
 
 .explore-banner-right {
@@ -259,6 +279,8 @@
 .explore-banner-right img {
   width: 99%;
   height: 98%;
+  max-width: 280px;
+  max-height: 142px;
   object-fit: cover;
 }
 
