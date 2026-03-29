@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem("refreshToken", response.data.data.refreshToken);
         }
         else {
-          sessionStorage.setItem("userID", response.data.data.userId);
+          sessionStorage.setItem("userID", response.data.data.id);
           sessionStorage.setItem("username", response.data.data.username);
           sessionStorage.setItem("token", response.data.data.token);
           sessionStorage.setItem("refreshToken", response.data.data.refreshToken);

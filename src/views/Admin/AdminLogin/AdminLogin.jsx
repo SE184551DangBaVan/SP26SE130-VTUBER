@@ -40,21 +40,21 @@ export default function AdminLogin() {
     };
 
   return (
-    <div class="glitch-form-wrapper">
+    <div className="glitch-form-wrapper">
         {/* From Uiverse.io by pharmacist-sabot*/}
-        <form class="glitch-card" onSubmit={handleAdminLogin}>
-            <div class="card-header">
-            <div class="card-title">
+        <form className="glitch-card" onSubmit={handleAdminLogin}>
+            <div className="card-header">
+            <div className="card-title">
                 <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
                 height="24"
                 viewBox="0 0 60 60"
-                stroke-width="1.5"
+                strokeWidth="1.5"
                 stroke="currentColor"
                 fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 >
                 <g xmlns="http://www.w3.org/2000/svg">
                     <path d="M54.246,12.991h-4.344l-2.031-4.662c-0.275-1.367-1.925-5.138-2.559-5.966c-1.602-2.089-4.453-2.902-7.189-1.997   l-6.53,2.855c-0.964,0.318-2.022,0.305-2.98-0.04L21.081,0.47c-1.439-0.518-3.074-0.356-4.599,0.461   c-1.916,1.027-3.418,2.938-3.909,4.943c-0.04,0.121-0.19,0.49-0.354,0.899c-0.377,0.938-0.522,1.31-0.584,1.521L9.59,12.991H5.746   c-2.481,0-4.5,2.019-4.5,4.5s2.019,4.5,4.5,4.5h2v3.803v0.6v24.598c0,2.757,2.243,5,5,5h3v1.694c0,1.271,1.034,2.306,2.306,2.306   H41.44c1.271,0,2.306-1.034,2.306-2.306v-1.694h3c2.757,0,5-2.243,5-5V26.393v-0.6v-3.803h2.5c2.481,0,4.5-2.019,4.5-4.5   S56.727,12.991,54.246,12.991z M13.501,9.019c0.036-0.084,0.042-0.077,0.055-0.167c0.046-0.157,0.342-0.894,0.519-1.334   c0.317-0.79,0.395-0.988,0.428-1.125c0.367-1.492,1.515-2.944,2.925-3.7c0.72-0.386,1.82-0.756,2.976-0.343l7.531,2.712   c1.376,0.496,2.898,0.516,4.372,0.025l6.53-2.855c1.845-0.607,3.804-0.066,4.888,1.348c0.507,0.661,2.084,4.386,2.191,5.176   c0.013,0.091,0.038,0.18,0.074,0.264l1.729,3.972H11.772L13.501,9.019z M41.746,57.685c0,0.169-0.137,0.306-0.306,0.306H18.051   c-0.169,0-0.306-0.137-0.306-0.306v-1.694h1h22h1V57.685z M39.746,53.991h-20v-9c0-1.654,1.346-3,3-3h14c1.654,0,3,1.346,3,3   V53.991z M49.746,40.081c-2.833,0.478-5,2.942-5,5.91v3c0,0.553,0.447,1,1,1s1-0.447,1-1v-3c0-1.859,1.28-3.411,3-3.858v8.858   c0,1.654-1.346,3-3,3h-3h-2v-9c0-2.757-2.243-5-5-5h-14c-2.757,0-5,2.243-5,5v9h-2h-3c-1.654,0-3-1.346-3-3v-8.858   c1.72,0.447,3,1.999,3,3.858v3c0,0.553,0.447,1,1,1s1-0.447,1-1v-3c0-2.967-2.167-5.431-5-5.91v-3.573   c1.363,2.344,3.215,3.182,4.899,3.352c0.861,0.087,1.69,0.131,2.488,0.131c3.942,0,7.111-1.063,9.442-3.169   c1.573-1.422,2.554-3.126,3.17-4.776c0.615,1.65,1.597,3.354,3.17,4.776c2.331,2.106,5.5,3.169,9.442,3.169   c0.798,0,1.628-0.044,2.488-0.131c1.684-0.17,3.537-1.008,4.899-3.352V40.081z M9.75,27c5.907-2.938,13.071-2.941,18.98-0.005   c-0.086,1.815-0.619,5.743-3.496,8.344c-2.365,2.138-5.863,2.989-10.389,2.531C10.8,37.461,9.822,31.87,9.75,27z M30.76,26.995   c5.909-2.938,13.073-2.936,18.98,0.005c-0.071,4.87-1.05,10.461-5.096,10.87c-4.53,0.457-8.022-0.394-10.389-2.531   C31.379,32.738,30.846,28.81,30.76,26.995z M49.746,24.798c-6.327-2.813-13.803-2.65-20,0.48c-6.197-3.13-13.673-3.293-20-0.48   v-2.807h40V24.798z M54.246,19.991h-3.5h-42h-3c-1.379,0-2.5-1.121-2.5-2.5s1.121-2.5,2.5-2.5h4.5h39h5c1.379,0,2.5,1.121,2.5,2.5   S55.624,19.991,54.246,19.991z"/>
@@ -69,11 +69,11 @@ export default function AdminLogin() {
                 <span>ADMIN_LOGIN</span>
             </div>
 
-            <div class="card-dots"><span></span><span></span><span></span></div>
+            <div className="card-dots"><span></span><span></span><span></span></div>
             </div>
 
-            <div class="card-body">
-            <div class="form-group">
+            <div className="card-body">
+            <div className="form-group">
                 <input
                 type="text"
                 id="username"
@@ -82,11 +82,11 @@ export default function AdminLogin() {
                 required
                 value={username} onChange={(e) => setUsername(e.target.value)}
                 />
-                <label for="username" class="form-label" data-text="USERNAME"
+                <label htmlFor="username" className="form-label" data-text="USERNAME"
                 >USERNAME</label>
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
                 <input
                 type="password"
                 id="password"
@@ -95,12 +95,12 @@ export default function AdminLogin() {
                 required
                 value={password} onChange={(e) => setPassword(e.target.value)}
                 />
-                <label for="password" class="form-label" data-text="PASSWORD"
+                <label htmlFor="password" className="form-label" data-text="PASSWORD"
                 >PASSWORD</label>
             </div>
 
-            <button data-text="SYSTEM_LOGIN" type="submit" class="submit-btn">
-                <span class="btn-text">SYSTEM_LOGIN</span>
+            <button data-text="SYSTEM_LOGIN" type="submit" className="submit-btn">
+                <span className="btn-text">SYSTEM_LOGIN</span>
             </button>
             </div>
         </form>

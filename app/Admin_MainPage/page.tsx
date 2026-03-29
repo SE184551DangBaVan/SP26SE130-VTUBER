@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from "@/firebase";
 import { useRouter } from 'next/navigation';
 import AdminMainPage from '@/views/Admin/AdminControlCenter/AdminMainPage/AdminMainPage';
+import LogoutButton from '@/functions/AccountActions/LogoutButton';
 
 export default function AdminMainPageRoute() {
   const [user, setUser] = useState(null);
@@ -35,6 +36,7 @@ export default function AdminMainPageRoute() {
   return (
     <div className="app">
       <AdminMainPage />
+      <LogoutButton />
     </div>
   );
 }

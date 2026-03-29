@@ -1,0 +1,231 @@
+body:has(.create-hub-page-container) {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.create-hub-page-container {
+  --input-focus: #2d8cf0;
+  --font-color: #323232;
+  --font-color-sub: #666;
+  --bg-color: #fff;
+  --bg-color-alt: #666;
+  --main-color: #323232;
+
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  margin-top: 40px;
+}
+
+.create-hub-page-container .loading-state {
+  font-size: 18px;
+  color: var(--font-color);
+}
+
+.create-hub-content {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.create-hub-content h1 {
+  font-size: 28px;
+  color: var(--main-color);
+  margin-bottom: 16px;
+}
+
+.create-hub-content p {
+  color: var(--font-color-sub);
+  font-size: 16px;
+}
+
+/* VTuber Application Form Wrapper */
+.vtuber-application-wrapper {
+  width: 100%;
+  max-width: 450px;
+}
+
+.application-card {
+  padding: 30px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 2px solid var(--main-color);
+  box-shadow: 4px 4px var(--main-color);
+}
+
+.application-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.application-header h1 {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--main-color);
+  margin: 0 0 8px 0;
+}
+
+.application-subtitle {
+  font-size: 14px;
+  color: var(--font-color-sub);
+  margin: 0;
+}
+
+.application-info {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background-color: #e7f3ff;
+  border-radius: 6px;
+  border: 1px solid #b3d9ff;
+  margin-bottom: 24px;
+}
+
+.info-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #0066cc;
+}
+
+.info-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.application-info p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--font-color);
+  line-height: 1.5;
+}
+
+.application-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.form-input {
+  width: 100%;
+  height: 45px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--font-color);
+  padding: 5px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: var(--font-color-sub);
+  opacity: 0.8;
+}
+
+.form-input:focus {
+  border: 2px solid var(--input-focus);
+}
+
+.form-input[type="url"] {
+  font-family: inherit;
+}
+
+.submit-btn {
+  margin-top: 10px;
+  width: 100%;
+  height: 45px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--font-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: var(--input-focus);
+  color: #fff;
+}
+
+.submit-btn:active:not(:disabled) {
+  box-shadow: 0px 0px var(--main-color);
+  transform: translate(3px, 3px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.application-status {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.status-text {
+  font-size: 14px;
+  color: var(--font-color);
+  margin: 0 0 8px 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-note {
+  font-size: 12px;
+  color: var(--font-color-sub);
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .application-card {
+    padding: 20px;
+  }
+
+  .application-header h1 {
+    font-size: 24px;
+  }
+
+  .form-input,
+  .submit-btn {
+    height: 40px;
+  }
+}

@@ -44,7 +44,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
       <div className="app">
         <Navbar LoggedIn={true}/>
         <SideBar />
-        <VirtualGremlin />
+        {/* <VirtualGremlin /> */}
         {children}
       </div>
     </SideBarProvider>

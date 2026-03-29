@@ -1,5 +1,6 @@
 #side-bar {
   --background: linear-gradient(to bottom right, #EEFEFF, #DDFCFF);
+  --secondary-background: #CDCDCD;
   --sidebar-width: 256px;
   --sidebar-width-min: 80px;
   --sidebar-dark-primary: #ffff;
@@ -83,8 +84,8 @@
   position: fixed;
   z-index: 99;
   left: 0;
-  top: 60px;
-  padding-top: 20px;
+  top: 70px;
+  padding-top: 10px;
   min-height: 100%;
   background: var(--background);
   display: flex;
@@ -299,6 +300,11 @@ label[for=side-bar-toggle] {
 .side-bar-button.posts {pointer-events: none; padding-left: 20px;}
 .side-bar-button.posts ~ #side-bar-content-highlight {
   top: 124px;
+}
+
+.side-bar-button.createHub {pointer-events: none; padding-left: 20px;}
+.side-bar-button.createHub ~ #side-bar-content-highlight {
+  top: 178px;
 }
 
 #side-bar .fas {

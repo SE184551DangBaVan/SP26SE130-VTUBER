@@ -185,7 +185,7 @@ export default function Login() {
             value={userInput} title='Please check your mail for the code.' onChange={(e) => setUserInput(e.target.value)} required/></div>
             <label className="signIn-OTP-themed-btn" onClick={() => setConfirmUserInput(userInput)}>
               <input className="signIn-OTP-themed-input" type="checkbox" defaultChecked="" />
-              <svg width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor" height="24" fill="none" className="icon"><path xmlns="http://www.w3.org/2000/svg" d="M4 12.6111L8.92308 17.5L20 6.5" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg width="24" viewBox="0 0 24 24" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" stroke="currentColor" height="24" fill="none" className="icon"><path xmlns="http://www.w3.org/2000/svg" d="M4 12.6111L8.92308 17.5L20 6.5" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </label>
             {confirmUserInput ?
               (confirmUserInput!=otp ? (<p className='incorrect'>OTP does not match</p>) : (<p className='correct'>OTP is correct.</p>))

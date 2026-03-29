@@ -2,11 +2,11 @@
     width: 100%;
     min-height: 100vh;
     padding-left: 260px;
-    margin-top: 80px;
+    padding-top: 80px;
     transition: padding 0.2s ease;
 }
 
-#root:has(#side-bar-toggle:checked) .explore-page-container {
+body:has(#side-bar.rebound-animation) .explore-page-container {
     padding-left: 80px;
 }
 
@@ -90,6 +90,7 @@
 }
 
 .category-row {
+  z-index: 10;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -104,6 +105,7 @@
 
 .category-row.expand {
   max-height: unset !important;
+  padding-bottom: 5px;
   gap: 20px 20px !important;
 }
 
@@ -172,7 +174,7 @@
 
 .explore-banner {
   display: flex;
-  height: 340px;
+  min-height: 340px;
   border-radius: 16px;
   overflow: hidden;
   color: white;
@@ -238,6 +240,7 @@
 .explore-banner-left .hub-info h2 {
   margin-left: 40px;
   font-size: 40px;
+  max-height: 64px;
 }
 
 .explore-banner-left .explore-visit-btn {
@@ -245,8 +248,8 @@
   justify-content: center;
   align-items: center;
   border-radius: 24px;
-  margin-top: 100px;
-  margin-left: 30px;
+  position: absolute;
+  transform: translate(25px, 80px);
   padding: 10px 20px;
   font-weight: 600;
   border: 2px solid #000000;
@@ -269,6 +272,34 @@
   margin-right: -20px;
 }
 
+.explore-banner-left .hub-info-member-count {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100px;
+  justify-content: right;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 300;
+  opacity: 0.8;
+  padding: 5px 10px;
+  background-color: #333;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  transform: translate(220px, 115px);
+}
+
+.explore-banner-left .hub-info-member-count span {
+  display: flex;
+  margin-right: 10px;
+  padding-right: 20px;
+  border-right: 1px solid #FFF;
+}
+
+.explore-banner-left .hub-info-member-count svg {
+  width: 16px;
+  margin-right: 5px;
+}
+
 .explore-banner-right {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -280,7 +311,7 @@
   width: 99%;
   height: 98%;
   max-width: 280px;
-  max-height: 142px;
+  max-height: 150px;
   object-fit: cover;
 }
 
@@ -294,7 +325,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 400px;
+  min-height: 400px;
   border-radius: 18px;
   box-shadow: inset 0 0 20px #33333380;
   padding: 20px 20px;
@@ -307,6 +338,7 @@
 .explore-section.top-hubs::before {
   pointer-events: none;
   position: absolute;
+  z-index: 2;
   content: "";
   width: 350px;
   height: 400px;
@@ -317,6 +349,22 @@
   background-position: 0 100%;
   background-size: contain;
   filter:  drop-shadow(1px 0 0 red) drop-shadow(2px 0 0 aqua);
+  pointer-events: none;
+}
+.explore-section.top-hubs::after {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  content: "";
+  width: 250px;
+  height: 80px;
+  transform: translate(-50px, -20px);
+  background: url('../../../assets/Decor/PEAK-Text.png');
+  background-repeat: no-repeat;
+  background-position: 0 10%;
+  background-size: cover;
+  pointer-events: none;
 }
 
 .explore-section h3 {
@@ -326,11 +374,7 @@
   background-color: transparent;
 }
 .explore-section.top-hubs h3 {
-  color: rgb(218,165,32);
-  background: -webkit-linear-gradient(transparent, transparent), -webkit-linear-gradient(top, rgba(218,165,32,1) 0%, rgba(213,173,109,1) 26%, rgba(226,186,120,1) 35%, rgba(163,126,67,1) 45%, rgba(212,175,55,1) 61%, rgba(213,173,109,1) 100%);
-  background: -o-linear-gradient(transparent, transparent);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: rgb(193, 152, 19);
   text-shadow: 0px 0px 10px rgb(231, 195, 111);
 }
 
@@ -377,4 +421,23 @@
   mix-blend-mode: multiply;
   opacity: 0.2;
   pointer-events: none;
+}
+
+.explore-section.top-hubs .art-credits {
+    font-family: "Just Another Hand", cursive;
+    color: #000000;
+    font-size: 20px;
+    position: absolute;
+    transform: rotate(-4deg);
+    right: 24px;
+    bottom: 280px;
+    z-index: 3;
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+}
+
+.explore-section.top-hubs .art-credits:hover,
+.explore-section.top-hubs:hover .art-credits {
+    opacity: 1;
+    transition: opacity 0.6s ease;
 }

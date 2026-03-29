@@ -362,6 +362,10 @@ body:has(.page-main-content) .nav-container .button-primary {
   animation: hover-twitch-effect 0.4s ease;
 }
 
+.nav-container .logout__btn-container {
+  transform: translateY(40px);
+}
+
 @keyframes hover-twitch-effect {
   0% {
     transform: rotate(0deg);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExpandMoreRounded, LiveTvRounded } from '@mui/icons-material';
 import { useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from 'react';
+import LogoutButton from '@/functions/AccountActions/LogoutButton';
 
 const Navbar = ({LoggedIn}) => {
   const router = useRouter();
@@ -72,7 +73,7 @@ const Navbar = ({LoggedIn}) => {
                 </div>
                 <div className='quick-access'>
                   <div></div>
-                  <div></div>
+                  <div><LogoutButton /></div>
                   <div className='navbar-profile-pic'>Pfp</div>
                 </div>
               </>)

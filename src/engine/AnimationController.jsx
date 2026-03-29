@@ -1,45 +1,55 @@
-import { useEffect } from "react";
-
 export async function createAnimationController({
   imageSrc,
   frameWidth,
   frameHeight,
   totalFrames = null // OPTIONAL
 }) {
-  const image = new Image();
-  image.src = imageSrc;
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    
+    image.onload = () => {
+      try {
+        const sheetWidth = image.width;
+        const sheetHeight = image.height;
 
-  await image.decode();
+        const columns = Math.floor(sheetWidth / frameWidth);
+        const rows = Math.floor(sheetHeight / frameHeight);
 
-  const sheetWidth = image.width;
-  const sheetHeight = image.height;
+        // If totalFrames is not provided, assume full grid
+        const maxFrames = totalFrames ?? columns * rows;
 
-  const columns = Math.floor(sheetWidth / frameWidth);
-  const rows = Math.floor(sheetHeight / frameHeight);
+        function getFramePosition(frameIndex) {
+          // clamp to valid range
+          const index = frameIndex % maxFrames;
 
-  // If totalFrames is not provided, assume full grid
-  const maxFrames = totalFrames ?? columns * rows;
+          const col = index % columns;
+          const row = Math.floor(index / columns);
 
-  function getFramePosition(frameIndex) {
-    // clamp to valid range
-    const index = frameIndex % maxFrames;
+          return {
+            x: -col * frameWidth,
+            y: -row * frameHeight
+          };
+        }
 
-    const col = index % columns;
-    const row = Math.floor(index / columns);
-
-    return {
-      x: -col * frameWidth,
-      y: -row * frameHeight
+        resolve({
+          image,
+          frameWidth,
+          frameHeight,
+          columns,
+          rows,
+          totalFrames: maxFrames,
+          getFramePosition
+        });
+      } catch (err) {
+        reject(err);
+      }
     };
-  }
 
-  return {
-    image,
-    frameWidth,
-    frameHeight,
-    columns,
-    rows,
-    totalFrames: maxFrames,
-    getFramePosition
-  };
+    image.onerror = (err) => {
+      console.error("Failed to load sprite sheet:", imageSrc);
+      reject(new Error(`Failed to load image: ${imageSrc}`));
+    };
+
+    image.src = imageSrc;
+  });
 }
