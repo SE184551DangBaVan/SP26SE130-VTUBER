@@ -48,3 +48,46 @@ export const getHubMembers = async (fanHubId, pageNo = 0, pageSize = 50, sortBy 
     return [];
   }
 };
+
+/**
+ * Set a member as moderator of a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number[]} memberIds - Array of member IDs to promote
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const setModerator = async (fanHubId, memberIds) => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/fan-hub-member/set-moderator/${fanHubId}?memberIds=${memberIds.join(',')}`,
+      {},
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    console.log("setModerator response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to set moderator" };
+  } catch (err) {
+    console.error("Set moderator error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

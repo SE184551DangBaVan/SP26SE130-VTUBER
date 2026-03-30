@@ -14,27 +14,24 @@ const getAuthToken = () => {
 export const getUserById = async (userId) => {
   try {
     const token = getAuthToken();
-    
-    if (!token) {
-      console.warn("No auth token found");
-      return null;
-    }
 
     const res = await axios.get(
       `${API_BASE_URL}/user/${userId}`,
       {
-        headers: {
+        headers: token ? {
           "Authorization": `Bearer ${token}`
+        } : {
+          "Content-Type": "application/json"
         }
       }
     );
-    
+
     console.log("getUserById response:", res.data);
-    
+
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
-    
+
     return null;
   } catch (err) {
     console.error("Fetch user by ID error:", {

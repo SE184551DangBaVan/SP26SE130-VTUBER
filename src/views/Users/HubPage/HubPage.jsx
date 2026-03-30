@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers } from '@/services/MemberController';
+import { getHubMembers, setModerator } from '@/services/MemberController';
 import './HubPage.css';
 import { GroupRounded, ArrowUpward, ArrowDownward, CommentRounded } from '@mui/icons-material';
 
@@ -13,7 +13,7 @@ export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
   const params = useParams();
   const fanHubIdFromParams = params?.fanHubId;
-  
+
   const [hubData, setHubData] = useState(ownedHub || null);
   const [posts, setPosts] = useState([]);
   const [members, setMembers] = useState([]);
@@ -21,6 +21,27 @@ export default function HubPage({ ownedHub }) {
   const [postsLoading, setPostsLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('latest');
+
+  // State for promote modal
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [promoting, setPromoting] = useState(false);
+
+  // Get current user ID from storage
+  const currentUserId = parseInt(
+    sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
+  );
+  const currentUsername = 
+    sessionStorage.getItem("username") || localStorage.getItem("username") || "";
+
+  // Check if current user is the owner of this hub
+  const isOwner = hubData && (
+    hubData.ownerUserId === currentUserId || 
+    hubData.ownerUsername === currentUsername
+  );
+
+  // Only owner can view members and manage them
+  const canViewMembers = isOwner;
 
   // Fetch hub data if fanHubId is provided via params (not owned hub)
   useEffect(() => {
@@ -75,7 +96,7 @@ export default function HubPage({ ownedHub }) {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!activeFanHubId) return;
+      if (!activeFanHubId || !canViewMembers) return;
 
       setMembersLoading(true);
       try {
@@ -88,7 +109,11 @@ export default function HubPage({ ownedHub }) {
             try {
               const userData = await getUserById(member.userId);
               if (userData) {
-                memberDetailsMap[member.userId] = userData;
+                // Store by member.id (not userId) for easier access when promoting
+                memberDetailsMap[member.id] = {
+                  ...userData,
+                  memberData: member
+                };
               }
             } catch (error) {
               console.error(`Error fetching user ${member.userId}:`, error);
@@ -104,7 +129,45 @@ export default function HubPage({ ownedHub }) {
     };
 
     fetchMembers();
-  }, [activeFanHubId]);
+  }, [activeFanHubId, canViewMembers]);
+
+  // Handle promote member to moderator
+  const handlePromoteClick = (member) => {
+    setSelectedMember(member);
+    setShowPromoteModal(true);
+  };
+
+  const handlePromoteConfirm = async () => {
+    if (!selectedMember || !activeFanHubId) return;
+
+    setPromoting(true);
+    try {
+      const result = await setModerator(activeFanHubId, [selectedMember.id]);
+      
+      if (result?.success) {
+        // Update the member's role in the local state
+        setMembers(prev => prev.map(m => 
+          m.id === selectedMember.id 
+            ? { ...m, roleInHub: 'MODERATOR' }
+            : m
+        ));
+        setShowPromoteModal(false);
+        setSelectedMember(null);
+      } else {
+        alert(result?.message || 'Failed to promote member');
+      }
+    } catch (error) {
+      console.error('Promote error:', error);
+      alert('Failed to promote member');
+    } finally {
+      setPromoting(false);
+    }
+  };
+
+  const handlePromoteCancel = () => {
+    setShowPromoteModal(false);
+    setSelectedMember(null);
+  };
 
   // Filter posts by type (IMAGE, VIDEO for now)
   const filteredPosts = posts.filter(post =>
@@ -150,8 +213,9 @@ export default function HubPage({ ownedHub }) {
               onError={(e) => {
                 e.target.src = '/profile-pic-undefined.jpg';
               }}
+              style={{border: `4px solid ${hubData.themeColor}`}}
             />
-            <div className='hub-title-section' style={{color: hubData.themeColor || '#333'}}>
+            <div className='hub-title-section'>
               <h1 className='hub-name'>{hubData.hubName}</h1>
               <p className='hub-subdomain'>{hubData.subdomain}</p>
               <div className='hub-owner-info'>
@@ -253,17 +317,20 @@ export default function HubPage({ ownedHub }) {
 
           <div className='hub-card fanhub-member-list'>
             <div className='hub-card-header'>
-              <span>Members ({members.length})</span>
+              <span>Members ({canViewMembers ? members.length : 'N/A'})</span>
             </div>
             <div className='hub-card-body'>
-              {membersLoading ? (
+              {!canViewMembers ? (
+                <p className='no-members-text'>Only the hub owner can view the member list.</p>
+              ) : membersLoading ? (
                 <div className='members-loading'>Loading members...</div>
               ) : members.length === 0 ? (
                 <p className='no-members-text'>No members yet.</p>
               ) : (
                 <div className='members-list'>
                   {members.map((member) => {
-                    const userDetails = memberDetails[member.userId];
+                    const userDetails = memberDetails[member.id];
+                    const isAlreadyModerator = member.roleInHub === 'MODERATOR';
                     return (
                       <div key={member.id} className='member-item'>
                         <img
@@ -279,6 +346,15 @@ export default function HubPage({ ownedHub }) {
                           <span className='member-username'>@{member.username}</span>
                           <span className='member-role'>{member.roleInHub}</span>
                         </div>
+                        {isOwner && !isAlreadyModerator && (
+                          <button 
+                            className='promote-btn'
+                            onClick={() => handlePromoteClick(member)}
+                            style={{background: `${hubData.themeColor}`}}
+                          >
+                            <span>Promote</span>
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -288,6 +364,51 @@ export default function HubPage({ ownedHub }) {
           </div>
         </div>
       </div>
+
+      {/* Promote to Moderator Modal */}
+      {showPromoteModal && selectedMember && (
+        <div className='modal-overlay' onClick={handlePromoteCancel}>
+          <div className='modal-content promote-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Promote to Moderator</h2>
+              <button className='modal-close' onClick={handlePromoteCancel}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <p className='modal-description'>
+                Set <strong>{selectedMember.displayName}</strong> (@{selectedMember.username}) as a moderator?
+              </p>
+              <p className='modal-note'>
+                Moderators can help manage the hub and its members.
+              </p>
+            </div>
+
+            <div className='modal-footer'>
+              <button 
+                className='cancel-btn' 
+                onClick={handlePromoteCancel}
+                disabled={promoting}
+              >
+                Cancel
+              </button>
+              <button 
+                className='confirm-btn' 
+                onClick={handlePromoteConfirm}
+                disabled={promoting}
+              >
+                {promoting ? (
+                  <>
+                    <span className='spinner' />
+                    Promoting...
+                  </>
+                ) : (
+                  'Confirm'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

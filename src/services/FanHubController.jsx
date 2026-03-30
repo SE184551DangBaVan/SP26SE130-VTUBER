@@ -100,3 +100,54 @@ export const createFanHub = async (payload) => {
     return null;
   }
 };
+
+/**
+ * Upload banner, avatar, and explore banner images for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {string} banner - Base64 encoded banner image
+ * @param {string} avatar - Base64 encoded avatar image
+ * @param {string[]} backgrounds - Array of base64 encoded explore banner images
+ * @returns {Promise<Object>} Upload result
+ */
+export const uploadImages = async (fanHubId, banner, avatar, backgrounds = []) => {
+  try {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/fan-hub/upload-images/${fanHubId}`,
+      {
+        banner,
+        avatar
+      },
+      {
+        params: {
+          backgrounds
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("uploadImages response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to upload images" };
+  } catch (err) {
+    console.error("Upload images error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

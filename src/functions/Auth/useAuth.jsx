@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState, useContext, createContext, useEffect } from "react";
+import { getUserById } from "@/services/UserController";
 
 const AuthContext = createContext(null);
 
@@ -21,21 +22,54 @@ export const AuthProvider = ({ children }) => {
     return `${day}/${month}/${year}`;
   };
 
-  useEffect(() => {
-    const savedEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
-
-    if (savedEmail) {
-      setUserAuth({ email: savedEmail });
+  // Helper function to fetch user role and update auth state
+  const fetchUserRole = async (userId) => {
+    try {
+      const userData = await getUserById(userId);
+      if (userData) {
+        return userData.role;
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
     }
-    setLoading(false);
+    return null;
+  };
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const savedUsername = sessionStorage.getItem("username") || localStorage.getItem("username");
+      const savedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+
+      if (savedUsername) {
+        const authData = { email: savedUsername };
+        
+        // Check if role is already stored
+        const savedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
+        if (savedRole) {
+          authData.role = savedRole;
+        } else if (savedUserId) {
+          // Fetch role if not stored
+          const role = await fetchUserRole(savedUserId);
+          if (role) {
+            authData.role = role;
+          }
+        }
+        
+        setUserAuth(authData);
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   useEffect(() => {
     const handleStorageChange = () => {
       const updatedEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
+      const updatedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
 
       if (updatedEmail) {
-        setUserAuth({ email: updatedEmail });
+        setUserAuth({ email: updatedEmail, role: updatedRole || null });
       } else {
         setUserAuth(null);
       }
@@ -47,27 +81,44 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password, rememberMe) => {
     try {
-      const response = await axios.post("https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/auth/login", 
+      const response = await axios.post("https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/auth/login",
         { username, password }
       );
       if (response) {
+        const userId = response.data.data.id;
+        
         if (rememberMe) {
-          localStorage.setItem("userID", response.data.data.id);
+          localStorage.setItem("userID", userId);
           localStorage.setItem("username", response.data.data.username);
           localStorage.setItem("token", response.data.data.token);
           localStorage.setItem("refreshToken", response.data.data.refreshToken);
         }
         else {
-          sessionStorage.setItem("userID", response.data.data.id);
+          sessionStorage.setItem("userID", userId);
           sessionStorage.setItem("username", response.data.data.username);
           sessionStorage.setItem("token", response.data.data.token);
           sessionStorage.setItem("refreshToken", response.data.data.refreshToken);
         }
-        
+
+        // Fetch user role and store it
+        const userData = await getUserById(userId);
+        if (userData && userData.role) {
+          if (rememberMe) {
+            localStorage.setItem("role", userData.role);
+          } else {
+            sessionStorage.setItem("role", userData.role);
+          }
+          
+          setUserAuth({
+            email: response.data.data.username,
+            role: userData.role
+          });
+        }
+
         window.dispatchEvent(new Event("storage"));
 
         return response.data;
-      } 
+      }
     } catch (error) {
       return error;
     }
@@ -119,12 +170,19 @@ export const AuthProvider = ({ children }) => {
     window.dispatchEvent(new Event("storage"));
   };
 
+  const clearAuth = () => {
+    sessionStorage.clear();
+    localStorage.clear();
+    setUserAuth(null);
+    window.dispatchEvent(new Event("storage"));
+  };
+
   if (loading) {
     return <div className="loader" />;
   }
 
   return (
-    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout }}>
+    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth }}>
       {children}
     </AuthContext.Provider>
   );
@@ -132,19 +190,23 @@ export const AuthProvider = ({ children }) => {
 
 export const adminLogin = async (username, password) => {
     try {
-      const response = await axios.post("https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/auth/system-account-login", 
+      const response = await axios.post("https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/auth/system-account-login",
         { username, password }
       );
       if (response) {
-        sessionStorage.setItem("userID", response.data.data.id);
+        const userId = response.data.data.id;
+        
+        sessionStorage.setItem("userID", userId);
         sessionStorage.setItem("username", response.data.data.username);
         sessionStorage.setItem("token", response.data.data.token);
         sessionStorage.setItem("refreshToken", response.data.data.refreshToken);
-        
+        // Admin users always have ADMIN role
+        sessionStorage.setItem("role", "ADMIN");
+
         window.dispatchEvent(new Event("storage"));
 
         return response.data;
-      } 
+      }
     } catch (error) {
       return error;
     }
