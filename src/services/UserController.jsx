@@ -15,6 +15,12 @@ export const getUserById = async (userId) => {
   try {
     const token = getAuthToken();
 
+    if (!token) {
+      console.warn("No auth token found");
+      return null;
+    }
+
+
     const res = await axios.get(
       `${API_BASE_URL}/user/${userId}`,
       {
@@ -26,15 +32,42 @@ export const getUserById = async (userId) => {
       }
     );
 
+
     console.log("getUserById response:", res.data);
+
 
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
 
+
     return null;
   } catch (err) {
     console.error("Fetch user by ID error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+/**
+ * Get user profile by username
+ * @param {string} username - Username
+ * @returns {Promise<Object|null>} User profile data or null
+ */
+export const getUserByUsername = async (username) => {
+  try {
+    const res = await axios.get(
+      `${API_BASE_URL}/user/user-name/${username}`)
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+    return null;
+  } catch (err) {
+    console.error("Fetch user by username error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,
@@ -79,6 +112,46 @@ export const registerVtuberApplication = async (userId, channelName, channelLink
     return res.data;
   } catch (err) {
     console.error("Register VTuber application error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Select display badges for user
+ * @param {number[]} userBadgeIds - Array of user badge IDs to display (max 3)
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const selectDisplayBadges = async (userBadgeIds) => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/user/badges/select-display`,
+      {
+        userBadgeIds
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    console.log("selectDisplayBadges response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Select display badges error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,
