@@ -4,7 +4,7 @@
   --sidebar-width: 256px;
   --sidebar-width-min: 80px;
   --sidebar-dark-primary: #ffff;
-  --sidebar-dark-secondary: #fcfcfc;
+  --sidebar-dark-secondary: rgba(0, 0, 0, 0.25);
   --sidebar-light-primary: #303030;
   --sidebar-light-secondary: #00193a;
 }
@@ -136,10 +136,11 @@
 #side-bar hr {
   margin: 0;
   position: relative;
-  left: 16px;
+  left: 0px;
+  transform: translateX(-20px);
   width: calc(100% - 32px);
   border: none;
-  border-top: solid 1px var(--sidebar-dark-secondary);
+  border-top: solid 2px var(--sidebar-dark-secondary);
 }
 #side-bar a {
   color: inherit;
@@ -302,9 +303,10 @@ label[for=side-bar-toggle] {
   top: 124px;
 }
 
-.side-bar-button.createHub {pointer-events: none; padding-left: 20px;}
+.side-bar-button.createHub {pointer-events: none; opacity: 0.2;}
 .side-bar-button.createHub ~ #side-bar-content-highlight {
-  top: 178px;
+  /* top: 178px; */
+  top: -100%;
 }
 
 #side-bar .fas {

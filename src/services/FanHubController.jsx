@@ -73,3 +73,30 @@ export const getFanHubs = async (pageNo = 0, pageSize = 50) => {
     return [];
   }
 };
+
+export const createFanHub = async (payload) => {
+  try {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+    if (!token) {
+      console.warn("No auth token found");
+      return null;
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/fan-hub/create`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error("Create FanHub error:", err);
+    return null;
+  }
+};

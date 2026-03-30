@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import './ExplorePage.css'
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -6,6 +7,7 @@ import { getFanHubs, getTopFanHubs } from '@/services/FanHubController';
 import { GroupRounded } from '@mui/icons-material';
 
 export default function ExplorePage() {
+  const router = useRouter();
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selecetedCategory, setSelecetedCategory] = useState(null);
   const [expandCategory, setExpandCategory] = useState(false);
@@ -18,6 +20,10 @@ export default function ExplorePage() {
 
   const [fanHubs, setFanHubs] = useState([]);
   const [groupedHubs, setGroupedHubs] = useState({});
+
+  const handleVisitHub = (fanHubId) => {
+    router.push(`/hub/${fanHubId}`);
+  };
 
   useEffect(() => {
     const fetchTop = async () => {
@@ -102,9 +108,8 @@ export default function ExplorePage() {
             key={idx}
             className="explore-banner"
             style={{
-              backgroundColor: "#555",
-              backgroundImage: hub.backgroundUrl
-                ? `url(${hub.backgroundUrl})`
+              backgroundImage: hub.bannerUrl
+                ? `url(${hub.bannerUrl})`
                 : "#333",
               color: hub.themeColor || "#fff",
             }}
@@ -131,17 +136,21 @@ export default function ExplorePage() {
                 <h2>{hub.hubName?.toUpperCase()}</h2>
 
                 <div className="hub-info-member-count">
-                  <span>{topHub?.memberCount ?? "N/A"}</span> <GroupRounded />
+                  <span>{hub?.memberCount ?? "N/A"}</span> <GroupRounded />
                 </div>
               </div>
 
-              <button className="explore-visit-btn">
+              <button 
+                className="explore-visit-btn"
+                onClick={() => handleVisitHub(hub.fanHubId)}
+              >
                 Visit Fanhub <span className="ico">→</span>
               </button>
             </div>
 
             <div className="explore-banner-right">
               {[1, 2, 3, 4].map((i) => (
+                hub.backgroundUrl ?
                 <img
                   key={i}
                   src={`/assets/featured-${i}.jpg`}
@@ -150,6 +159,10 @@ export default function ExplorePage() {
                     e.target.src = "/WompWomp.png";
                   }}
                 />
+                :
+                <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
+                  <Skeleton />
+                </SkeletonTheme>
               ))}
             </div>
           </div>
@@ -229,11 +242,15 @@ export default function ExplorePage() {
                 <h2>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
 
                 <div className="hub-info-member-count">
-                  <span>{topHub?.memberCount ?? "N/A"}</span> <GroupRounded />
+                  <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
                 </div>
               </div>
 
-              <button className="explore-visit-btn">
+              <button 
+                className="explore-visit-btn"
+                onClick={() => handleVisitHub(topHub?.fanHubId)}
+                disabled={!topHub?.fanHubId}
+              >
                 Visit Fanhub <span className="ico">→</span>
               </button>
             </div>

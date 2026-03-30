@@ -241,6 +241,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   margin-left: 40px;
   font-size: 40px;
   max-height: 64px;
+  text-shadow: 2px 2px 10px #00000048;
 }
 
 .explore-banner-left .explore-visit-btn {
@@ -252,7 +253,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   transform: translate(25px, 80px);
   padding: 10px 20px;
   font-weight: 600;
-  border: 2px solid #000000;
+  border: 2px solid var(--font-color);
   text-overflow: clip;
   flex-wrap: nowrap;
   transition: all 0.3s ease;
@@ -266,6 +267,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
 
 .explore-banner-left .explore-visit-btn:hover {
   padding-right: 40px;
+  border: 2px solid var(--bg-color);
 }
 .explore-banner-left .explore-visit-btn:hover .ico {
   margin-left: 20px;
@@ -283,7 +285,8 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   opacity: 0.8;
   padding: 5px 10px;
   background-color: #333;
-  border: 1px solid #ccc;
+  border: 2px solid #ffffff;
+  color: var(--bg-color);
   border-radius: 24px;
   transform: translate(220px, 115px);
 }
@@ -298,6 +301,23 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
 .explore-banner-left .hub-info-member-count svg {
   width: 16px;
   margin-right: 5px;
+}
+
+.explore-section.top-hubs .explore-banner-left .hub-info-member-count span p {
+  animation: emphasise 3s ease infinite;
+}
+
+
+@keyframes emphasise {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .explore-banner-right {
@@ -343,7 +363,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   width: 350px;
   height: 400px;
   border-radius: 18px;
-  transform: translate(-40px, -20px);
+  transform: translate(-40px, 0);
   background: url('../../../assets/Decor/PEAKCoverLayer1.png');
   background-repeat: no-repeat;
   background-position: 0 100%;
