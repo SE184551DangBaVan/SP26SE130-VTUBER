@@ -14,11 +14,6 @@ export default function ProfilePage({ username }: { username: string }) {
   const [userId, setUserId] = useState<number | null>(null);
   const [loggedInUserId, setLoggedInUserId] = useState<number | null>(null);
 
-    const [chatOpened, setChatOpened] = useState(false);
-    const RandomButtonClicked = () =>{
-        setChatOpened(prev => !prev);
-    }
-
   useEffect(() => {
     // Get logged in user ID from session/local storage
     const storedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
@@ -134,8 +129,6 @@ export default function ProfilePage({ username }: { username: string }) {
   if (!userData) {
     return (
       <div className="user-profile">
-          <button onClick={RandomButtonClicked}>Random button</button>
-          <ChatBot isOpen={chatOpened} onClose={RandomButtonClicked}/>
         <div className="empty-message">User not found...</div>
       </div>
     );
