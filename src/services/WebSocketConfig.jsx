@@ -2,8 +2,8 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
 // Change this to your Azure backend URL when deploying
-// const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net";
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net";
+// const API_BASE_URL = "http://localhost:8080";
 
 let stompClient = null;
 
