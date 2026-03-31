@@ -100,3 +100,64 @@ export const createFanHub = async (payload) => {
     return null;
   }
 };
+
+/**
+ * Upload banner, avatar, and background images for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {File} bannerFile - Banner file
+ * @param {File} avatarFile - Avatar file
+ * @param {File[]} backgroundFiles - Array of background files (max 4)
+ * @returns {Promise<Object>} Upload result
+ */
+export const uploadImages = async (fanHubId, bannerFile, avatarFile, backgroundFiles = []) => {
+  try {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    const formData = new FormData();
+    
+    if (bannerFile) {
+      formData.append("banner", bannerFile);
+    }
+    
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+    
+    // Append each background file (max 4)
+    const backgroundsToAdd = backgroundFiles.slice(0, 4);
+    backgroundsToAdd.forEach((file) => {
+      formData.append("backgrounds", file);
+    });
+
+    const res = await axios.post(
+      `${API_BASE_URL}/fan-hub/upload-images/${fanHubId}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("uploadImages response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to upload images" };
+  } catch (err) {
+    console.error("Upload images error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

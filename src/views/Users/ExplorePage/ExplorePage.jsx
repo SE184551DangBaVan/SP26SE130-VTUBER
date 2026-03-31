@@ -150,13 +150,13 @@ export default function ExplorePage() {
 
             <div className="explore-banner-right">
               {[1, 2, 3, 4].map((i) => (
-                hub.backgroundUrl ?
+                hub.highlightImgUrls[0] ?
                 <img
                   key={i}
-                  src={`/assets/featured-${i}.jpg`}
+                  src={`${hub.highlightImgUrls[i-1]}`}
                   alt=""
                   onError={(e) => {
-                    e.target.src = "/WompWomp.png";
+                    e.target.src = "/picture-not-available-photo.jpg";
                   }}
                 />
                 :
@@ -213,8 +213,8 @@ export default function ExplorePage() {
           <div className="explore-banner"
             style={{
               backgroundColor: '#e7bc21',
-              backgroundImage: topHub?.backgroundUrl
-                ? `url(${topHub.backgroundUrl})`
+              backgroundImage: topHub?.bannerUrl
+                ? `url(${topHub.bannerUrl})`
                 : "#999",
               color: topHub?.themeColor || "#fff",
             }}
@@ -258,6 +258,7 @@ export default function ExplorePage() {
             <div className="explore-banner-right">
               {topLoading ? (
                 [1, 2, 3, 4].map((i) => (
+                  
                   <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
                     <Skeleton />
                   </SkeletonTheme>

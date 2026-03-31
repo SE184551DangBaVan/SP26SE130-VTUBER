@@ -170,7 +170,7 @@ function PostCard({ post, onClick, onHubClick }) {
             <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
             {post.fanHubName && post.fanHubId && (
               <span className='fanhub-badge' onClick={handleHubClick}>
-                r/{post.fanHubName}
+                fh/{post.fanHubName}
               </span>
             )}
           </div>

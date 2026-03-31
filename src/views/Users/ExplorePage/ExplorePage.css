@@ -178,6 +178,9 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   border-radius: 16px;
   overflow: hidden;
   color: white;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow: 0 0 10px #0d0c22;
 }
 
@@ -333,6 +336,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   max-width: 280px;
   max-height: 150px;
   object-fit: cover;
+  border-radius: 4px;
 }
 
 .explore-banner-right span {
