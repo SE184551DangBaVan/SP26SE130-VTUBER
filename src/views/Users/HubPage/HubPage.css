@@ -2,8 +2,8 @@
   width: 100%;
   padding: 0;
   margin-top: 50px;
-  margin-left: 255px;
-  transition: margin 0.2s ease;
+  padding-left: 252px;
+  transition: all 0.2s ease;
   background-color: #f5f5f5;
 }
 
