@@ -94,11 +94,6 @@
   user-select: none;
   border: 2px solid #202020;
   border-left: none;
-  border-radius: 0 12px 12px 0;
-}
-
-#side-bar:has(#side-bar-toggle:checked) {
-  min-height: calc(100% - 100px);
 }
 
 /* .rebound-animation {

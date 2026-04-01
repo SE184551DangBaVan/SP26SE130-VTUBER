@@ -91,3 +91,45 @@ export const setModerator = async (fanHubId, memberIds) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Join a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Result of the join operation
+ */
+export const joinFanHub = async (fanHubId) => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/fan-hub-member/join/${fanHubId}`,
+      {},
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    console.log("joinFanHub response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to join fan hub" };
+  } catch (err) {
+    console.error("Join fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

@@ -203,3 +203,41 @@ body {
 .correct {
   color: #00c05a;
 }
+
+.noir-tv-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+
+  /* angled stripe pattern */
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(20, 20, 20, 0.15) 0px,
+    rgba(20, 20, 20, 0.15) 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 6px
+  );
+
+}
+
+.noir-tv-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url("https://www.transparenttextures.com/patterns/asfalt-light.png");
+  opacity: 0.15;
+
+  mix-blend-mode: overlay;
+}
+
+@keyframes noirFlicker {
+  0% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+  100% { opacity: 0.15; }
+}
+
+.noir-tv-overlay {
+  animation: noirFlicker 2.5s infinite ease-in-out;
+}

@@ -58,18 +58,29 @@ export default function CreateHubPage() {
       setUserId(storedUserId);
       setUsername(storedUsername);
 
-      const userData = await getUserById(storedUserId);
+      try {
+        const userData = await getUserById(storedUserId);
 
-      if (userData) {
-        setUserRole(userData.role);
+        if (userData) {
+          // Always update the stored role with the latest from API
+          setUserRole(userData.role);
+          
+          // Update stored role in session/local storage
+          if (userData.role) {
+            sessionStorage.setItem('userRole', userData.role);
+            localStorage.setItem('userRole', userData.role);
+          }
 
-        if (userData.role === 'VTUBER') {
-          setChecking(false);
+          if (userData.role === 'VTUBER') {
+            setChecking(false);
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+        setChecking(false);
       }
-
-      setLoading(false);
-      setChecking(false);
     };
 
     fetchUserId();
@@ -176,12 +187,14 @@ export default function CreateHubPage() {
     }
   };
 
-  // Handle explore images change
+  // Handle explore images change (max 4)
   const handleExploreImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      setExploreImages(files);
-      const previews = await Promise.all(files.map(file => fileToBase64(file)));
+      // Limit to max 4 images
+      const limitedFiles = files.slice(0, 4);
+      setExploreImages(limitedFiles);
+      const previews = await Promise.all(limitedFiles.map(file => fileToBase64(file)));
       setExplorePreviews(previews);
     }
   };
@@ -223,19 +236,18 @@ export default function CreateHubPage() {
 
       const fanHubId = createRes.data.fanHubId;
 
-      // Step 2: Upload images if provided
+      // Step 2: Upload images if provided (max 4 backgrounds)
       if (bannerFile || avatarFile || exploreImages.length > 0) {
         updateToast(toastId, "info", "Uploading images...");
-        
-        const bannerBase64 = bannerFile ? await fileToBase64(bannerFile) : "";
-        const avatarBase64 = avatarFile ? await fileToBase64(avatarFile) : "";
-        const exploreBase64s = await Promise.all(exploreImages.map(img => fileToBase64(img)));
+
+        // Limit backgrounds to max 4
+        const backgroundsToUpload = exploreImages.slice(0, 4);
 
         const uploadRes = await uploadImages(
           fanHubId,
-          bannerBase64,
-          avatarBase64,
-          exploreBase64s
+          bannerFile,
+          avatarFile,
+          backgroundsToUpload
         );
 
         if (uploadRes?.success) {
@@ -443,7 +455,7 @@ export default function CreateHubPage() {
 
                   <div className='form-field'>
                     <label>Explore Banner Images</label>
-                    <span className='field-hint'>Images shown in the explore page (up to 4)</span>
+                    <span className='field-hint'>Background images shown in the explore page (max 4)</span>
                     <div className='image-upload-wrapper'>
                       <input
                         type='file'

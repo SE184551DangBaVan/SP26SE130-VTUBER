@@ -102,14 +102,14 @@ export const createFanHub = async (payload) => {
 };
 
 /**
- * Upload banner, avatar, and explore banner images for a fan hub
+ * Upload banner, avatar, and background images for a fan hub
  * @param {number} fanHubId - Fan Hub ID
- * @param {string} banner - Base64 encoded banner image
- * @param {string} avatar - Base64 encoded avatar image
- * @param {string[]} backgrounds - Array of base64 encoded explore banner images
+ * @param {File} bannerFile - Banner file
+ * @param {File} avatarFile - Avatar file
+ * @param {File[]} backgroundFiles - Array of background files (max 4)
  * @returns {Promise<Object>} Upload result
  */
-export const uploadImages = async (fanHubId, banner, avatar, backgrounds = []) => {
+export const uploadImages = async (fanHubId, bannerFile, avatarFile, backgroundFiles = []) => {
   try {
     const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
@@ -118,19 +118,29 @@ export const uploadImages = async (fanHubId, banner, avatar, backgrounds = []) =
       return { success: false, message: "No auth token" };
     }
 
+    const formData = new FormData();
+    
+    if (bannerFile) {
+      formData.append("banner", bannerFile);
+    }
+    
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+    
+    // Append each background file (max 4)
+    const backgroundsToAdd = backgroundFiles.slice(0, 4);
+    backgroundsToAdd.forEach((file) => {
+      formData.append("backgrounds", file);
+    });
+
     const res = await axios.post(
       `${API_BASE_URL}/fan-hub/upload-images/${fanHubId}`,
+      formData,
       {
-        banner,
-        avatar
-      },
-      {
-        params: {
-          backgrounds
-        },
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
       }
     );

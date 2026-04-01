@@ -5,9 +5,11 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers, setModerator } from '@/services/MemberController';
+import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
+import { uploadImages } from '@/services/FanHubController';
+import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './HubPage.css';
-import { GroupRounded, ArrowUpward, ArrowDownward, CommentRounded } from '@mui/icons-material';
+import { GroupRounded, ArrowUpward, ArrowDownward, CommentRounded, EditRounded } from '@mui/icons-material';
 
 export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
@@ -26,6 +28,20 @@ export default function HubPage({ ownedHub }) {
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [promoting, setPromoting] = useState(false);
+
+  // State for join fan hub
+  const [isMember, setIsMember] = useState(false);
+  const [joining, setJoining] = useState(false);
+
+  // State for edit images modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [bannerFile, setBannerFile] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [backgroundFiles, setBackgroundFiles] = useState([]);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [backgroundPreviews, setBackgroundPreviews] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   // Get current user ID from storage
   const currentUserId = parseInt(
@@ -104,6 +120,8 @@ export default function HubPage({ ownedHub }) {
         setMembers(membersData);
 
         const memberDetailsMap = {};
+        let currentUserIsMember = false;
+
         await Promise.all(
           membersData.map(async (member) => {
             try {
@@ -114,6 +132,11 @@ export default function HubPage({ ownedHub }) {
                   ...userData,
                   memberData: member
                 };
+
+                // Check if current user is a member
+                if (member.userId === currentUserId || member.username === currentUsername) {
+                  currentUserIsMember = true;
+                }
               }
             } catch (error) {
               console.error(`Error fetching user ${member.userId}:`, error);
@@ -121,6 +144,7 @@ export default function HubPage({ ownedHub }) {
           })
         );
         setMemberDetails(memberDetailsMap);
+        setIsMember(currentUserIsMember);
       } catch (error) {
         console.error('Error fetching members:', error);
       } finally {
@@ -129,7 +153,7 @@ export default function HubPage({ ownedHub }) {
     };
 
     fetchMembers();
-  }, [activeFanHubId, canViewMembers]);
+  }, [activeFanHubId, currentUserId, currentUsername]);
 
   // Handle promote member to moderator
   const handlePromoteClick = (member) => {
@@ -143,11 +167,11 @@ export default function HubPage({ ownedHub }) {
     setPromoting(true);
     try {
       const result = await setModerator(activeFanHubId, [selectedMember.id]);
-      
+
       if (result?.success) {
         // Update the member's role in the local state
-        setMembers(prev => prev.map(m => 
-          m.id === selectedMember.id 
+        setMembers(prev => prev.map(m =>
+          m.id === selectedMember.id
             ? { ...m, roleInHub: 'MODERATOR' }
             : m
         ));
@@ -167,6 +191,152 @@ export default function HubPage({ ownedHub }) {
   const handlePromoteCancel = () => {
     setShowPromoteModal(false);
     setSelectedMember(null);
+  };
+
+  // Handle join fan hub
+  const handleJoinFanHub = async () => {
+    if (!activeFanHubId) return;
+
+    setJoining(true);
+    const toastId = showLoading('Joining FanHub...');
+
+    try {
+      const result = await joinFanHub(activeFanHubId);
+
+      if (result?.success) {
+        updateToast(toastId, 'success', 'Joined FanHub successfully!');
+        setIsMember(true);
+
+        // Refresh members list
+        const membersData = await getHubMembers(activeFanHubId, 0, 50, 'joinedAt');
+        setMembers(membersData);
+      } else {
+        updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
+      }
+    } catch (error) {
+      console.error('Join error:', error);
+      updateToast(toastId, 'error', 'Network error. Please try again.');
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  // Convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Handle banner file change
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBannerFile(file);
+      const base64 = await fileToBase64(file);
+      setBannerPreview(base64);
+    }
+  };
+
+  // Handle avatar file change
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      const base64 = await fileToBase64(file);
+      setAvatarPreview(base64);
+    }
+  };
+
+  // Handle background files change (max 4)
+  const handleBackgroundChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // Limit to max 4 images
+      const limitedFiles = files.slice(0, 4);
+      setBackgroundFiles(limitedFiles);
+      const previews = await Promise.all(limitedFiles.map(file => fileToBase64(file)));
+      setBackgroundPreviews(previews);
+    }
+  };
+
+  // Remove background image
+  const removeBackgroundImage = (index) => {
+    setBackgroundFiles(prev => prev.filter((_, i) => i !== index));
+    setBackgroundPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle edit button click
+  const handleEditClick = () => {
+    setBannerFile(null);
+    setAvatarFile(null);
+    setBackgroundFiles([]);
+    setBannerPreview(null);
+    setAvatarPreview(null);
+    setBackgroundPreviews([]);
+    setShowEditModal(true);
+  };
+
+  // Handle edit modal close
+  const handleEditClose = () => {
+    setShowEditModal(false);
+    setBannerFile(null);
+    setAvatarFile(null);
+    setBackgroundFiles([]);
+    setBannerPreview(null);
+    setAvatarPreview(null);
+    setBackgroundPreviews([]);
+  };
+
+  // Handle save image changes
+  const handleSaveImages = async () => {
+    if (!bannerFile && !avatarFile && backgroundFiles.length === 0) {
+      showError('Please select at least one image to upload');
+      return;
+    }
+
+    setUploading(true);
+    const toastId = showLoading('Uploading images...');
+
+    try {
+      // Limit backgrounds to max 4
+      const backgroundsToUpload = backgroundFiles.slice(0, 4);
+
+      const uploadRes = await uploadImages(
+        activeFanHubId,
+        bannerFile,
+        avatarFile,
+        backgroundsToUpload
+      );
+
+      if (uploadRes?.success) {
+        updateToast(toastId, 'success', 'Images updated successfully!');
+
+        // Refresh hub data to show new images
+        const { getFanHubs } = await import('@/services/FanHubController');
+        const hubs = await getFanHubs();
+        const updatedHub = hubs.find(h =>
+          h.fanHubId === activeFanHubId ||
+          h.ownerUsername === hubData.ownerUsername
+        );
+
+        if (updatedHub) {
+          setHubData(updatedHub);
+        }
+
+        handleEditClose();
+      } else {
+        updateToast(toastId, 'error', uploadRes?.message || 'Failed to upload images');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      updateToast(toastId, 'error', 'Network error. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Filter posts by type (IMAGE, VIDEO for now)
@@ -199,9 +369,8 @@ export default function HubPage({ ownedHub }) {
       <div
         className='hub-banner'
         style={{
-          backgroundImage: hubData.backgroundUrl ? `url(${hubData.backgroundUrl})` : '#75a4c8',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundImage: hubData.bannerUrl ? `url(${hubData.bannerUrl})` : '#75a4c8',
+          backgroundSize: 'cover'
         }}
       >
         <div className='hub-banner-overlay'>
@@ -223,6 +392,11 @@ export default function HubPage({ ownedHub }) {
                 <span className='owner-username'>{hubData.ownerDisplayName || hubData.ownerUsername}</span>
               </div>
             </div>
+            {isOwner && (
+              <button className='edit-banner-btn' onClick={handleEditClick} title='Edit banner and avatar'>
+                <EditRounded fontSize='small' />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -320,8 +494,28 @@ export default function HubPage({ ownedHub }) {
               <span>Members ({canViewMembers ? members.length : 'N/A'})</span>
             </div>
             <div className='hub-card-body'>
-              {!canViewMembers ? (
-                <p className='no-members-text'>Only the hub owner can view the member list.</p>
+              {!canViewMembers && !isMember ? (
+                <div className='join-fanhub-section'>
+                  <p className='join-description'>Join this FanHub to become a member and access exclusive content!</p>
+                  <button
+                    className='join-fanhub-btn'
+                    onClick={handleJoinFanHub}
+                    disabled={joining}
+                    style={{background: hubData.themeColor}}
+                  >
+                    {joining ? (
+                      <>
+                        <span className='spinner' />
+                        Joining...
+                      </>
+                    ) : (
+                      <>
+                        <GroupRounded fontSize='small' />
+                        Join FanHub
+                      </>
+                    )}
+                  </button>
+                </div>
               ) : membersLoading ? (
                 <div className='members-loading'>Loading members...</div>
               ) : members.length === 0 ? (
@@ -347,7 +541,7 @@ export default function HubPage({ ownedHub }) {
                           <span className='member-role'>{member.roleInHub}</span>
                         </div>
                         {isOwner && !isAlreadyModerator && (
-                          <button 
+                          <button
                             className='promote-btn'
                             onClick={() => handlePromoteClick(member)}
                             style={{background: `${hubData.themeColor}`}}
@@ -384,15 +578,15 @@ export default function HubPage({ ownedHub }) {
             </div>
 
             <div className='modal-footer'>
-              <button 
-                className='cancel-btn' 
+              <button
+                className='cancel-btn'
                 onClick={handlePromoteCancel}
                 disabled={promoting}
               >
                 Cancel
               </button>
-              <button 
-                className='confirm-btn' 
+              <button
+                className='confirm-btn'
                 onClick={handlePromoteConfirm}
                 disabled={promoting}
               >
@@ -403,6 +597,147 @@ export default function HubPage({ ownedHub }) {
                   </>
                 ) : (
                   'Confirm'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Images Modal */}
+      {showEditModal && (
+        <div className='modal-overlay' onClick={handleEditClose}>
+          <div className='modal-content edit-images-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Edit Banner & Avatar</h2>
+              <button className='modal-close' onClick={handleEditClose}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <p className='modal-description'>
+                Upload new images to update your FanHub appearance.
+              </p>
+
+              <div className='edit-images-form'>
+                <div className='image-upload-group'>
+                  <label htmlFor='edit-banner-upload'>Banner Image</label>
+                  <div className='image-upload-wrapper'>
+                    <input
+                      type='file'
+                      id='edit-banner-upload'
+                      accept='image/*'
+                      onChange={handleBannerChange}
+                      className='image-upload-input'
+                    />
+                    <label htmlFor='edit-banner-upload' className='image-upload-btn'>
+                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                        <circle cx='8.5' cy='8.5' r='1.5' />
+                        <polyline points='21 15 16 10 5 21' />
+                      </svg>
+                      {bannerFile ? 'Change Banner' : 'Upload Banner'}
+                    </label>
+                    {bannerFile && (
+                      <span className='image-file-name'>{bannerFile.name}</span>
+                    )}
+                  </div>
+                  {bannerPreview && (
+                    <div className='image-preview banner-preview'>
+                      <img src={bannerPreview} alt='Banner preview' />
+                    </div>
+                  )}
+                </div>
+
+                <div className='image-upload-group'>
+                  <label htmlFor='edit-avatar-upload'>Avatar Image</label>
+                  <div className='image-upload-wrapper'>
+                    <input
+                      type='file'
+                      id='edit-avatar-upload'
+                      accept='image/*'
+                      onChange={handleAvatarChange}
+                      className='image-upload-input'
+                    />
+                    <label htmlFor='edit-avatar-upload' className='image-upload-btn'>
+                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                        <circle cx='8.5' cy='8.5' r='1.5' />
+                        <polyline points='21 15 16 10 5 21' />
+                      </svg>
+                      {avatarFile ? 'Change Avatar' : 'Upload Avatar'}
+                    </label>
+                    {avatarFile && (
+                      <span className='image-file-name'>{avatarFile.name}</span>
+                    )}
+                  </div>
+                  {avatarPreview && (
+                    <div className='image-preview avatar-preview'>
+                      <img src={avatarPreview} alt='Avatar preview' />
+                    </div>
+                  )}
+                </div>
+
+                <div className='image-upload-group'>
+                  <label htmlFor='edit-background-upload'>Background Images</label>
+                  <span className='field-hint'>Add background images (max 4)</span>
+                  <div className='image-upload-wrapper'>
+                    <input
+                      type='file'
+                      id='edit-background-upload'
+                      accept='image/*'
+                      multiple
+                      onChange={handleBackgroundChange}
+                      className='image-upload-input'
+                    />
+                    <label htmlFor='edit-background-upload' className='image-upload-btn'>
+                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                        <circle cx='8.5' cy='8.5' r='1.5' />
+                        <polyline points='21 15 16 10 5 21' />
+                      </svg>
+                      {backgroundFiles.length > 0 ? 'Change Images' : 'Upload Backgrounds'}
+                    </label>
+                  </div>
+                  {backgroundPreviews.length > 0 && (
+                    <div className='explore-preview-grid'>
+                      {backgroundPreviews.map((preview, index) => (
+                        <div key={index} className='explore-preview-item'>
+                          <img src={preview} alt={`Background ${index + 1}`} />
+                          <button
+                            type='button'
+                            className='remove-image-btn'
+                            onClick={() => removeBackgroundImage(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className='modal-footer'>
+              <button
+                className='cancel-btn'
+                onClick={handleEditClose}
+                disabled={uploading}
+              >
+                Cancel
+              </button>
+              <button
+                className='confirm-btn'
+                onClick={handleSaveImages}
+                disabled={uploading || (!bannerFile && !avatarFile && backgroundFiles.length === 0)}
+              >
+                {uploading ? (
+                  <>
+                    <span className='spinner' />
+                    Uploading...
+                  </>
+                ) : (
+                  'Save Changes'
                 )}
               </button>
             </div>

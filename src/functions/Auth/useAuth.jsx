@@ -182,7 +182,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ userAuth, loading, login, /*googleLogin,*/ logout }}>
+    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth }}>
       {children}
     </AuthContext.Provider>
   );
@@ -200,7 +200,7 @@ export const adminLogin = async (username, password) => {
         sessionStorage.setItem("username", response.data.data.username);
         sessionStorage.setItem("token", response.data.data.token);
         sessionStorage.setItem("refreshToken", response.data.data.refreshToken);
-        // Admin users always have ADMIN role
+        
         sessionStorage.setItem("role", "ADMIN");
 
         window.dispatchEvent(new Event("storage"));
