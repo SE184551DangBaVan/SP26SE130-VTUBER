@@ -3,7 +3,7 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById, registerVtuberApplication } from '@/services/UserController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './CreateHubPage.css';
-import { getFanHubs, createFanHub } from '@/services/FanHubController';
+import { getFanHubs, createFanHub, uploadImages } from '@/services/FanHubController';
 import HubPage from '@/views/Users/HubPage/HubPage';
 
 export default function CreateHubPage() {
@@ -27,13 +27,19 @@ export default function CreateHubPage() {
   const [hubName, setHubName] = useState("");
   const [subdomain, setSubdomain] = useState("");
   const [description, setDescription] = useState("");
-  const [themeColor, setThemeColor] = useState("#000");
+  const [themeColor, setThemeColor] = useState("#555");
   const [categories, setCategories] = useState([]);
   const [isPrivate, setIsPrivate] = useState(false);
   const [requiresApproval, setRequiresApproval] = useState(false);
 
+  // Image upload state
+  const [bannerFile, setBannerFile] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [exploreImages, setExploreImages] = useState([]);
+  
   const [bannerPreview, setBannerPreview] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [explorePreviews, setExplorePreviews] = useState([]);
 
   const [creating, setCreating] = useState(false);
 
@@ -52,18 +58,29 @@ export default function CreateHubPage() {
       setUserId(storedUserId);
       setUsername(storedUsername);
 
-      const userData = await getUserById(storedUserId);
+      try {
+        const userData = await getUserById(storedUserId);
 
-      if (userData) {
-        setUserRole(userData.role);
+        if (userData) {
+          // Always update the stored role with the latest from API
+          setUserRole(userData.role);
+          
+          // Update stored role in session/local storage
+          if (userData.role) {
+            sessionStorage.setItem('userRole', userData.role);
+            localStorage.setItem('userRole', userData.role);
+          }
 
-        if (userData.role === 'VTUBER') {
-          setChecking(false);
+          if (userData.role === 'VTUBER') {
+            setChecking(false);
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+        setChecking(false);
       }
-
-      setLoading(false);
-      setChecking(false);
     };
 
     fetchUserId();
@@ -140,34 +157,120 @@ export default function CreateHubPage() {
     );
   };
 
+  // Convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Handle banner file change
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBannerFile(file);
+      const base64 = await fileToBase64(file);
+      setBannerPreview(base64);
+    }
+  };
+
+  // Handle avatar file change
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      const base64 = await fileToBase64(file);
+      setAvatarPreview(base64);
+    }
+  };
+
+  // Handle explore images change (max 4)
+  const handleExploreImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // Limit to max 4 images
+      const limitedFiles = files.slice(0, 4);
+      setExploreImages(limitedFiles);
+      const previews = await Promise.all(limitedFiles.map(file => fileToBase64(file)));
+      setExplorePreviews(previews);
+    }
+  };
+
+  // Remove explore image
+  const removeExploreImage = (index) => {
+    setExploreImages(prev => prev.filter((_, i) => i !== index));
+    setExplorePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleCreateHub = async () => {
-  if (!hubName || !subdomain) {
-    showError("Hub name and subdomain required");
-    return;
-  }
-
-  setCreating(true);
-    const toastId = showLoading("Creating FanHub...");
-
-    const payload = {
-      hubName,
-      subdomain,
-      description,
-      themeColor,
-      category: categories,
-      isPrivate,
-      requiresApproval,
-    };
-
-    const res = await createFanHub(payload);
-
-    if (res?.success) {
-      updateToast(toastId, "success", "FanHub created!");
-    } else {
-      updateToast(toastId, "error", "Failed to create FanHub");
+    if (!hubName || !subdomain) {
+      showError("Hub name and subdomain required");
+      return;
     }
 
-    setCreating(false);
+    setCreating(true);
+    const toastId = showLoading("Creating FanHub...");
+
+    try {
+      // Step 1: Create the fan hub
+      const payload = {
+        hubName,
+        subdomain,
+        description,
+        themeColor,
+        category: categories,
+        isPrivate,
+        requiresApproval,
+      };
+
+      const createRes = await createFanHub(payload);
+
+      if (!createRes?.success || !createRes?.data?.fanHubId) {
+        updateToast(toastId, "error", createRes?.message || "Failed to create FanHub");
+        setCreating(false);
+        return;
+      }
+
+      const fanHubId = createRes.data.fanHubId;
+
+      // Step 2: Upload images if provided (max 4 backgrounds)
+      if (bannerFile || avatarFile || exploreImages.length > 0) {
+        updateToast(toastId, "info", "Uploading images...");
+
+        // Limit backgrounds to max 4
+        const backgroundsToUpload = exploreImages.slice(0, 4);
+
+        const uploadRes = await uploadImages(
+          fanHubId,
+          bannerFile,
+          avatarFile,
+          backgroundsToUpload
+        );
+
+        if (uploadRes?.success) {
+          updateToast(toastId, "success", "FanHub created and images uploaded!");
+        } else {
+          updateToast(toastId, "warning", "FanHub created but image upload failed");
+        }
+      } else {
+        updateToast(toastId, "success", "FanHub created!");
+      }
+
+      // Refresh and check for owned hub
+      const hubs = await getFanHubs();
+      const userOwnedHub = hubs.find(hub => hub.ownerUsername === username);
+      if (userOwnedHub) {
+        setOwnedHub(userOwnedHub);
+      }
+    } catch (error) {
+      console.error('Create hub error:', error);
+      updateToast(toastId, "error", "Network error. Please try again.");
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (loading) {
@@ -272,12 +375,12 @@ export default function CreateHubPage() {
                 {/* Appearance Section */}
                 <div className='settings-section'>
                   <h3 className='section-title'>Appearance</h3>
-                  
+
                   <div className='form-field'>
                     <label>Theme Color</label>
                     <div className='color-picker-wrapper'>
-                      <div 
-                        className='color-preview' 
+                      <div
+                        className='color-preview'
                         style={{ backgroundColor: themeColor }}
                       />
                       <input
@@ -288,6 +391,105 @@ export default function CreateHubPage() {
                       />
                       <span className='color-value'>{themeColor.toUpperCase()}</span>
                     </div>
+                    <span className='field-hint'>Used for accent colors like buttons and avatar frame</span>
+                  </div>
+
+                  {/* Image Upload Section */}
+                  <div className='form-field'>
+                    <label>Banner Image</label>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='banner-upload'
+                        accept='image/*'
+                        onChange={handleBannerChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='banner-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {bannerFile ? 'Change Banner' : 'Upload Banner'}
+                      </label>
+                      {bannerFile && (
+                        <span className='image-file-name'>{bannerFile.name}</span>
+                      )}
+                    </div>
+                    {bannerPreview && (
+                      <div className='image-preview banner-preview'>
+                        <img src={bannerPreview} alt='Banner preview' />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='form-field'>
+                    <label>Avatar Image</label>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='avatar-upload'
+                        accept='image/*'
+                        onChange={handleAvatarChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='avatar-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {avatarFile ? 'Change Avatar' : 'Upload Avatar'}
+                      </label>
+                      {avatarFile && (
+                        <span className='image-file-name'>{avatarFile.name}</span>
+                      )}
+                    </div>
+                    {avatarPreview && (
+                      <div className='image-preview avatar-preview'>
+                        <img src={avatarPreview} alt='Avatar preview' />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='form-field'>
+                    <label>Explore Banner Images</label>
+                    <span className='field-hint'>Background images shown in the explore page (max 4)</span>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='explore-upload'
+                        accept='image/*'
+                        multiple
+                        onChange={handleExploreImagesChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='explore-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {exploreImages.length > 0 ? 'Change Images' : 'Upload Explore Images'}
+                      </label>
+                    </div>
+                    {explorePreviews.length > 0 && (
+                      <div className='explore-preview-grid'>
+                        {explorePreviews.map((preview, index) => (
+                          <div key={index} className='explore-preview-item'>
+                            <img src={preview} alt={`Explore ${index + 1}`} />
+                            <button
+                              type='button'
+                              className='remove-image-btn'
+                              onClick={() => removeExploreImage(index)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className='form-field'>
@@ -312,7 +514,6 @@ export default function CreateHubPage() {
                   </div>
                 </div>
 
-                {/* Privacy Section */}
                 <div className='settings-section'>
                   <h3 className='section-title'>Privacy & Access</h3>
                   
@@ -349,7 +550,6 @@ export default function CreateHubPage() {
                   </div>
                 </div>
 
-                {/* Action Button */}
                 <button 
                   className='create-btn' 
                   onClick={handleCreateHub} 
@@ -398,20 +598,28 @@ export default function CreateHubPage() {
                   </div>
 
                   {/* Preview Banner */}
-                  <div 
+                  <div
                     className="preview-banner"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%)`,
+                    style={{
+                      backgroundImage: bannerPreview ? `url(${bannerPreview})` : `linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
                     }}
                   >
                     <div className='banner-content'>
-                      <div className='preview-avatar-placeholder'>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
+                      <div className='preview-avatar-wrapper' style={{ borderColor: themeColor }}>
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt='Avatar preview' className='preview-avatar-image' />
+                        ) : (
+                          <div className='preview-avatar-placeholder'>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
-                      <div className='preview-info'>
+                      <div className='preview-info' style={{background: themeColor}}>
                         <h2>{hubName || "Your Hub Name"}</h2>
                         <p className='preview-subdomain'>@{subdomain || 'yourhub'}</p>
                         <p className='preview-description'>{description || "Your community description will appear here..."}</p>
@@ -447,9 +655,6 @@ export default function CreateHubPage() {
                           <path d="M12 19V5M5 12l7-7 7 7" />
                         </svg>
                         <span>0</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className='vote-icon down'>
-                          <path d="M12 5v14M5 12l7 7 7-7" />
-                        </svg>
                       </div>
                       <div className='placeholder-post-content'>
                         <div className='placeholder-post-header'>

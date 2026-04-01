@@ -13,15 +13,13 @@
 }
 
 .header.away {
-  top: -10px;
-  opacity: 0.2;
+  top: -5px;
   transition: top 1s ease, opacity 0.8s ease;
 }
 
 .header:hover {
-  opacity: 1 !important;
   top: 0;
-  transition: top 0.3s ease, opacity 0.4s ease;
+  transition: top 0.3s ease;
 }
 
 .navbar {
