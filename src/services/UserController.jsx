@@ -45,6 +45,45 @@ export const getUserById = async (userId) => {
     return null;
   }
 };
+/**
+ * Get user information by ID
+ * @param {number} userId - User ID
+ * @returns {Promise<Object|null>} User data or null
+ */
+export const setUserOshi = async (userName) => {
+    try {
+        const token = getAuthToken();
+
+        if (!token) {
+            console.warn("No auth token found");
+            return null;
+        }
+
+        const res = await axios.post(
+            `${API_BASE_URL}/user/${userName}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+
+
+        if (res.data?.success && res.data?.data) {
+            return res.data.data;
+        }
+
+        return null;
+    } catch (err) {
+        console.error("Fetch user by ID error:", {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+        });
+        return null;
+    }
+};
+
 
 /**
  * Get user profile by username

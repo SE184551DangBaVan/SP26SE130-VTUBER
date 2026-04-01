@@ -38,10 +38,6 @@ export const connectWebSocket = () => {
         connectHeaders: {
           Authorization: `Bearer ${token}`
         },
-        debug: (str) => {
-          // Enable debugging to see what's happening
-          console.log('STOMP Debug: ', str);
-        },
         reconnectDelay: 5000,
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
