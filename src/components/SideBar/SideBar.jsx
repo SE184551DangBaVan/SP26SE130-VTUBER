@@ -6,16 +6,14 @@ import ExploreIco from '../../assets/UI-Elements/search.svg'
 import PostsIco from '../../assets/UI-Elements/post.svg'
 import GachaIco from '../../assets/UI-Elements/gacha.svg'
 import './SideBar.css'
-import ScissorLift from '../../components/ExtensionJoint/ScissorLift'
 import { useEffect, useState } from "react"
-import axios from 'axios';
 import { useRouter, usePathname } from 'next/navigation'
 import { useSideBar } from '@/contexts/SideBarContext'
 
 export default function SideBar() {
-  const { sideBarSelected, setSideBarSelected } = useSideBar();
+  const { sideBarSelected, setSideBarSelected, sideBarRetractor, setSideBarRetractor } = useSideBar();
   const [retract, setRetract] = useState(1);
-  const [sideBarRetractor, setSideBarRetractor] = useState(true);
+
   const router = useRouter();
   const pathname = usePathname();
 

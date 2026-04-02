@@ -19,7 +19,6 @@ export const getChatMessages = async () => {
       console.warn("No auth token found");
       return { success: false, message: "No auth token" };
     }
-    else console.log("Found token :D");
 
     const res = await axios.get(
       `${API_BASE_URL}/message`,
@@ -29,8 +28,6 @@ export const getChatMessages = async () => {
         }
       }
     );
-
-    console.log("getChatMessages response:", res.data);
 
     if (res.data?.success && res.data?.data) {
       return res.data;
@@ -73,8 +70,6 @@ export const sendChatMessage = async (content) => {
         }
       }
     );
-
-    console.log("sendChatMessage response:", res.data);
 
     return res.data;
   } catch (err) {

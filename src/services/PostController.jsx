@@ -136,3 +136,46 @@ export const getPostById = async (postId) => {
     return null;
   }
 };
+
+/**
+ * Get posts by user ID (for viewing user's own posts)
+ * @param {number} userId - User ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort by field (createdAt, etc.)
+ * @returns {Promise<Array>} Posts data
+ */
+export const getUserPosts = async (userId, pageNo = 0, pageSize = 50, sortBy = "createdAt") => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return [];
+    }
+
+    const res = await axios.get(
+      `${API_BASE_URL}/posts/user?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("getUserPosts response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch user posts error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};

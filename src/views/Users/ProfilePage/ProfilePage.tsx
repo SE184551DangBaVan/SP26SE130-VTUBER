@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import "./ProfilePage.css";
 import { getUserByUsername, selectDisplayBadges } from "@/services/UserController";
 import { useAuth } from "@/functions/Auth/useAuth";
-import ChatBot from "@/components/ChatBot/ChatBot";
+import ExtraOptionIcon from "../../../../public/extra-options-icon.png"
+
+// i accidentally made it a .tsx file buuut its working so its whatever ig
 
 export default function ProfilePage({ username }: { username: string }) {
   const auth = useAuth();
@@ -13,6 +15,7 @@ export default function ProfilePage({ username }: { username: string }) {
   const [selectedBadges, setSelectedBadges] = useState<number[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [loggedInUserId, setLoggedInUserId] = useState<number | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Get logged in user ID from session/local storage
@@ -23,10 +26,28 @@ export default function ProfilePage({ username }: { username: string }) {
   }, []);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.icon-holder')) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
     async function fetchUserProfile() {
       try {
         const data = await getUserByUsername(username);
         if (data) {
+            console.log(data);
           setUserId(data.userId);
           setUserData({
             displayName: data.displayName || data.username,
@@ -49,6 +70,7 @@ export default function ProfilePage({ username }: { username: string }) {
               : "Unknown",
             allBadges: data.allBadges || [],
             hubs: data.fanHubsJoined || [],
+            role: data.role,
           });
           // Initialize selected badges from displayBadges
           if (data.displayBadges && data.displayBadges.length > 0) {
@@ -118,6 +140,16 @@ export default function ProfilePage({ username }: { username: string }) {
     });
   };
 
+  const handleSetAsOshi = () => {
+    console.log("oshi set!");
+    setIsDropdownOpen(false);
+  };
+
+  const handleReportUser = () => {
+    console.log("report button clicked");
+    setIsDropdownOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="user-profile">
@@ -144,7 +176,27 @@ export default function ProfilePage({ username }: { username: string }) {
           <img src={userData.avatar} alt="User Avatar" className="avatar-image" />
         </div>
         <div className="user-details">
-          <h1 className="display-name">{userData.displayName}</h1>
+          <span>
+              <h1 className="display-name">{userData.displayName}</h1>
+              <span className="icon-holder">
+                  <img 
+                    className={`icon ${isDropdownOpen ? 'icon-rotated' : ''}`} 
+                    src={ExtraOptionIcon.src} 
+                    alt="User Extra" 
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  />
+                  <div className={`extra-drop-down ${isDropdownOpen ? 'show' : ''}`}>
+                      {userData.role === "VTUBER" && loggedInUserId !== null && userId !== null && loggedInUserId !== userId && (
+                          <div className="dropdown-item" onClick={handleSetAsOshi}>
+                              Set as Oshi
+                          </div>
+                      )}
+                      <div className="dropdown-item report" onClick={handleReportUser}>
+                          Report User
+                      </div>
+                  </div>
+              </span>
+          </span>
           <p className="user-handle">@{userData.username}</p>
           <div className="user-badges-small">
             {userData.displayBadges && userData.displayBadges.length > 0 ? (

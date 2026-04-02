@@ -5,6 +5,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface SideBarContextType {
   sideBarSelected: string;
   setSideBarSelected: (selected: string) => void;
+  sideBarRetractor: boolean;
+  setSideBarRetractor: (retractor: boolean) => void;
 }
 
 const SideBarContext = createContext<SideBarContextType | undefined>(undefined);
@@ -12,6 +14,7 @@ const SideBarContext = createContext<SideBarContextType | undefined>(undefined);
 export function SideBarProvider({ children }: { children: ReactNode }) {
   const [sideBarSelected, setSideBarSelectedState] = useState("home");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [sideBarRetractor, setSideBarRetractor] = useState(true);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -33,7 +36,7 @@ export function SideBarProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SideBarContext.Provider value={{ sideBarSelected, setSideBarSelected }}>
+    <SideBarContext.Provider value={{ sideBarSelected, setSideBarSelected, sideBarRetractor, setSideBarRetractor }}>
       {children}
     </SideBarContext.Provider>
   );
