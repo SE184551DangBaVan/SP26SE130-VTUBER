@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore']
 export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSessionExpired, setShowSessionExpired] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
             const response = await checkToken();
             if(response.data.expired || !response.data.valid){
                 console.warn("token is expired or is not valid!");
-                logout();
+                setShowSessionExpired(true);
             }
             else{
                 const authData = {
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }) => {
                 setUserAuth(authData);
             }
         } catch (error) {
-            logout();
+            setShowSessionExpired(true);
             console.error(error);
         }
       setLoading(false);
@@ -197,13 +198,33 @@ export const AuthProvider = ({ children }) => {
     window.dispatchEvent(new Event("storage"));
   };
 
+  const handleSessionExpiredConfirm = () => {
+    setShowSessionExpired(false);
+    logout();
+    router.push("/login");
+  };
+
   if (loading) {
     return <div className="loader" />;
   }
 
   return (
-    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth }}>
+    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth, showSessionExpired }}>
       {children}
+      
+      {/* Session Expired Modal */}
+      {showSessionExpired && (
+        <div className="session-expired-overlay">
+          <div className="session-expired-modal">
+            <div className="session-expired-icon">⚠️</div>
+            <h2>Session Expired</h2>
+            <p>Your session has expired. Please log in again to continue.</p>
+            <button className="session-expired-ok-btn" onClick={handleSessionExpiredConfirm}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };
