@@ -1,6 +1,7 @@
 import axios from "axios";
-import { useState, useContext, createContext, useEffect } from "react";
-import { getUserById } from "@/services/UserController";
+import {useState, useContext, createContext, useEffect, useMemo} from "react";
+import {checkForToken, checkToken, getUserById} from "@/services/UserController";
+import {usePathname, useRouter} from "next/navigation";
 
 const AuthContext = createContext(null);
 
@@ -8,9 +9,13 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
+const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore'];
+
 export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
   const [loading, setLoading] = useState(true);
+    const pathname = usePathname();
+    const router = useRouter();
 
   const formatDate = (isoString) => {
     if (!isoString) return ""; // Null or empty
@@ -35,33 +40,48 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
+    // Helper to check if current path is public
+    const isPublic = useMemo(() => {
+        return PUBLIC_ROUTES.some(route =>
+            pathname === route || pathname.startsWith(`${route}/`)
+        );
+    }, [pathname]);
+
+
+
   useEffect(() => {
     const initAuth = async () => {
-      const savedUsername = sessionStorage.getItem("username") || localStorage.getItem("username");
-      const savedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
-
-      if (savedUsername) {
-        const authData = { email: savedUsername };
-        
-        // Check if role is already stored
-        const savedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
-        if (savedRole) {
-          authData.role = savedRole;
-        } else if (savedUserId) {
-          // Fetch role if not stored
-          const role = await fetchUserRole(savedUserId);
-          if (role) {
-            authData.role = role;
-          }
+        try {
+            const response = await checkToken();
+            if(response.data.expired || !response.data.valid){
+                console.warn("token is expired or is not valid!");
+                logout();
+            }
+            else{
+                const authData = {
+                    userId: response.data.id,
+                    role: response.data.role,
+                    email: response.data.username,
+                }
+                setUserAuth(authData);
+            }
+        } catch (error) {
+            logout();
+            console.error(error);
         }
-        
-        setUserAuth(authData);
-      }
       setLoading(false);
     };
-
     initAuth();
   }, []);
+
+
+    useEffect(() => {
+        if (!loading && !userAuth && !isPublic) {
+            console.log("Unauthorized access attempt. Redirecting...");
+            router.push("/login");
+        }
+    }, [userAuth, loading, isPublic, router]);
+
 
   useEffect(() => {
     const handleStorageChange = () => {

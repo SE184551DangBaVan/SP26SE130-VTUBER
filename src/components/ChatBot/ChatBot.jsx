@@ -7,8 +7,6 @@ import {
   connectWebSocket,
   subscribeToMessages,
   sendWebSocketMessage,
-  disconnectWebSocket,
-  isWebSocketConnected
 } from "@/services/WebSocketConfig";
 
 export default function ChatBot() {
@@ -38,12 +36,14 @@ export default function ChatBot() {
     const initWebSocket = async () => {
       if (isOpen && !isConnected) {
         try {
-          await connectWebSocket();
+          const client = await connectWebSocket();
           setIsConnected(true);
+
+          // Small delay to ensure STOMP broker is fully ready
+          await new Promise(resolve => setTimeout(resolve, 50));
 
           // Subscribe to messages
           subscriptionRef.current = subscribeToMessages((response) => {
-            console.log("ChatBot received message:", response);
             // Handle both APIResponse wrapper and raw MessageResponse
             const newMessage = response.data || response;
             if (newMessage.id && newMessage.content) {
@@ -59,6 +59,7 @@ export default function ChatBot() {
           });
         } catch (error) {
           console.error("Failed to connect WebSocket:", error);
+          setIsConnected(false);
         }
       }
     };
@@ -67,12 +68,10 @@ export default function ChatBot() {
 
     // Cleanup on unmount OR when chatbot is closed
     return () => {
-      console.log("Cleaning up WebSocket subscription...");
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
         subscriptionRef.current = null;
       }
-      // Don't disconnect on every render - only when component unmounts
     };
   }, [isOpen]);
 

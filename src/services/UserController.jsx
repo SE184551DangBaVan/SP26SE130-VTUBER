@@ -7,6 +7,61 @@ const getAuthToken = () => {
 };
 
 /**
+ * Validate user authentication token
+ * @returns {Promise<Object>} Token validation result with validity, expiration, and user info
+ */
+export const checkToken = async () => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return {
+        success: false,
+        message: "No auth token",
+        data: {
+          valid: false,
+          expired: true,
+          userId: null,
+          username: null,
+          role: null,
+          expiresAt: null
+        }
+      };
+    }
+
+    const res = await axios.get(
+      `${API_BASE_URL}/auth/me`,
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error("Validate token error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || {
+      success: false,
+      message: err.message,
+      data: {
+        valid: false,
+        expired: true,
+        userId: null,
+        username: null,
+        role: null,
+        expiresAt: null
+      }
+    };
+  }
+};
+
+/**
  * Get user information by ID
  * @param {number} userId - User ID
  * @returns {Promise<Object|null>} User data or null
