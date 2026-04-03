@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getPendingPostsByFanHub, reviewPost } from "@/services/ModeratorController";
-import { getPostsByFanHub } from "@/services/PostController";
+import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController";
 import "./PostModerationPage.css";
 import { useSideBar } from "@/contexts/SideBarContext.tsx";
 
@@ -55,11 +55,64 @@ export default function PostModerationPage() {
   // Track which dropdown is open (by postId)
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  const { sideBarRetractor } = useSideBar();
+  // AI Validation retry cooldown state
+  const [aiCooldown, setAiCooldown] = useState(null); // { postId, remainingSeconds, cooldownText }
+  const [aiRetrying, setAiRetrying] = useState(false);
 
-  useEffect(()=>{
-      console.log("New dropdown id: " + openDropdownId);
-  },[openDropdownId])
+  const { sideBarRetractor } = useSideBar();
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (!aiCooldown || aiCooldown.remainingSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setAiCooldown((prev) => {
+        if (!prev || prev.remainingSeconds <= 1) {
+          clearInterval(timer);
+          return null;
+        }
+        const newRemaining = prev.remainingSeconds - 1;
+        const minutes = Math.floor(newRemaining / 60);
+        const seconds = newRemaining % 60;
+        return {
+          ...prev,
+          remainingSeconds: newRemaining,
+          cooldownText: `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+        };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [aiCooldown]);
+
+  // AI Validation retry handler
+  const handleAiValidationRetry = async (postId) => {
+    if (aiRetrying || aiCooldown) return;
+    setAiRetrying(true);
+    try {
+      const result = await retryAiValidation(postId);
+      if (result?.success) {
+        showToast("AI validation retry sent successfully!", "success");
+      } else {
+        const cooldownMatch = result?.data?.match(/(\d+):(\d+)/);
+        if (cooldownMatch) {
+          const minutes = parseInt(cooldownMatch[1], 10);
+          const seconds = parseInt(cooldownMatch[2], 10);
+          const totalSeconds = minutes * 60 + seconds;
+          setAiCooldown({
+            postId,
+            remainingSeconds: totalSeconds,
+            cooldownText: `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+          });
+        }
+        showToast(result?.message || "Retry failed", "error");
+      }
+    } catch (err) {
+      console.error("AI validation retry error:", err);
+      showToast("Error sending AI validation retry", "error");
+    } finally {
+      setAiRetrying(false);
+    }
+  };
 
   useEffect(() => {
     if (params?.fanHubId) {
@@ -79,10 +132,10 @@ export default function PostModerationPage() {
       try {
         let data;
         if (statusFilter === "PENDING") {
-          // Fetch only pending posts
           data = await getPendingPostsByFanHub(fanHubId, 0, 100, sortBy);
+        } else if (statusFilter === "ALL") {
+          data = await getAllPostsByFanHub(fanHubId, 0, 100, sortBy);
         } else {
-          // Fetch all posts from the fan hub
           data = await getPostsByFanHub(fanHubId, 0, 100, sortBy);
         }
         setPosts(data);
@@ -604,6 +657,19 @@ export default function PostModerationPage() {
                     }}
                   >
                     ✕ Reject Post
+                  </button>
+                  <button
+                    className={`action-btn retry-ai-btn ${aiCooldown ? "cooldown" : ""} ${aiRetrying ? "loading" : ""}`}
+                    onClick={() => handleAiValidationRetry(selectedPost.postId)}
+                    disabled={!!aiCooldown || aiRetrying}
+                  >
+                    {aiRetrying ? (
+                      <>⟳ Sending...</>
+                    ) : aiCooldown ? (
+                      <>↻ Retry AI ({aiCooldown.cooldownText})</>
+                    ) : (
+                      <>↻ Retry AI Validation</>
+                    )}
                   </button>
                 </div>
               </div>

@@ -108,11 +108,18 @@
   display: flex;
   align-items: center;
   height: 100%;
-  width: 400px;
+  width: 15rem;
+    justify-content: center;
+}
+
+.navbar .nav-container .logo:hover {
+    cursor: pointer;
+    transform: scale(1.015);
+    transition: transform 0.2s ease;
 }
 
 .navbar .nav-container .logo img {
-  width: 300px;
+  width: 90%;
 }
 
 .nav-container .button-primary {
@@ -168,6 +175,7 @@ body:has(.page-main-content) .nav-container .button-primary {
 .nav-container .search-bar {
   display: flex;
   align-items: center;
+    justify-content: center;
   width: 100%;
   max-width: 800px;
   overflow: hidden;
@@ -406,4 +414,431 @@ body:has(.page-main-content) .nav-container .button-primary {
   font-weight: 600;
   transition: 0.2s ease;
   cursor: pointer;
+}
+
+/* Navbar Actions */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-right: 24px;
+  height: 100%;
+}
+
+.navbar-action-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2a2b33;
+}
+
+.navbar-action-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.navbar-action-btn.active {
+  background-color: #e8e8e8;
+}
+
+.navbar-action-btn svg {
+  font-size: 28px;
+  color: #2a2b33;
+}
+
+.navbar-action-btn.active svg {
+  color: #52ffff;
+}
+
+/* User Avatar Button */
+.profile-btn {
+  padding: 0;
+  overflow: hidden;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2a2b33;
+}
+
+/* Dropdown Menu Base */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: #ffffff;
+  border: 2px solid #2a2b33;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-placeholder {
+  padding: 20px;
+  color: #8a8a8a;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Daily Mission & Notification Dropdowns */
+.daily-mission-dropdown,
+.notification-dropdown {
+  width: 280px;
+  min-height: 150px;
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  width: 300px;
+  padding: 16px;
+  background-color: #e0f7fa;
+  border-color: #2a2b33;
+}
+
+/* Profile Header */
+.profile-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+  margin-bottom: 12px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #2a2b33;
+}
+
+.profile-greeting {
+  display: flex;
+  flex-direction: column;
+}
+
+.greeting-text {
+  font-size: 14px;
+  color: #2a2b33;
+  font-weight: 500;
+}
+
+.username-text {
+  font-size: 16px;
+  color: #7b2ff7;
+  font-weight: 700;
+}
+
+/* Coins Section */
+.coins-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.coins-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coin-icon {
+  font-size: 20px;
+}
+
+.coin-icon-wrapper {
+  position: relative;
+  cursor: default;
+}
+
+.coin-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2a2b33;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.coin-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #2a2b33;
+}
+
+.coin-icon-wrapper:hover .coin-tooltip {
+  opacity: 1;
+}
+
+.coin-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a2b33;
+}
+
+.paid-coins-display {
+  margin-left: 8px;
+}
+
+.paid-coin-icon {
+  font-size: 18px;
+}
+
+.paid-coin-amount {
+  color: #7b2ff7;
+}
+
+.add-coins-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #2a2b33;
+  border-radius: 8px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2a2b33;
+}
+
+.add-coins-btn:hover {
+  background-color: #52ffff;
+  border-color: #52ffff;
+}
+
+/* Profile Menu Items */
+.profile-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2a2b33;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.profile-menu-item:hover {
+  background-color: #ffffff;
+}
+
+.profile-menu-item svg {
+  font-size: 20px;
+  color: #2a2b33;
+}
+
+/* Profile Toggle Items */
+.profile-toggle-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+}
+
+.profile-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2a2b33;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.profile-toggle-item:hover {
+  background-color: #ffffff;
+}
+
+.profile-toggle-item svg {
+  font-size: 20px;
+  color: #2a2b33;
+}
+
+/* Login Button */
+.login-btn {
+  padding: 0.6rem 2rem;
+  border: 2px solid #2a2b33;
+  border-radius: 10px;
+  background-color: #abf8f8;
+  color: #2a2b33;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+    background-color: #b7eded;
+  border-color: #2a2b33;
+}
+
+/* Language Dropdown */
+.language-toggle-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.language-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2a2b33;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+}
+
+.language-toggle-btn:hover {
+  background-color: #ffffff;
+}
+
+.language-toggle-btn svg {
+  font-size: 20px;
+  color: #2a2b33;
+}
+
+.language-dropdown {
+  position: absolute;
+  right: 100%;
+  top: 0;
+  margin-right: 8px;
+  background-color: #ffffff;
+  border: 2px solid #2a2b33;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  min-width: 180px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+/* Custom scrollbar for language dropdown */
+.language-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.language-dropdown::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.language-dropdown::-webkit-scrollbar-thumb {
+  background: #b2ebf2;
+  border-radius: 3px;
+}
+
+.language-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #80deea;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #2a2b33;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.language-option:hover {
+  background-color: #e0f7fa;
+}
+
+.language-option.active {
+  background-color: #b2ebf2;
+  font-weight: 600;
+}
+
+.language-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.check-mark {
+  color: #00897b;
+  font-weight: 700;
+  font-size: 14px;
 }

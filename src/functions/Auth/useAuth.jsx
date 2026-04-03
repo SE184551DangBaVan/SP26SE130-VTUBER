@@ -1,6 +1,6 @@
 import axios from "axios";
 import {useState, useContext, createContext, useEffect, useMemo} from "react";
-import {checkForToken, checkToken, getUserById} from "@/services/UserController";
+import {checkForToken, checkToken, getAuthToken, getUserById} from "@/services/UserController";
 import {usePathname, useRouter} from "next/navigation";
 
 const AuthContext = createContext(null);
@@ -53,21 +53,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
         try {
-            const response = await checkToken();
-            if(response.data.expired || !response.data.valid){
-                console.warn("token is expired or is not valid!");
-                setShowSessionExpired(true);
-            }
-            else{
-                const authData = {
-                    userId: response.data.id,
-                    role: response.data.role,
-                    email: response.data.username,
+            const token = getAuthToken();
+            if(token){
+                const response = await checkToken(token);
+                if(response.data.expired || !response.data.valid){
+                    console.warn("token is expired or is not valid!");
+                    setShowSessionExpired(true);
+                    logout();
                 }
-                setUserAuth(authData);
+                else{
+                    const authData = {
+                        userId: response.data.id,
+                        role: response.data.role,
+                        email: response.data.username,
+                    }
+                    setUserAuth(authData);
+                }
             }
         } catch (error) {
-            setShowSessionExpired(true);
             console.error(error);
         }
       setLoading(false);

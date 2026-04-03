@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
 
-const getAuthToken = () => {
+export const getAuthToken = () => {
   return sessionStorage.getItem("token") || localStorage.getItem("token");
 };
 
@@ -10,10 +10,8 @@ const getAuthToken = () => {
  * Validate user authentication token
  * @returns {Promise<Object>} Token validation result with validity, expiration, and user info
  */
-export const checkToken = async () => {
+export const checkToken = async (token) => {
   try {
-    const token = getAuthToken();
-
     if (!token) {
       console.warn("No auth token found");
       return {

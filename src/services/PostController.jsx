@@ -179,3 +179,82 @@ export const getUserPosts = async (userId, pageNo = 0, pageSize = 50, sortBy = "
     return [];
   }
 };
+
+/**
+ * Get all posts for a specific fan hub (all statuses)
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort by field (createdAt, etc.)
+ * @returns {Promise<Array>} Posts data
+ */
+export const getAllPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return [];
+    }
+
+    const res = await axios.get(
+      `${API_BASE_URL}/posts/fan-hub/${fanHubId}/all?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("getAllPostsByFanHub response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch all posts by fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Send AI validation retry request for a post
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} { success, message, data, error }
+ */
+export const retryAiValidation = async (postId) => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token", error: "401" };
+    }
+
+    const res = await axios.post(
+      `${API_BASE_URL}/posts/validate?postId=${postId}`,
+      {},
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error("AI validation retry error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message, error: "500" };
+  }
+};
