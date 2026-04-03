@@ -24,7 +24,7 @@ export default function MemberModerationContent({ fanHubId }) {
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
-  const [banForm, setBanForm] = useState({ reason: "", banType: "COMMENT" });
+  const [banForm, setBanForm] = useState({ reason: "", banType: "COMMENT", bannedUntil: "" });
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
   useEffect(() => {
@@ -66,9 +66,11 @@ export default function MemberModerationContent({ fanHubId }) {
     try {
       const result = await banFanHubMember({
         fanHubMemberId: selectedMember.id,
-        reason: banForm.reason,
+        reason: banForm.reason.trim(),
         banType: banForm.banType,
-        bannedUntil: null,
+          bannedUntil: banForm.bannedUntil
+              ? new Date(banForm.bannedUntil).toISOString()
+              : null,
       });
       if (result?.success) {
         showToast("Member banned successfully!", "success");
@@ -85,14 +87,14 @@ export default function MemberModerationContent({ fanHubId }) {
 
   const openBanModal = (member) => {
     setSelectedMember(member);
-    setBanForm({ reason: "", banType: "COMMENT" });
+    setBanForm({ reason: "", banType: "COMMENT", bannedUntil: "" });
     setIsBanModalOpen(true);
   };
 
   const closeBanModal = () => {
     setIsBanModalOpen(false);
     setSelectedMember(null);
-    setBanForm({ reason: "", banType: "COMMENT" });
+    setBanForm({ reason: "", banType: "COMMENT", bannedUntil: "" });
   };
 
   useEffect(() => {
@@ -227,6 +229,10 @@ export default function MemberModerationContent({ fanHubId }) {
                   <select value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
                     {BAN_TYPE_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Banned Until</label>
+                  <input type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
                 </div>
                 <div className="form-group full-width">
                   <label>Reason</label>
