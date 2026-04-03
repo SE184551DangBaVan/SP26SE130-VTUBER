@@ -1,9 +1,9 @@
 import UserLayout from "@/components/UserLayout/UserLayout";
-import PostModerationPage from '@/views/Users/PostModerationPage/PostModerationPage';
+import HubModerationPage from '@/views/Users/PostModerationPage/HubModerationPage';
 export default function HubPostsModerationRoute(){
     return(
         <UserLayout>
-            <PostModerationPage/>
+            <HubModerationPage/>
         </UserLayout>
     );
 }
