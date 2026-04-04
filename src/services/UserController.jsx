@@ -5,7 +5,7 @@ const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.az
 export const getAuthToken = () => {
   return sessionStorage.getItem("token") || localStorage.getItem("token");
 };
-=======
+
 import axiosInstance from "@/utils/axiosInstance";
 
 /**
