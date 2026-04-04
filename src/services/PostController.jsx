@@ -90,3 +90,54 @@ export const getPostById = async (postId) => {
     return null;
   }
 };
+
+/**
+ * Create a new post
+ * @param {Object} postData - Post data including fanHubId, postType, title, content, hashtags
+ * @param {File|File[]} mediaFiles - Image or video files (optional)
+ * @param {string} mediaKey - Key for media files in form data ('images' or 'video')
+ * @returns {Promise<Object>} Response data
+ */
+export const createPost = async (postData, mediaFiles = null, mediaKey = 'images') => {
+  try {
+    const formData = new FormData();
+
+    // Add request JSON data
+    formData.append('request', JSON.stringify({
+      fanHubId: postData.fanHubId,
+      postType: postData.postType || 'TEXT',
+      title: postData.title,
+      content: postData.content || '',
+      hashtags: postData.hashtags || []
+    }));
+
+    // Add media files if provided
+    if (mediaFiles) {
+      const files = Array.isArray(mediaFiles) ? mediaFiles : [mediaFiles];
+      files.forEach(file => {
+        formData.append(mediaKey, file);
+      });
+    }
+
+    const res = await axiosInstance.post('/posts', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log("createPost response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to create post');
+  } catch (err) {
+    console.error("Create post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
