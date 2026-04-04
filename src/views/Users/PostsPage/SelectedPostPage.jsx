@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { ArrowUpward, ArrowDownward, CommentRounded, ShareRounded } from '@mui/icons-material';
+import { ArrowUpward, CommentRounded, ShareRounded } from '@mui/icons-material';
 import './SelectedPostPage.css';
 
 export default function SelectedPostPage() {
@@ -123,13 +123,10 @@ export default function SelectedPostPage() {
 
         <div className='selected-post-card'>
           <div className='post-vote-section'>
-            <button className='vote-btn upvote' onClick={handleLike}>
+            <button className='vote-btn like-btn' onClick={handleLike}>
               <ArrowUpward fontSize='small' />
             </button>
             <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-            <button className='vote-btn downvote'>
-              <ArrowDownward fontSize='small' />
-            </button>
           </div>
 
           <div className='post-content'>

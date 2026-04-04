@@ -110,6 +110,12 @@ function PostCard({ post, onClick, onHubClick }) {
     }
   };
 
+  const handleCommentsClick = (e) => {
+    e.stopPropagation();
+    localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
+    onClick();
+  };
+
   const renderMedia = () => {
     if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
 
@@ -141,13 +147,10 @@ function PostCard({ post, onClick, onHubClick }) {
   return (
     <div className='post-card' onClick={onClick}>
       <div className='post-vote-section'>
-        <button className='vote-btn upvote' onClick={handleLike}>
+        <button className='vote-btn like-btn' onClick={handleLike}>
           <ArrowUpward fontSize='small' />
         </button>
         <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-        <button className='vote-btn downvote' onClick={(e) => e.stopPropagation()}>
-          <ArrowDownward fontSize='small' />
-        </button>
       </div>
 
       <div className='post-content'>
@@ -193,7 +196,7 @@ function PostCard({ post, onClick, onHubClick }) {
         )}
 
         <div className='post-actions'>
-          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
+          <button className='action-btn' onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
             <span>Comments</span>
           </button>

@@ -97,8 +97,8 @@ export default function HubPage({ ownedHub }) {
     if (!canCreatePost) {
       setShowCreatePostModal(true);
     } else {
-      // TODO: Navigate to create post page or open create post modal
-      alert('Create post feature coming soon!');
+      // Navigate to create post page with fanHubId
+      router.push(`/create-post?fanHubId=${activeFanHubId}`);
     }
   };
 
@@ -911,6 +911,12 @@ function PostCard({ post, onClick }) {
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
 
+  const handleCommentsClick = (e) => {
+    e.stopPropagation();
+    localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
+    onClick();
+  };
+
   const renderMedia = () => {
     if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
 
@@ -941,13 +947,10 @@ function PostCard({ post, onClick }) {
   return (
     <div className='post-card' onClick={onClick}>
       <div className='post-vote-section'>
-        <button className='vote-btn upvote' onClick={handleLike}>
+        <button className='vote-btn like-btn' onClick={handleLike}>
           <ArrowUpward fontSize='small' />
         </button>
         <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-        <button className='vote-btn downvote' onClick={(e) => e.stopPropagation()}>
-          <ArrowDownward fontSize='small' />
-        </button>
       </div>
 
       <div className='post-content'>
@@ -986,7 +989,7 @@ function PostCard({ post, onClick }) {
         )}
 
         <div className='post-actions'>
-          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
+          <button className='action-btn' onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
             <span>Comments</span>
           </button>
