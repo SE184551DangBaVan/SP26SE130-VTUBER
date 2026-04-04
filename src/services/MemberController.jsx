@@ -89,3 +89,28 @@ export const joinFanHub = async (fanHubId) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+export const banFanHubMember = async (payload) => {
+
+    try {
+        const res = await axiosInstance.post(
+            `/fan-hub-member/ban`,payload,
+            {}
+        );
+
+        console.log("joinFanHub response:", res.data);
+
+        if (res.data?.success) {
+            return res.data;
+        }
+
+        return { success: false, message: "Failed to join fan hub" };
+    } catch (err) {
+        console.error("Join fan hub error:", {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+        });
+        return err.response?.data || { success: false, message: err.message };
+    }
+};
