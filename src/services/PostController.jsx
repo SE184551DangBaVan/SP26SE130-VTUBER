@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
+import axiosInstance from "@/utils/axiosInstance";
 
 /**
  * Get posts feed (all posts across all hubs)
@@ -15,20 +9,8 @@ const getAuthToken = () => {
  */
 export const getPostsFeed = async (pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/posts/feed?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.get(
+      `/posts/feed?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
     );
 
     console.log("getPostsFeed response:", res.data);
@@ -59,26 +41,12 @@ export const getPostsFeed = async (pageNo = 0, pageSize = 10, sortBy = "createdA
  */
 export const getPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt", postHashtag = "") => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    let url = `${API_BASE_URL}/posts/fan-hub/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`;
+    let url = `/posts/fan-hub/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`;
     if (postHashtag) {
       url += `&postHashtag=${encodeURIComponent(postHashtag)}`;
     }
 
-    const res = await axios.get(
-      url,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
-    );
+    const res = await axiosInstance.get(url);
 
     console.log("getPostsByFanHub response:", res.data);
 
@@ -104,21 +72,7 @@ export const getPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, sort
  */
 export const getPostById = async (postId) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return null;
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/posts/${postId}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
-    );
+    const res = await axiosInstance.get(`/posts/${postId}`);
 
     console.log("getPostById response:", res.data);
 

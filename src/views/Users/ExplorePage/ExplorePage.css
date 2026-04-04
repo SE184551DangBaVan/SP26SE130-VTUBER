@@ -185,7 +185,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
 
 .explore-banner {
   display: flex;
-  min-height: 340px;
+  min-height: 348px;
   border-radius: 16px;
   overflow: hidden;
   color: white;
@@ -193,7 +193,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   background-position: 0 50%;
   background-repeat: no-repeat;
   box-shadow: 0 0 10px #0d0c22;
-  animation: dynamic-background 250s ease;
+  animation: dynamic-background 250s ease infinite;
 }
 
 @keyframes dynamic-background {
@@ -222,6 +222,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   display: flex;
   flex-direction: row;
   gap: 10px;
+  text-shadow: 0 0 10px #000;
 }
 
 .explore-banner-left .hub-info .hub-owner-info .hub-owner-pfp {
@@ -384,12 +385,14 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   box-shadow: inset 0 0 20px #33333380;
   padding: 20px 20px;
   border: 4px solid #ccdfde;
+  overflow: hidden;
 }
 
 .explore-section.top-hubs {
   box-shadow: inset 0 0 10px 10px #33333380;
   background: url('../../../assets/Decor/PEAKCover.png');
   background-size: cover;
+  max-height: 436px;
 }
 
 .explore-section.top-hubs::before {
@@ -398,7 +401,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   z-index: 2;
   content: "";
   width: 350px;
-  height: 400px;
+  height: 408px;
   border-radius: 18px;
   transform: translate(-40px, 0);
   background: url('../../../assets/Decor/PEAKCoverLayer1.png');
@@ -484,10 +487,10 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
     font-family: "Just Another Hand", cursive;
     color: #000000;
     font-size: 20px;
-    position: absolute;
+    position: relative;
     transform: rotate(-4deg);
-    right: 24px;
-    bottom: 280px;
+    left: 72vw;
+    top: -425px;
     z-index: 3;
     opacity: 0.4;
     transition: opacity 0.3s ease;

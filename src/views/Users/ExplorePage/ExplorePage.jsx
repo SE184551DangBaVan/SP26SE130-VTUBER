@@ -99,7 +99,7 @@ export default function ExplorePage() {
 
         {hubs.length === 0 ? (
         // fallback (your old static look)
-        <div className="explore-banner" style={{ background: "#333" }}>
+        <div className="explore-banner" style={{ background: "#333", justifyContent: 'center', alignItems: 'center' }}>
           <div className="explore-banner-left">
             <h2>NO DATA</h2>
           </div>
@@ -186,7 +186,7 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className={`category-row ${expandCategory ? 'expand' : ''}`} >
-          {["Gaming", "Just Chatting", "Music", "ASMR", "Cooking", "Art"].map((cat, i) => (
+          {["Game", "Just Chatting", "Music", "ASMR", "Cooking", "Art"].map((cat, i) => (
           <div
             key={i}
             className="category-card"
@@ -217,7 +217,8 @@ export default function ExplorePage() {
               backgroundImage: topHub?.bannerUrl
                 ? `url(${topHub.bannerUrl})`
                 : "#999",
-              color: topHub?.themeColor || "#fff",
+                color: "#ccc",
+                border: `4px solid ${topHub?.themeColor || "#fff"} `
             }}
           >
             <div className="explore-banner-left">
@@ -240,7 +241,7 @@ export default function ExplorePage() {
                   </div>
                 </div>
 
-                <h2>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
+                <h2 style={{ color: topHub?.themeColor || "#fff" }}>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
               </div>
 
               <button 
@@ -258,7 +259,6 @@ export default function ExplorePage() {
             <div className="explore-banner-right">
               {topLoading ? (
                 [1, 2, 3, 4].map((i) => (
-                  
                   <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
                     <Skeleton />
                   </SkeletonTheme>

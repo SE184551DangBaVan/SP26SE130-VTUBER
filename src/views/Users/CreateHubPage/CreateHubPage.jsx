@@ -6,6 +6,15 @@ import './CreateHubPage.css';
 import { getFanHubs, createFanHub, uploadImages } from '@/services/FanHubController';
 import HubPage from '@/views/Users/HubPage/HubPage';
 
+import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
+import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
+import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
+import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
+
+const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
+
 export default function CreateHubPage() {
   const { userAuth } = useAuth();
   const [userId, setUserId] = useState(null);
@@ -42,6 +51,13 @@ export default function CreateHubPage() {
   const [explorePreviews, setExplorePreviews] = useState([]);
 
   const [creating, setCreating] = useState(false);
+
+   const [randomLoadingImage, setRandomLoadingImage] = useState(null);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * loadingImages.length);
+    setRandomLoadingImage(loadingImages[randomIndex]);
+  }, []);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -191,7 +207,6 @@ export default function CreateHubPage() {
   const handleExploreImagesChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      // Limit to max 4 images
       const limitedFiles = files.slice(0, 4);
       setExploreImages(limitedFiles);
       const previews = await Promise.all(limitedFiles.map(file => fileToBase64(file)));
@@ -285,16 +300,34 @@ export default function CreateHubPage() {
     if (hubLoading) {
       return (
         <div className='create-hub-page-container'>
-          <div className='loading-state'>Checking for your FanHub...</div>
+          <div className='posts-loading'>
+            Checking For Your Fan Hub
+            {randomLoadingImage && (
+              <img
+                className='loading-animation'
+                src={randomLoadingImage.src}
+                alt=""
+                onError={(e) => {
+                  e.target.src = "/picture-not-available-photo.jpg";
+                }}
+              />
+            )}
+            <div className="loading-wrapper">
+              <div className="loading-circle"></div>
+              <div className="loading-circle"></div>
+              <div className="loading-circle"></div>
+              <div className="loading-shadow"></div>
+              <div className="loading-shadow"></div>
+              <div className="loading-shadow"></div>
+            </div>
+          </div>
         </div>
       );
     }
 
     if (ownedHub) {
       return (
-        <div className='create-hub-page-container'>
-          <HubPage ownedHub={ownedHub} />
-        </div>
+        <HubPage ownedHub={ownedHub} />
       );
     }
 

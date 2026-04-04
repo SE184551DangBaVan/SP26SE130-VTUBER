@@ -204,6 +204,7 @@
     left: 0;
     filter: drop-shadow(2px -2px 0 #ffffff);
     width: 600px;
+    pointer-events: none;
 }
 
 .landing-page-container .website-banner .desktop-wallpaper a {

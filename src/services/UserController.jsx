@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
+import axiosInstance from "@/utils/axiosInstance";
 
 /**
  * Get user information by ID
@@ -13,33 +7,13 @@ const getAuthToken = () => {
  */
 export const getUserById = async (userId) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return null;
-    }
-
-
-    const res = await axios.get(
-      `${API_BASE_URL}/user/${userId}`,
-      {
-        headers: token ? {
-          "Authorization": `Bearer ${token}`
-        } : {
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
+    const res = await axiosInstance.get(`/user/${userId}`);
 
     console.log("getUserById response:", res.data);
-
 
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
-
 
     return null;
   } catch (err) {
@@ -59,8 +33,7 @@ export const getUserById = async (userId) => {
  */
 export const getUserByUsername = async (username) => {
   try {
-    const res = await axios.get(
-      `${API_BASE_URL}/user/user-name/${username}`)
+    const res = await axiosInstance.get(`/user/user-name/${username}`);
 
     if (res.data?.success && res.data?.data) {
       return res.data.data;
@@ -85,30 +58,17 @@ export const getUserByUsername = async (username) => {
  */
 export const registerVtuberApplication = async (userId, channelName, channelLink) => {
   try {
-    const token = getAuthToken();
-    
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/vtuber-application/register-vtuber`,
+    const res = await axiosInstance.post(
+      `/vtuber-application/register-vtuber`,
       {
         userId,
         channelName,
         channelLink
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
       }
     );
-    
+
     console.log("registerVtuberApplication response:", res.data);
-    
+
     return res.data;
   } catch (err) {
     console.error("Register VTuber application error:", {
@@ -127,23 +87,10 @@ export const registerVtuberApplication = async (userId, channelName, channelLink
  */
 export const selectDisplayBadges = async (userBadgeIds) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/user/badges/select-display`,
+    const res = await axiosInstance.post(
+      `/user/badges/select-display`,
       {
         userBadgeIds
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
       }
     );
 

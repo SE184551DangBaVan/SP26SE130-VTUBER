@@ -1,0 +1,102 @@
+/* Terminal Window */
+.terminal {
+    background-color: #333;
+    color: #0f0;
+    font-family: "Courier New", Courier, monospace;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    animation: pop-up 0.6s ease forwards;
+}
+
+.terminal-header {
+    background-color: #555;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+
+.buttons {
+    display: flex;
+    margin-right: 15px;
+}
+
+.buttons span {
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.close {
+    background-color: #ff605c;
+}
+
+.minimize {
+    background-color: #ffbd44;
+}
+
+.maximize {
+    background-color: #00ca4e;
+}
+
+.title {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.terminal-body {
+    padding: 20px;
+}
+
+.terminal-loader {
+    display: inline-flex;
+    align-items: center;
+}
+
+.loader-text {
+    margin-right: 5px;
+}
+
+.dot {
+    transform: translateY(-10px);
+    opacity: 0;
+    animation: dotFadeInOut 1.5s infinite;
+}
+
+@keyframes dotFadeInOut {
+
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+#dot1 {
+    animation-delay: 0.5s;
+}
+
+#dot2 {
+    animation-delay: 0.6s;
+}
+
+#dot3 {
+    animation-delay: 0.7s;
+}
+
+@keyframes pop-up {
+    0% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

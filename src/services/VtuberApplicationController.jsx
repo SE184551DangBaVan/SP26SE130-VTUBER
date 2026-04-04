@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
+import axiosInstance from "@/utils/axiosInstance";
 
 /**
  * Get all VTuber applications
@@ -15,28 +9,16 @@ const getAuthToken = () => {
  */
 export const getVtuberApplications = async (pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
   try {
-    const token = getAuthToken();
-    
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/vtuber-application?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.get(
+      `/vtuber-application?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
     );
-    
+
     console.log("getVtuberApplications response:", res.data);
-    
+
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
-    
+
     return [];
   } catch (err) {
     console.error("Fetch VTuber applications error:", {
@@ -57,25 +39,13 @@ export const getVtuberApplications = async (pageNo = 0, pageSize = 10, sortBy = 
  */
 export const reviewVtuberApplication = async (vTuberApplicationId, status, reason) => {
   try {
-    const token = getAuthToken();
-    
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
-    const res = await axios.put(
-      `${API_BASE_URL}/vtuber-application/review-application?vTuberApplicationId=${vTuberApplicationId}&status=${status}&reason=${encodeURIComponent(reason)}`,
-      null,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.put(
+      `/vtuber-application/review-application?vTuberApplicationId=${vTuberApplicationId}&status=${status}&reason=${encodeURIComponent(reason)}`,
+      null
     );
-    
+
     console.log("reviewVtuberApplication response:", res.data);
-    
+
     return res.data;
   } catch (err) {
     console.error("Review VTuber application error:", {

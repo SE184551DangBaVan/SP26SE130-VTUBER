@@ -1,35 +1,25 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
-
+import axiosInstance from "@/utils/axiosInstance";
 
 export const getTopFanHubs = async (category = "", pageNo = 0, pageSize = 10) => {
   try {
-    const token = getAuthToken();
+    // The API doesn't support category filtering, so we fetch all and filter client-side
+    const url = `/fan-hub/top?pageNo=${pageNo}&pageSize=${pageSize}`;
 
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const url = `${API_BASE_URL}/fan-hub/top?pageNo=${pageNo}&pageSize=${pageSize}${
-      category ? `&category=${encodeURIComponent(category)}` : ""
-    }`;
-
-    const res = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await axiosInstance.get(url);
 
     console.log("getTopFanHubs response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      let hubs = res.data.data;
+
+      // Filter by category if specified
+      if (category) {
+        hubs = hubs.filter(hub => 
+          hub.categories && hub.categories.includes(category)
+        );
+      }
+
+      return hubs;
     }
 
     return [];
@@ -41,28 +31,16 @@ export const getTopFanHubs = async (category = "", pageNo = 0, pageSize = 10) =>
 
 export const getFanHubs = async (pageNo = 0, pageSize = 50) => {
   try {
-    const token = getAuthToken();
-    
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/fan-hub/all?pageNo=${pageNo}&pageSize=${pageSize}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.get(
+      `/fan-hub/all?pageNo=${pageNo}&pageSize=${pageSize}`
     );
-    
+
     console.log("getFanHubs response:", res.data);
-    
+
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
-    
+
     return [];
   } catch (err) {
     console.error("Fetch fan hubs error:", {
@@ -76,22 +54,9 @@ export const getFanHubs = async (pageNo = 0, pageSize = 50) => {
 
 export const createFanHub = async (payload) => {
   try {
-    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-
-    if (!token) {
-      console.warn("No auth token found");
-      return null;
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/fan-hub/create`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+    const res = await axiosInstance.post(
+      `/fan-hub/create`,
+      payload
     );
 
     return res.data;
@@ -111,35 +76,27 @@ export const createFanHub = async (payload) => {
  */
 export const uploadImages = async (fanHubId, bannerFile, avatarFile, backgroundFiles = []) => {
   try {
-    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
     const formData = new FormData();
-    
+
     if (bannerFile) {
       formData.append("banner", bannerFile);
     }
-    
+
     if (avatarFile) {
       formData.append("avatar", avatarFile);
     }
-    
+
     // Append each background file (max 4)
     const backgroundsToAdd = backgroundFiles.slice(0, 4);
     backgroundsToAdd.forEach((file) => {
       formData.append("backgrounds", file);
     });
 
-    const res = await axios.post(
-      `${API_BASE_URL}/fan-hub/upload-images/${fanHubId}`,
+    const res = await axiosInstance.post(
+      `/fan-hub/upload-images/${fanHubId}`,
       formData,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       }
