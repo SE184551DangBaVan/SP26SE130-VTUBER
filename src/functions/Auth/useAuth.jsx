@@ -1,6 +1,6 @@
 import axios from "axios";
 import {useState, useContext, createContext, useEffect, useMemo} from "react";
-import {checkForToken, checkToken, getUserById} from "@/services/UserController";
+import {checkForToken, checkToken, getAuthToken, getUserById} from "@/services/UserController";
 import {usePathname, useRouter} from "next/navigation";
 
 const AuthContext = createContext(null);
@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore']
 export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSessionExpired, setShowSessionExpired] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -52,21 +53,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
         try {
-            const response = await checkToken();
-            if(response.data.expired || !response.data.valid){
-                console.warn("token is expired or is not valid!");
-                logout();
-            }
-            else{
-                const authData = {
-                    userId: response.data.id,
-                    role: response.data.role,
-                    email: response.data.username,
+            const token = getAuthToken();
+            if(token){
+                const response = await checkToken(token);
+                if(response.data.expired || !response.data.valid){
+                    console.warn("token is expired or is not valid!");
+                    setShowSessionExpired(true);
+                    logout();
                 }
-                setUserAuth(authData);
+                else{
+                    const authData = {
+                        userId: response.data.id,
+                        role: response.data.role,
+                        email: response.data.username,
+                    }
+                    setUserAuth(authData);
+                }
             }
         } catch (error) {
-            logout();
             console.error(error);
         }
       setLoading(false);
@@ -197,13 +201,33 @@ export const AuthProvider = ({ children }) => {
     window.dispatchEvent(new Event("storage"));
   };
 
+  const handleSessionExpiredConfirm = () => {
+    setShowSessionExpired(false);
+    logout();
+    router.push("/login");
+  };
+
   if (loading) {
     return <div className="loader" />;
   }
 
   return (
-    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth }}>
+    <AuthContext.Provider value={{ userAuth, login, /*googleLogin,*/ logout, clearAuth, showSessionExpired }}>
       {children}
+      
+      {/* Session Expired Modal */}
+      {showSessionExpired && (
+        <div className="session-expired-overlay">
+          <div className="session-expired-modal">
+            <div className="session-expired-icon">⚠️</div>
+            <h2>Session Expired</h2>
+            <p>Your session has expired. Please log in again to continue.</p>
+            <button className="session-expired-ok-btn" onClick={handleSessionExpiredConfirm}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };

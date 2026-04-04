@@ -97,16 +97,23 @@ export default function MyPostsPage() {
 
     // Special handling for postType (enum order)
     if (sortBy === "postType") {
-      const postTypeOrder = { 
-        ANNOUNCEMENT: 0, 
-        EVENT_SCHEDULE: 1, 
-        POLL: 2, 
-        TEXT: 3, 
-        IMAGE: 4, 
-        VIDEO: 5 
+      const postTypeOrder = {
+        ANNOUNCEMENT: 0,
+        EVENT_SCHEDULE: 1,
+        POLL: 2,
+        TEXT: 3,
+        IMAGE: 4,
+        VIDEO: 5
       };
       aVal = postTypeOrder[aVal?.toUpperCase()] ?? 999;
       bVal = postTypeOrder[bVal?.toUpperCase()] ?? 999;
+    }
+
+    // Special handling for aiValidationStatus (enum order: AI_SAFE, AI_UNSAFE, PENDING)
+    if (sortBy === "aiValidationStatus") {
+      const aiValidationOrder = { ai_safe: 0, ai_unsafe: 1, pending: 2 };
+      aVal = aiValidationOrder[aVal?.toLowerCase()] ?? 999;
+      bVal = aiValidationOrder[bVal?.toLowerCase()] ?? 999;
     }
 
     if (sortDirection === "asc") {
@@ -260,8 +267,7 @@ export default function MyPostsPage() {
   return (
     <div className={`user-posts-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
       <div className="user-posts-header">
-        <h1>My Posts</h1>
-        <p>View and manage your posts</p>
+        <h1>Your Posts</h1>
       </div>
 
       <div className="user-posts-table-container">
@@ -274,9 +280,9 @@ export default function MyPostsPage() {
               <th className="sortable" onClick={() => handleSort("fanHubName")}>
                 Fan Hub{getSortIcon("fanHubName")}
               </th>
-              <th className="sortable" onClick={() => handleSort("authorDisplayName")}>
-                Author{getSortIcon("authorDisplayName")}
-              </th>
+              {/*<th className="sortable" onClick={() => handleSort("authorDisplayName")}>*/}
+              {/*  Author{getSortIcon("authorDisplayName")}*/}
+              {/*</th>*/}
               <th className="sortable" onClick={() => handleSort("postType")}>
                 Type{getSortIcon("postType")}
               </th>
@@ -287,7 +293,9 @@ export default function MyPostsPage() {
               <th className="sortable" onClick={() => handleSort("status")}>
                 Status{getSortIcon("status")}
               </th>
-              <th>AI Validation</th>
+              <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>
+                AI Validation{getSortIcon("aiValidationStatus")}
+              </th>
               {/*<th className="non-sortable">Media</th>*/}
               {/*<th>Hashtags</th>*/}
               <th className="sortable" onClick={() => handleSort("createdAt")}>
@@ -305,7 +313,7 @@ export default function MyPostsPage() {
               >
                 <td className="post-id">#{post.postId}</td>
                 <td className="fan-hub-name">{post.fanHubName}</td>
-                <td className="author-display-name">{post.authorDisplayName}</td>
+                {/*<td className="author-display-name">{post.authorDisplayName}</td>*/}
                 <td className="post-type">
                   <span className="post-type-badge">{getPostTypeLabel(post.postType)}</span>
                 </td>

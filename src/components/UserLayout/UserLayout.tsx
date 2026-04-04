@@ -38,7 +38,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
     <SideBarProvider>
       <div className="app">
           {userAuth && (<ChatBot/>)}
-        <Navbar LoggedIn={true}/>
+        <Navbar/>
         <SideBar />
         {/* <VirtualGremlin /> */}
         {children}

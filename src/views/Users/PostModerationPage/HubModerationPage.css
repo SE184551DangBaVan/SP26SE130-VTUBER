@@ -1,0 +1,71 @@
+.hub-moderation-page {
+  max-width: 90%;
+  margin-top: 80px;
+  padding: 1.5rem;
+  color: #000;
+  font-family: 'Inter', sans-serif;
+  transition: margin-left 0.3s ease;
+}
+
+.hub-moderation-page.sidebar-expanded {
+  margin-left: 256px;
+}
+
+.hub-moderation-page.sidebar-retracted {
+  margin-left: 80px;
+}
+
+/* Hub Title */
+.hub-title {
+  margin-bottom: 1rem;
+}
+
+.hub-title h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  margin: 0;
+  color: #000;
+  background: linear-gradient(135deg, #000 0%, #444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tabs */
+.moderation-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #000;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.tab-btn.active {
+  color: #000;
+  border-bottom-color: #000;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Content wrappers */
+.post-moderation-content,
+.member-moderation-content {
+  max-width: 100%;
+}

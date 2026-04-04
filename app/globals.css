@@ -238,6 +238,75 @@ body {
   100% { opacity: 0.15; }
 }
 
+/* Session Expired Modal */
+.session-expired-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.session-expired-modal {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.session-expired-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.session-expired-modal h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.session-expired-modal p {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.session-expired-ok-btn {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #000 0%, #333 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.session-expired-ok-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.session-expired-ok-btn:active {
+  transform: translateY(0);
+}
+
 .noir-tv-overlay {
   animation: noirFlicker 2.5s infinite ease-in-out;
 }
