@@ -41,16 +41,16 @@ export default function Login() {
     try {
       setError("");
       const response = await login(username, password, rememberMe);
-      if (response) {
+      if (response.code === "ERR_BAD_REQUEST") {
+        updateToast(toastId, "error", response.response.data.message);
+        console.log("Error Login:", response)
+        setError(response.response.data.data);
+      }
+      else {
         updateToast(toastId, "success", "Login Success!");
         setTimeout(() => {
           router.push(response ? "/home" : "/login");
         }, 100);
-      }
-      else if(response.code === "ERR_BAD_REQUEST") {
-        updateToast(toastId, "error", response.response.data.message);
-        console.log("Error Login:", response)
-        setError(response.response.data.message);
       }
 
     } catch (error) {

@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
+import axiosInstance from "@/utils/axiosInstance";
 
 /**
  * Get members of a fan hub
@@ -16,20 +10,8 @@ const getAuthToken = () => {
  */
 export const getHubMembers = async (fanHubId, pageNo = 0, pageSize = 50, sortBy = "joinedAt") => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/fan-hub-member/members/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.get(
+      `/fan-hub-member/members/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
     );
 
     console.log("getHubMembers response:", res.data);
@@ -57,22 +39,9 @@ export const getHubMembers = async (fanHubId, pageNo = 0, pageSize = 50, sortBy 
  */
 export const setModerator = async (fanHubId, memberIds) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/fan-hub-member/set-moderator/${fanHubId}?memberIds=${memberIds.join(',')}`,
-      {},
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
+    const res = await axiosInstance.post(
+      `/fan-hub-member/set-moderator/${fanHubId}?memberIds=${memberIds.join(',')}`,
+      {}
     );
 
     console.log("setModerator response:", res.data);
@@ -99,22 +68,9 @@ export const setModerator = async (fanHubId, memberIds) => {
  */
 export const joinFanHub = async (fanHubId) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/fan-hub-member/join/${fanHubId}`,
-      {},
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
+    const res = await axiosInstance.post(
+      `/fan-hub-member/join/${fanHubId}`,
+      {}
     );
 
     console.log("joinFanHub response:", res.data);
