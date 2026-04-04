@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPendingPostsByFanHub, reviewPost } from "@/services/ModeratorController";
-import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController";
+import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services/ModeratorController.jsx";
+import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController.jsx";
 import "./PostModerationContent.css";
 
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
@@ -21,13 +21,15 @@ const STATUS_OPTIONS = [
 export default function PostModerationContent({ fanHubId }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalPosts, setTotalPosts] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage] = useState(10);
   const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [sortDirection, setSortDirection] = useState("desc");
   const [statusFilter, setStatusFilter] = useState("PENDING");
 
+  const [selectedPostIds, setSelectedPostIds] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
@@ -61,28 +63,36 @@ export default function PostModerationContent({ fanHubId }) {
     async function fetchPosts() {
       setLoading(true);
       try {
+        const pageNo = currentPage - 1;
         let data;
         if (statusFilter === "PENDING") {
-          data = await getPendingPostsByFanHub(fanHubId, 0, 100, sortBy);
+          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
         } else if (statusFilter === "ALL") {
-          data = await getAllPostsByFanHub(fanHubId, 0, 100, sortBy);
+          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
         } else {
-          data = await getPostsByFanHub(fanHubId, 0, 100, sortBy);
+          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
         }
-        setPosts(data);
+        // Check if API returns paginated response with total
+        if (data && typeof data === 'object' && data.content) {
+          setPosts(Array.isArray(data.content) ? data.content : []);
+          setTotalPosts(data.totalElements || (data.content.length || 0));
+        } else if (Array.isArray(data)) {
+          setPosts(data);
+          setTotalPosts(data.length);
+        } else {
+          setPosts([]);
+          setTotalPosts(0);
+        }
       } catch (err) {
         console.error("Failed to fetch posts:", err);
+        setPosts([]);
+        setTotalPosts(0);
       } finally {
         setLoading(false);
       }
     }
     fetchPosts();
-  }, [fanHubId, statusFilter, sortBy]);
-
-  const showToast = (message, type) => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
-  };
+  }, [fanHubId, statusFilter, sortBy, currentPage]);
 
   const handleSort = (field) => {
     setCurrentPage(1);
@@ -139,22 +149,113 @@ export default function PostModerationContent({ fanHubId }) {
     }
   };
 
-  const sortedPosts = [...posts].sort((a, b) => {
-    let aVal = a[sortBy], bVal = b[sortBy];
-    if (aVal === null || aVal === undefined) aVal = "";
-    if (bVal === null || bVal === undefined) bVal = "";
-    if (sortBy === "createdAt") { aVal = new Date(aVal).getTime(); bVal = new Date(bVal).getTime(); }
-    if (sortBy === "postId") { aVal = Number(aVal); bVal = Number(bVal); }
-    if (sortBy === "status") { const o = { approved: 0, pending: 1, rejected: 2 }; aVal = o[aVal?.toLowerCase()] ?? 999; bVal = o[bVal?.toLowerCase()] ?? 999; }
-    if (sortBy === "postType") { const o = { ANNOUNCEMENT: 0, EVENT_SCHEDULE: 1, POLL: 2, TEXT: 3, IMAGE: 4, VIDEO: 5 }; aVal = o[aVal?.toUpperCase()] ?? 999; bVal = o[bVal?.toUpperCase()] ?? 999; }
-    if (sortBy === "aiValidationStatus") { const o = { ai_safe: 0, ai_unsafe: 1, pending: 2 }; aVal = o[aVal?.toLowerCase()] ?? 999; bVal = o[bVal?.toLowerCase()] ?? 999; }
-    return sortDirection === "asc" ? (aVal > bVal ? 1 : aVal < bVal ? -1 : 0) : (aVal < bVal ? 1 : aVal > bVal ? -1 : 0);
-  });
-
-  const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
+  const totalPages = Math.ceil(totalPosts / postsPerPage);
   const startIndex = (currentPage - 1) * postsPerPage;
   const endIndex = startIndex + postsPerPage;
-  const paginatedPosts = sortedPosts.slice(startIndex, endIndex);
+  const paginatedPosts = posts;
+
+  const isAllSelectedOnPage = paginatedPosts.length > 0 && paginatedPosts.every(post => selectedPostIds.includes(post.postId));
+
+  const showToast = (message, type) => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+  };
+
+  const handleSelectPost = (postId) => {
+    setSelectedPostIds(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId) 
+        : [...prev, postId]
+    );
+  };
+
+  const handleSelectAllOnPage = () => {
+    const pagePostIds = paginatedPosts.map(post => post.postId);
+    const allSelected = pagePostIds.every(id => selectedPostIds.includes(id));
+    
+    if (allSelected) {
+      // Deselect all on this page
+      setSelectedPostIds(prev => prev.filter(id => !pagePostIds.includes(id)));
+    } else {
+      // Select all on this page
+      setSelectedPostIds(prev => {
+        const newIds = pagePostIds.filter(id => !prev.includes(id));
+        return [...prev, ...newIds];
+      });
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedPostIds.length === 0) return;
+    try {
+      const result = await reviewPostsBulk(selectedPostIds, "APPROVED");
+      if (result?.success) {
+        showToast(`${selectedPostIds.length} post(s) approved successfully!`, "success");
+        setSelectedPostIds([]);
+        // Refresh posts
+        const pageNo = currentPage - 1;
+        let data;
+        if (statusFilter === "PENDING") {
+          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        } else if (statusFilter === "ALL") {
+          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        } else {
+          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        }
+        if (data && typeof data === 'object' && data.content) {
+          setPosts(Array.isArray(data.content) ? data.content : []);
+          setTotalPosts(data.totalElements || (data.content.length || 0));
+        } else if (Array.isArray(data)) {
+          setPosts(data);
+          setTotalPosts(data.length);
+        } else {
+          setPosts([]);
+          setTotalPosts(0);
+        }
+      } else {
+        showToast(result?.message || "Failed to approve posts", "error");
+      }
+    } catch (err) {
+      console.error("Bulk approve error:", err);
+      showToast("Error approving posts", "error");
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedPostIds.length === 0) return;
+    try {
+      const result = await reviewPostsBulk(selectedPostIds, "REJECTED");
+      if (result?.success) {
+        showToast(`${selectedPostIds.length} post(s) rejected successfully!`, "success");
+        setSelectedPostIds([]);
+        // Refresh posts
+        const pageNo = currentPage - 1;
+        let data;
+        if (statusFilter === "PENDING") {
+          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        } else if (statusFilter === "ALL") {
+          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        } else {
+          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
+        }
+        if (data && typeof data === 'object' && data.content) {
+          setPosts(Array.isArray(data.content) ? data.content : []);
+          setTotalPosts(data.totalElements || (data.content.length || 0));
+        } else if (Array.isArray(data)) {
+          setPosts(data);
+          setTotalPosts(data.length);
+        } else {
+          setPosts([]);
+          setTotalPosts(0);
+        }
+      } else {
+        showToast(result?.message || "Failed to reject posts", "error");
+      }
+    } catch (err) {
+      console.error("Bulk reject error:", err);
+      showToast("Error rejecting posts", "error");
+    }
+  };
 
   const getPageNumbers = () => {
     const pages = [];
@@ -217,10 +318,17 @@ export default function PostModerationContent({ fanHubId }) {
       <div className="content-toolbar">
         <div className="status-filter-container">
           <label htmlFor="status-filter">Filter:</label>
-          <select id="status-filter" className="status-filter-dropdown" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+          <select id="status-filter" className="status-filter-dropdown" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); setSelectedPostIds([]); }}>
             {STATUS_FILTER_OPTIONS.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}
           </select>
         </div>
+        {selectedPostIds.length > 0 && (
+          <div className="bulk-actions">
+            <span className="selected-count">{selectedPostIds.length} selected</span>
+            <button className="bulk-btn approve-bulk-btn" onClick={handleBulkApprove}>✓ Approve</button>
+            <button className="bulk-btn reject-bulk-btn" onClick={handleBulkReject}>✕ Reject</button>
+          </div>
+        )}
       </div>
 
       {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
@@ -232,6 +340,14 @@ export default function PostModerationContent({ fanHubId }) {
           <table className="moderation-table">
             <thead>
               <tr>
+                <th className="select-column">
+                  <input 
+                    type="checkbox" 
+                    checked={isAllSelectedOnPage} 
+                    onChange={handleSelectAllOnPage}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </th>
                 <th className="sortable" onClick={() => handleSort("postId")}>Post ID{getSortIcon("postId")}</th>
                 <th className="sortable" onClick={() => handleSort("authorDisplayName")}>Author{getSortIcon("authorDisplayName")}</th>
                 <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
@@ -245,6 +361,13 @@ export default function PostModerationContent({ fanHubId }) {
             <tbody>
               {paginatedPosts.map((post, index) => (
                 <tr key={post.postId} className={`post-row ${openDropdownId === post.postId ? 'has-open-dropdown' : ''} ${index === paginatedPosts.length - 1 ? 'last-row' : ''}`} onClick={() => handlePostClick(post)} style={{ cursor: 'pointer' }}>
+                  <td className="select-cell" onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedPostIds.includes(post.postId)} 
+                      onChange={() => handleSelectPost(post.postId)}
+                    />
+                  </td>
                   <td className="post-id">#{post.postId}</td>
                   <td className="author-display-name">{post.authorDisplayName}</td>
                   <td className="post-type"><span className="post-type-badge">{getPostTypeLabel(post.postType)}</span></td>
@@ -262,7 +385,7 @@ export default function PostModerationContent({ fanHubId }) {
 
           {totalPages > 1 && (
             <div className="pagination-container">
-              <div className="pagination-info">Showing {startIndex + 1} to {Math.min(endIndex, sortedPosts.length)} of {sortedPosts.length} posts</div>
+              <div className="pagination-info">Showing {startIndex + 1} to {Math.min(endIndex, totalPosts)} of {totalPosts} posts</div>
               <div className="pagination-controls">
                 <button className="pagination-btn" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>««</button>
                 <button className="pagination-btn" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>«</button>

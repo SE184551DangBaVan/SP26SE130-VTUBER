@@ -74,7 +74,13 @@ export default function MemberModerationContent({ fanHubId }) {
       });
       if (result?.success) {
         showToast("Member banned successfully!", "success");
-        setMembers((prev) => prev.filter((m) => m.id !== selectedMember.id));
+        // Refresh the members list to get updated data
+        try {
+          const data = await getHubMembers(fanHubId, 0, 20, sortBy);
+          setMembers(data);
+        } catch (err) {
+          console.error("Failed to refresh members:", err);
+        }
         closeBanModal();
       } else {
         showToast(result?.message || "Failed to ban member", "error");

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useSideBar } from "@/contexts/SideBarContext.tsx";
-import PostModerationContent from "./PostModerationContent";
-import MemberModerationContent from "./MemberModerationContent";
+import PostModerationContent from "./HubModerations/PostModeration/PostModerationContent.jsx";
+import MemberModerationContent from "./HubModerations/MemberModeration/MemberModerationContent.jsx";
+import BansManagementContent from "./HubModerations/BansManagement/BansManagementContent.jsx";
 import "./HubModerationPage.css";
 
 export default function HubModerationPage() {
@@ -35,13 +36,21 @@ export default function HubModerationPage() {
         >
           Members
         </button>
+        <button
+          className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}
+          onClick={() => setActiveTab("bans")}
+        >
+          Bans
+        </button>
       </div>
 
       {/* Tab Content */}
       {fanHubId && (
         activeTab === "posts"
           ? <PostModerationContent fanHubId={fanHubId} />
-          : <MemberModerationContent fanHubId={fanHubId} />
+          : activeTab === "members"
+          ? <MemberModerationContent fanHubId={fanHubId} />
+          : <BansManagementContent fanHubId={fanHubId} />
       )}
     </div>
   );
