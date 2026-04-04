@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getPendingPostsByFanHub, reviewPost } from "@/services/ModeratorController";
 import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController";
-import "./PostModerationPage.css";
+import "./PostModerationContent.css";
 
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
 
@@ -277,48 +277,48 @@ export default function PostModerationContent({ fanHubId }) {
 
       {/* Post Details Modal */}
       {isModalOpen && selectedPost && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header"><h2>Post Details</h2><button className="modal-close" onClick={closeModal}>×</button></div>
-            <div className="modal-body">
-              <div className="post-info-section">
+        <div className="pm-modal-overlay" onClick={closeModal}>
+          <div className="pm-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="pm-modal-header"><h2>Post Details</h2><button className="pm-modal-close" onClick={closeModal}>×</button></div>
+            <div className="pm-modal-body">
+              <div className="pm-info-section">
                 <h3>Post Information</h3>
-                <div className="info-grid">
-                  <div className="info-item"><span className="info-label">Post ID:</span><span className="info-value">#{selectedPost.postId}</span></div>
-                  <div className="info-item"><span className="info-label">Title:</span><span className="info-value">{selectedPost.title}</span></div>
-                  <div className="info-item"><span className="info-label">Author:</span><span className="info-value">{selectedPost.authorDisplayName}</span></div>
-                  <div className="info-item"><span className="info-label">Type:</span><span className="info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
-                  <div className="info-item"><span className="info-label">Current Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
-                  <div className="info-item"><span className="info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
-                  <div className="info-item full-width"><span className="info-label">AI Comment:</span><span className="info-value ai-comment">{selectedPost.aiValidationComment || "No comment"}</span></div>
-                  <div className="info-item"><span className="info-label">Created:</span><span className="info-value">{formatDate(selectedPost.createdAt)}</span></div>
+                <div className="pm-info-grid">
+                  <div className="pm-info-item"><span className="pm-info-label">Post ID:</span><span className="pm-info-value">#{selectedPost.postId}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">Title:</span><span className="pm-info-value">{selectedPost.title}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">Current Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
+                  <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><span className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</span></div>
+                  <div className="pm-info-item"><span className="pm-info-label">Created:</span><span className="pm-info-value">{formatDate(selectedPost.createdAt)}</span></div>
                 </div>
               </div>
-              <div className="content-section"><h3>Content</h3><p className="post-content-full">{selectedPost.content || "No content"}</p></div>
-              <div className="media-section">
+              <div className="pm-content-section"><h3>Content</h3><p className="pm-content-full">{selectedPost.content || "No content"}</p></div>
+              <div className="pm-media-section">
                 <h3>Media ({selectedPost.media?.length || 0})</h3>
                 {selectedPost.media && selectedPost.media.length > 0 ? (
-                  <div className="media-grid">
+                  <div className="pm-media-grid">
                     {selectedPost.media.map((mediaItem) => (
-                      <div key={mediaItem.mediaId} className="media-card" onClick={() => { setSelectedMedia(mediaItem); setIsMediaViewerOpen(true); }} style={{ cursor: 'pointer' }}>
-                        <div className="media-preview">
-                          {mediaItem.mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (<video controls className="media-video" onClick={(e) => e.stopPropagation()}><source src={mediaItem.mediaUrl} type="video/mp4" />Your browser does not support the video tag.</video>) : (<img src={mediaItem.mediaUrl} alt={`Media ${mediaItem.mediaId}`} className="media-image" />)}
+                      <div key={mediaItem.mediaId} className="pm-media-card" onClick={() => { setSelectedMedia(mediaItem); setIsMediaViewerOpen(true); }} style={{ cursor: 'pointer' }}>
+                        <div className="pm-media-preview">
+                          {mediaItem.mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (<video controls className="pm-media-video" onClick={(e) => e.stopPropagation()}><source src={mediaItem.mediaUrl} type="video/mp4" />Your browser does not support the video tag.</video>) : (<img src={mediaItem.mediaUrl} alt={`Media ${mediaItem.mediaId}`} className="pm-media-image" />)}
                         </div>
-                        <div className="media-info"><div className="media-id">Media ID: #{mediaItem.mediaId}</div><div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>{mediaItem.aiValidationStatus || "UNKNOWN"}</div></div>
+                        <div className="pm-media-info"><div className="pm-media-id">Media ID: #{mediaItem.mediaId}</div><div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>{mediaItem.aiValidationStatus || "UNKNOWN"}</div></div>
                       </div>
                     ))}
                   </div>
-                ) : (<div className="no-media-message">No media attached to this post</div>)}
+                ) : (<div className="pm-no-media-message">No media attached to this post</div>)}
               </div>
               {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
-                <div className="hashtags-section"><h3>Hashtags</h3><div className="hashtags-container">{selectedPost.hashtags.map((hashtag, index) => (<span key={index} className="hashtag-tag">#{hashtag}</span>))}</div></div>
+                <div className="pm-hashtags-section"><h3>Hashtags</h3><div className="pm-hashtags-container">{selectedPost.hashtags.map((hashtag, index) => (<span key={index} className="pm-hashtag-tag">#{hashtag}</span>))}</div></div>
               )}
-              <div className="quick-actions-section">
+              <div className="pm-actions-section pm-quick-actions">
                 <h3>Moderation Actions</h3>
-                <div className="action-buttons">
-                  <button className="action-btn approve-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "APPROVED", selectedPost.status); closeModal(); }}>✓ Approve Post</button>
-                  <button className="action-btn reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
-                  <button className={`action-btn retry-ai-btn ${aiCooldown ? "cooldown" : ""} ${aiRetrying ? "loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>
+                <div className="pm-action-buttons">
+                  <button className="pm-action-btn pm-approve-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "APPROVED", selectedPost.status); closeModal(); }}>✓ Approve Post</button>
+                  <button className="pm-action-btn pm-reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
+                  <button className={`pm-action-btn pm-retry-ai-btn ${aiCooldown ? "pm-cooldown" : ""} ${aiRetrying ? "pm-loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>
                     {aiRetrying ? (<>&#x27F3; Sending...</>) : aiCooldown ? (<>&#x21BB; Retry AI ({aiCooldown.cooldownText})</>) : (<>&#x21BB; Retry AI Validation</>)}
                   </button>
                 </div>

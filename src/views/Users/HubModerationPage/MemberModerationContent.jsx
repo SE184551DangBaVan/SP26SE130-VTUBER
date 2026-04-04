@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllFanHubMembers, banFanHubMember } from "@/services/FanHubController";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
-import "./MemberModerationPage.css";
+import "./MemberModerationContent.css";
+import {banFanHubMember, getHubMembers} from "@/services/MemberController.jsx";
 
 const BAN_TYPE_OPTIONS = [
   { value: "COMMENT", label: "Comment" },
@@ -32,7 +32,7 @@ export default function MemberModerationContent({ fanHubId }) {
     async function fetchMembers() {
       setLoading(true);
       try {
-        const data = await getAllFanHubMembers(fanHubId, 0, 100, sortBy);
+        const data = await getHubMembers(fanHubId, 0, 20, sortBy);
         setMembers(data);
       } catch (err) {
         console.error("Failed to fetch members:", err);
