@@ -25,13 +25,20 @@ export default function AdminMainPageRoute() {
   }, []);
 
   useEffect(() => {
-    if (!loading && !userAuth) {
-      router.push('/login/admin');
+    if (!loading) {
+      // Redirect to admin login if not authenticated or not ADMIN role
+      if (!userAuth || userAuth.role !== 'ADMIN') {
+        router.push('/login/admin');
+      }
     }
   }, [userAuth, loading, router]);
 
   if (loading) return <div className="loader" />;
-  if (!userAuth) return null;
+  
+  // Only render if user has ADMIN role
+  if (!userAuth || userAuth.role !== 'ADMIN') {
+    return null;
+  }
 
   return (
     <div className="app">

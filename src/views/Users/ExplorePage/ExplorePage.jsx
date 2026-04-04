@@ -6,6 +6,8 @@ import 'react-loading-skeleton/dist/skeleton.css'
 import { getFanHubs, getTopFanHubs } from '@/services/FanHubController';
 import { GroupRounded } from '@mui/icons-material';
 
+import CassettePlayer from '../../../assets/Decor/cassette_player.gif'
+
 export default function ExplorePage() {
   const router = useRouter();
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -97,7 +99,7 @@ export default function ExplorePage() {
 
         {hubs.length === 0 ? (
         // fallback (your old static look)
-        <div className="explore-banner" style={{ background: "#333" }}>
+        <div className="explore-banner" style={{ background: "#333", justifyContent: 'center', alignItems: 'center' }}>
           <div className="explore-banner-left">
             <h2>NO DATA</h2>
           </div>
@@ -134,23 +136,22 @@ export default function ExplorePage() {
                 </div>
 
                 <h2>{hub.hubName?.toUpperCase()}</h2>
-
-                <div className="hub-info-member-count">
-                  <span>{hub?.memberCount ?? "N/A"}</span> <GroupRounded />
-                </div>
               </div>
 
               <button 
                 className="explore-visit-btn"
                 onClick={() => handleVisitHub(hub.fanHubId)}
               >
+                <div className="hub-info-member-count">
+                  <span>{hub?.memberCount ?? "N/A"}</span> <GroupRounded />
+                </div>
                 Visit Fanhub <span className="ico">→</span>
               </button>
             </div>
 
             <div className="explore-banner-right">
               {[1, 2, 3, 4].map((i) => (
-                hub.highlightImgUrls[0] ?
+                hub.highlightImgUrls[i-1] ?
                 <img
                   key={i}
                   src={`${hub.highlightImgUrls[i-1]}`}
@@ -185,7 +186,7 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className={`category-row ${expandCategory ? 'expand' : ''}`} >
-          {["Gaming", "Just Chatting", "Music", "ASMR", "Cooking", "Art"].map((cat, i) => (
+          {["Game", "Just Chatting", "Music", "ASMR", "Cooking", "Art"].map((cat, i) => (
           <div
             key={i}
             className="category-card"
@@ -212,11 +213,12 @@ export default function ExplorePage() {
           <h3>⭐ Top {selecetedCategory} FanHub</h3>
           <div className="explore-banner"
             style={{
-              backgroundColor: '#e7bc21',
+              backgroundColor: '#555',
               backgroundImage: topHub?.bannerUrl
                 ? `url(${topHub.bannerUrl})`
                 : "#999",
-              color: topHub?.themeColor || "#fff",
+                color: "#ccc",
+                border: `4px solid ${topHub?.themeColor || "#fff"} `
             }}
           >
             <div className="explore-banner-left">
@@ -239,11 +241,7 @@ export default function ExplorePage() {
                   </div>
                 </div>
 
-                <h2>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
-
-                <div className="hub-info-member-count">
-                  <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
-                </div>
+                <h2 style={{ color: topHub?.themeColor || "#fff" }}>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
               </div>
 
               <button 
@@ -251,6 +249,9 @@ export default function ExplorePage() {
                 onClick={() => handleVisitHub(topHub?.fanHubId)}
                 disabled={!topHub?.fanHubId}
               >
+                <div className="hub-info-member-count">
+                  <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
+                </div>
                 Visit Fanhub <span className="ico">→</span>
               </button>
             </div>
@@ -258,7 +259,6 @@ export default function ExplorePage() {
             <div className="explore-banner-right">
               {topLoading ? (
                 [1, 2, 3, 4].map((i) => (
-                  
                   <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
                     <Skeleton />
                   </SkeletonTheme>

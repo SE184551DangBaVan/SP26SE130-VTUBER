@@ -494,3 +494,24 @@ body:has(.login-wrapper) {
   transform: translate(120px, 60px);
   height: 160px;
 }
+
+.login-error-message {
+  color: red;
+  font-weight: 800;
+  position: absolute;
+  left: 0;
+  top: 15px;
+  width: 100%;
+  background-color: #aaaaaa;
+  overflow: hidden;
+  animation: pop-out 0.8s ease-out forwards;
+}
+
+@keyframes pop-out {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: 25px;
+  }
+}

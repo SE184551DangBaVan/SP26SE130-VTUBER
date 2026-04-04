@@ -310,3 +310,144 @@ body {
 .noir-tv-overlay {
   animation: noirFlicker 2.5s infinite ease-in-out;
 }
+
+.stylised-btn {
+  position: relative;
+  color: #fff;
+  background: linear-gradient(
+    165deg,
+    #606060,
+    #0f0f0f
+  );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.15), /* top highlight */
+    inset 0 -2px 4px rgba(0,0,0,0.8),     /* bottom depth */
+    0 2px 6px rgba(0,0,0,0.6);            /* outer shadow */
+
+  overflow: hidden;
+}
+
+.stylised-btn::before {
+  content: "";
+  position: absolute;
+  inset: 2px 2.5px;
+  border-radius: 999px;
+
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 6px
+    ),
+    linear-gradient(180deg, #1a1a1a, #0a0a0a);
+
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.9),
+    inset 0 -1px 2px rgba(255,255,255,0.05);
+}
+
+.stylised-btn::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  right: 6px;
+  height: 40%;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.15),
+    rgba(255,255,255,0)
+  );
+
+  pointer-events: none;
+}
+
+.stylised-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -2px 6px rgba(0,0,0,0.9),
+    0 4px 10px rgba(0,0,0,0.8);
+}
+
+.stylised-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,1),
+    0 1px 2px rgba(0,0,0,0.6);
+}
+
+.stylised-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stylised-btn .stylised-text {
+  position: relative;
+  z-index: 2;
+  color: #e5e5e5;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+
+  text-shadow:
+    0 1px 1px rgba(0,0,0,0.8),
+    0 0 6px rgba(255,255,255,0.05);
+}
+
+.modal-content {
+  position: relative !important;
+  color: #fff !important;
+  background: linear-gradient(
+    165deg,
+    #606060,
+    #0f0f0f
+  ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.15), /* top highlight */
+    inset 0 -2px 4px rgba(0,0,0,0.8),     /* bottom depth */
+    0 2px 6px rgba(0,0,0,0.6) !important;            /* outer shadow */
+
+  overflow: hidden !important;
+}
+
+.modal-content::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: inherit;
+
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 6px
+    ),
+    linear-gradient(180deg, #1a1a1a, #0a0a0a);
+
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.9),
+    inset 0 -1px 2px rgba(255,255,255,0.05);
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+  position: relative;
+  z-index: 2;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+
+  text-shadow:
+    0 1px 1px rgba(0,0,0,0.8),
+    0 0 6px rgba(255,255,255,0.05);
+}

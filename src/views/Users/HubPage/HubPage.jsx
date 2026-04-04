@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
@@ -9,12 +9,31 @@ import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberContro
 import { uploadImages } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './HubPage.css';
-import { GroupRounded, ArrowUpward, ArrowDownward, CommentRounded, EditRounded } from '@mui/icons-material';
+import { GroupRounded, ArrowUpward, ArrowDownward, CommentRounded, EditRounded, ShareRounded } from '@mui/icons-material';
+import { useScroll, useMotionValueEvent } from "framer-motion";
+
+import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
+import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
+import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
+import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
+
+const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
 
 export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
   const params = useParams();
+  const router = useRouter();
   const fanHubIdFromParams = params?.fanHubId;
+
+  // Generate random loading image on mount
+  const [randomLoadingImage, setRandomLoadingImage] = useState(null);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * loadingImages.length);
+    setRandomLoadingImage(loadingImages[randomIndex]);
+  }, []);
 
   const [hubData, setHubData] = useState(ownedHub || null);
   const [posts, setPosts] = useState([]);
@@ -43,21 +62,45 @@ export default function HubPage({ ownedHub }) {
   const [backgroundPreviews, setBackgroundPreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
 
+  const [navScrollOffset, setNavScrollOffset] = useState(0);
+
+  const { scrollY } = useScroll();
+    useMotionValueEvent(scrollY, "change", (latest) => {
+      setNavScrollOffset(latest);
+  });
+
+  // State for create post modal
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+
   // Get current user ID from storage
   const currentUserId = parseInt(
     sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
   );
-  const currentUsername = 
+  const currentUsername =
     sessionStorage.getItem("username") || localStorage.getItem("username") || "";
 
   // Check if current user is the owner of this hub
   const isOwner = hubData && (
-    hubData.ownerUserId === currentUserId || 
+    hubData.ownerUserId === currentUserId ||
     hubData.ownerUsername === currentUsername
   );
 
-  // Only owner can view members and manage them
-  const canViewMembers = isOwner;
+  // Track current user's role in this hub (for moderators)
+  const [userRoleInHub, setUserRoleInHub] = useState(null);
+
+  // Check if user can create posts (Owner, Moderator, or Member)
+  // Note: userRoleInHub will be set from fanHubsJoined, so this should work correctly
+  const canCreatePost = isOwner || userRoleInHub === 'MODERATOR' || userRoleInHub === 'MEMBER';
+
+  // Handle create post click
+  const handleCreatePostClick = () => {
+    if (!canCreatePost) {
+      setShowCreatePostModal(true);
+    } else {
+      // TODO: Navigate to create post page or open create post modal
+      alert('Create post feature coming soon!');
+    }
+  };
 
   // Fetch hub data if fanHubId is provided via params (not owned hub)
   useEffect(() => {
@@ -111,8 +154,49 @@ export default function HubPage({ ownedHub }) {
   }, [activeFanHubId, sortOrder]);
 
   useEffect(() => {
+    const fetchUserMembership = async () => {
+      if (!activeFanHubId || !currentUserId) return;
+
+      // If owner, they're implicitly a member with full access
+      if (isOwner) {
+        setIsMember(true);
+        setUserRoleInHub('OWNER');
+        return;
+      }
+
+      try {
+        // Fetch current user's profile to check fanHubsJoined
+        const userData = await getUserById(currentUserId);
+        
+        if (userData && userData.fanHubsJoined) {
+          // Check if this hub is in the user's joined hubs
+          const isUserMember = userData.fanHubsJoined.some(
+            (hub) => hub.fanHubId === activeFanHubId
+          );
+          
+          setIsMember(isUserMember);
+          
+          // If user is a member, set their role (default to MEMBER since we can't get specific role from fanHubsJoined)
+          if (isUserMember) {
+            setUserRoleInHub('MEMBER');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user membership:', error);
+      }
+    };
+
+    fetchUserMembership();
+  }, [activeFanHubId, currentUserId, isOwner]);
+
+  useEffect(() => {
     const fetchMembers = async () => {
       if (!activeFanHubId) return;
+
+      // Only fetch members if user is Owner or Moderator (others get 403)
+      if (!isOwner && userRoleInHub !== 'MODERATOR') {
+        return;
+      }
 
       setMembersLoading(true);
       try {
@@ -120,7 +204,6 @@ export default function HubPage({ ownedHub }) {
         setMembers(membersData);
 
         const memberDetailsMap = {};
-        let currentUserIsMember = false;
 
         await Promise.all(
           membersData.map(async (member) => {
@@ -132,11 +215,6 @@ export default function HubPage({ ownedHub }) {
                   ...userData,
                   memberData: member
                 };
-
-                // Check if current user is a member
-                if (member.userId === currentUserId || member.username === currentUsername) {
-                  currentUserIsMember = true;
-                }
               }
             } catch (error) {
               console.error(`Error fetching user ${member.userId}:`, error);
@@ -144,7 +222,6 @@ export default function HubPage({ ownedHub }) {
           })
         );
         setMemberDetails(memberDetailsMap);
-        setIsMember(currentUserIsMember);
       } catch (error) {
         console.error('Error fetching members:', error);
       } finally {
@@ -153,7 +230,7 @@ export default function HubPage({ ownedHub }) {
     };
 
     fetchMembers();
-  }, [activeFanHubId, currentUserId, currentUsername]);
+  }, [activeFanHubId, isOwner, userRoleInHub]);
 
   // Handle promote member to moderator
   const handlePromoteClick = (member) => {
@@ -193,7 +270,6 @@ export default function HubPage({ ownedHub }) {
     setSelectedMember(null);
   };
 
-  // Handle join fan hub
   const handleJoinFanHub = async () => {
     if (!activeFanHubId) return;
 
@@ -206,10 +282,14 @@ export default function HubPage({ ownedHub }) {
       if (result?.success) {
         updateToast(toastId, 'success', 'Joined FanHub successfully!');
         setIsMember(true);
+        setUserRoleInHub('MEMBER');
 
-        // Refresh members list
-        const membersData = await getHubMembers(activeFanHubId, 0, 50, 'joinedAt');
-        setMembers(membersData);
+        // Refresh user data to update fanHubsJoined
+        const userData = await getUserById(currentUserId);
+        if (userData && userData.fanHubsJoined) {
+          // User is now a member, members list will be fetched by the useEffect
+          // Only fetch members if user is owner or moderator (which they aren't as a new member)
+        }
       } else {
         updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
       }
@@ -353,67 +433,124 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
+  // Handle post click - navigate to post detail page
+  const handlePostClick = (post) => {
+    router.push(`/post/${post.postId}`);
+  };
+
   // Show loading if no hub data
   if (!hubData) {
     return (
       <div className='hub-page-container'>
         <div className='posts-loading'>
-          <div className='loading-spinner'>Loading hub...</div>
+          LOADING
+          {randomLoadingImage && (
+            <img
+              className='loading-animation'
+              src={randomLoadingImage.src}
+              alt=""
+              onError={(e) => {
+                e.target.src = "/picture-not-available-photo.jpg";
+              }}
+            />
+          )}
+          <div className="loading-wrapper">
+            <div className="loading-circle"></div>
+            <div className="loading-circle"></div>
+            <div className="loading-circle"></div>
+            <div className="loading-shadow"></div>
+            <div className="loading-shadow"></div>
+            <div className="loading-shadow"></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='hub-page-container'>
+    <div className='hub-page-container' >
       <div
         className='hub-banner'
         style={{
+          height: `calc(450px - ${navScrollOffset*0.65}px)`,
           backgroundImage: hubData.bannerUrl ? `url(${hubData.bannerUrl})` : '#75a4c8',
-          backgroundSize: 'cover'
+          backgroundSize: 'cover',
+          borderBottom: hubData.themeColor ? `4px solid ${hubData.themeColor}` : '4px solid #ccc',
         }}
       >
         <div className='hub-banner-overlay'>
-          <div className='hub-header-content'>
-            <img
-              className='hub-avatar'
-              src={hubData.avatarUrl || '/profile-pic-undefined.jpg'}
-              alt={hubData.hubName}
-              onError={(e) => {
-                e.target.src = '/profile-pic-undefined.jpg';
-              }}
-              style={{border: `4px solid ${hubData.themeColor}`}}
-            />
-            <div className='hub-title-section'>
-              <h1 className='hub-name'>{hubData.hubName}</h1>
-              <p className='hub-subdomain'>{hubData.subdomain}</p>
-              <div className='hub-owner-info'>
-                <span>Owned by </span>
-                <span className='owner-username'>{hubData.ownerDisplayName || hubData.ownerUsername}</span>
+          <div className='hub-header-content' 
+            style={{ height: `calc(470px - ${navScrollOffset*0.65}px)`}}>
+            <div className='hub-header-left'>
+              <img
+                className='hub-avatar'
+                src={hubData.avatarUrl || '/profile-pic-undefined.jpg'}
+                alt={hubData.hubName}
+                onError={(e) => {
+                  e.target.src = '/profile-pic-undefined.jpg';
+                }}
+                style={{border: hubData.themeColor ? `4px solid ${hubData.themeColor}` : '4px solid #ccc'}}
+              />
+              <div className='hub-title-section'>
+                <h1 className='hub-name'>{hubData.hubName}</h1>
+                <p className='hub-subdomain'>{hubData.subdomain}</p>
+                <div className='hub-owner-info'>
+                  <span>Owned by </span>
+                  <span className='owner-username'>{hubData.ownerDisplayName || hubData.ownerUsername}</span>
+                </div>
               </div>
             </div>
-            {isOwner && (
-              <button className='edit-banner-btn' onClick={handleEditClick} title='Edit banner and avatar'>
-                <EditRounded fontSize='small' />
+            <div className='hub-header-actions'>
+              <button
+                className='create-post-header-btn'
+                onClick={handleCreatePostClick}
+                title='Create Post'
+              >
+                <span className='btn-icon'>+</span>
+                <span>Create Post</span>
               </button>
-            )}
+              {!isOwner && !isMember && (
+                <button
+                  className='join-fanhub-btn header-join-btn'
+                  onClick={handleJoinFanHub}
+                  disabled={joining}
+                  style={{background: hubData.themeColor}}
+                >
+                  {joining ? (
+                    <>
+                      <span className='spinner' />
+                      Joining...
+                    </>
+                  ) : (
+                    <>
+                      <GroupRounded fontSize='small' />
+                      Join
+                    </>
+                  )}
+                </button>
+              )}
+              {!isOwner && isMember && (
+                <button
+                  className='joined-badge'
+                  disabled
+                  style={{background: hubData.themeColor, pointerEvents: 'none', opacity: '0.4'}}
+                >
+                  <GroupRounded fontSize='small' />
+                  Joined
+                </button>
+              )}
+              {isOwner && (
+                <button className='edit-banner-btn' onClick={handleEditClick} title='Edit banner and avatar'>
+                  <EditRounded fontSize='small' />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className='hub-content-wrapper'>
         <div className='hub-main-content'>
-          <div className='create-post-input'>
-            <img
-              src='/profile-pic-undefined.jpg'
-              alt='Your avatar'
-              onError={(e) => {
-                e.target.src = '/profile-pic-undefined.jpg';
-              }}
-            />
-            <input type='text' placeholder='Create Post' readOnly />
-          </div>
-
           <div className='posts-sort-bar'>
             <div className='sort-controls'>
               <label>Sort by:</label>
@@ -430,15 +567,33 @@ export default function HubPage({ ownedHub }) {
 
           {postsLoading ? (
             <div className='posts-loading'>
-              <div className='loading-spinner'>Loading posts...</div>
+              LOADING POSTS
+              {randomLoadingImage && (
+                <img
+                  className='loading-animation'
+                  src={randomLoadingImage.src}
+                  alt=""
+                  onError={(e) => {
+                    e.target.src = "/picture-not-available-photo.jpg";
+                  }}
+                />
+              )}
+              <div className="loading-wrapper">
+                <div className="loading-circle"></div>
+                <div className="loading-circle"></div>
+                <div className="loading-circle"></div>
+                <div className="loading-shadow"></div>
+                <div className="loading-shadow"></div>
+                <div className="loading-shadow"></div>
+              </div>
             </div>
           ) : filteredPosts.length === 0 ? (
             <div className='no-posts'>
-              <p>No IMAGE or VIDEO posts yet.</p>
+              <p>No Posts Yet.</p>
             </div>
           ) : (
             filteredPosts.map((post) => (
-              <PostCard key={post.postId} post={post} />
+              <PostCard key={post.postId} post={post} onClick={() => handlePostClick(post)} />
             ))
           )}
         </div>
@@ -489,73 +644,53 @@ export default function HubPage({ ownedHub }) {
             </div>
           </div>
 
-          <div className='hub-card fanhub-member-list'>
-            <div className='hub-card-header'>
-              <span>Members ({canViewMembers ? members.length : 'N/A'})</span>
-            </div>
-            <div className='hub-card-body'>
-              {!canViewMembers && !isMember ? (
-                <div className='join-fanhub-section'>
-                  <p className='join-description'>Join this FanHub to become a member and access exclusive content!</p>
-                  <button
-                    className='join-fanhub-btn'
-                    onClick={handleJoinFanHub}
-                    disabled={joining}
-                    style={{background: hubData.themeColor}}
-                  >
-                    {joining ? (
-                      <>
-                        <span className='spinner' />
-                        Joining...
-                      </>
-                    ) : (
-                      <>
-                        <GroupRounded fontSize='small' />
-                        Join FanHub
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : membersLoading ? (
-                <div className='members-loading'>Loading members...</div>
-              ) : members.length === 0 ? (
-                <p className='no-members-text'>No members yet.</p>
-              ) : (
-                <div className='members-list'>
-                  {members.map((member) => {
-                    const userDetails = memberDetails[member.id];
-                    const isAlreadyModerator = member.roleInHub === 'MODERATOR';
-                    return (
-                      <div key={member.id} className='member-item'>
-                        <img
-                          className='member-avatar'
-                          src={userDetails?.avatarUrl || '/profile-pic-undefined.jpg'}
-                          alt={member.displayName}
-                          onError={(e) => {
-                            e.target.src = '/profile-pic-undefined.jpg';
-                          }}
-                        />
-                        <div className='member-info'>
-                          <span className='member-display-name'>{member.displayName}</span>
-                          <span className='member-username'>@{member.username}</span>
-                          <span className='member-role'>{member.roleInHub}</span>
+          {(isOwner || userRoleInHub === 'MODERATOR') && (
+            <div className='hub-card fanhub-member-list'>
+              <div className='hub-card-header'>
+                <span>Members ({members.length})</span>
+              </div>
+              <div className='hub-card-body'>
+                {membersLoading ? (
+                  <div className='members-loading'>Loading members...</div>
+                ) : members.length === 0 ? (
+                  <p className='no-members-text'>No members yet.</p>
+                ) : (
+                  <div className='members-list'>
+                    {members.map((member) => {
+                      const userDetails = memberDetails[member.id];
+                      const isAlreadyModerator = member.roleInHub === 'MODERATOR';
+                      return (
+                        <div key={member.id} className='member-item'>
+                          <img
+                            className='member-avatar'
+                            src={userDetails?.avatarUrl || '/profile-pic-undefined.jpg'}
+                            alt={member.displayName}
+                            onError={(e) => {
+                              e.target.src = '/profile-pic-undefined.jpg';
+                            }}
+                          />
+                          <div className='member-info'>
+                            <span className='member-display-name'>{member.displayName}</span>
+                            <span className='member-username'>@{member.username}</span>
+                            <span className='member-role'>{member.roleInHub}</span>
+                          </div>
+                          {isOwner && !isAlreadyModerator && (
+                            <button
+                              className='promote-btn'
+                              onClick={() => handlePromoteClick(member)}
+                              style={{background: `${hubData.themeColor}`}}
+                            >
+                              <span>Promote</span>
+                            </button>
+                          )}
                         </div>
-                        {isOwner && !isAlreadyModerator && (
-                          <button
-                            className='promote-btn'
-                            onClick={() => handlePromoteClick(member)}
-                            style={{background: `${hubData.themeColor}`}}
-                          >
-                            <span>Promote</span>
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -579,26 +714,43 @@ export default function HubPage({ ownedHub }) {
 
             <div className='modal-footer'>
               <button
-                className='cancel-btn'
-                onClick={handlePromoteCancel}
-                disabled={promoting}
-              >
-                Cancel
-              </button>
-              <button
-                className='confirm-btn'
+                className='confirm-btn stylised-btn'
                 onClick={handlePromoteConfirm}
                 disabled={promoting}
               >
                 {promoting ? (
-                  <>
+                  <span className='stylised-text'>
                     <span className='spinner' />
                     Promoting...
-                  </>
+                  </span>
                 ) : (
-                  'Confirm'
+                  <span className='stylised-text'>Confirm</span>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join to Post Modal */}
+      {showCreatePostModal && (
+        <div className='modal-overlay' onClick={() => setShowCreatePostModal(false)}>
+          <div className='modal-content join-to-post-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Join to Post</h2>
+              <button className='modal-close' onClick={() => setShowCreatePostModal(false)}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <div className='join-to-post-icon'>
+                <GroupRounded fontSize='large' />
+              </div>
+              <p className='modal-description'>
+                You Must Be a Member to Post.
+              </p>
+              <p className='modal-note'>
+                Become part of the community and share your thoughts!
+              </p>
             </div>
           </div>
         </div>
@@ -749,11 +901,12 @@ export default function HubPage({ ownedHub }) {
 }
 
 // Post Card Component
-function PostCard({ post }) {
+function PostCard({ post, onClick }) {
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
 
-  const handleLike = () => {
+  const handleLike = (e) => {
+    e.stopPropagation();
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
   };
@@ -774,9 +927,9 @@ function PostCard({ post }) {
 
     return (
       <div className='post-media image-media'>
-        <img 
-          src={post.mediaUrls[0]} 
-          alt={post.title} 
+        <img
+          src={post.mediaUrls[0]}
+          alt={post.title}
           onError={(e) => {
             e.target.src = '/placeholder-image.png';
           }}
@@ -786,13 +939,13 @@ function PostCard({ post }) {
   };
 
   return (
-    <div className='post-card'>
+    <div className='post-card' onClick={onClick}>
       <div className='post-vote-section'>
         <button className='vote-btn upvote' onClick={handleLike}>
           <ArrowUpward fontSize='small' />
         </button>
         <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-        <button className='vote-btn downvote'>
+        <button className='vote-btn downvote' onClick={(e) => e.stopPropagation()}>
           <ArrowDownward fontSize='small' />
         </button>
       </div>
@@ -817,7 +970,7 @@ function PostCard({ post }) {
         </div>
 
         <h3 className='post-title'>{post.title}</h3>
-        
+
         {post.content && (
           <p className='post-text'>{post.content}</p>
         )}
@@ -833,11 +986,12 @@ function PostCard({ post }) {
         )}
 
         <div className='post-actions'>
-          <button className='action-btn'>
+          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
             <CommentRounded fontSize='small' />
             <span>Comments</span>
           </button>
-          <button className='action-btn'>
+          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
+            <ShareRounded fontSize='small' />
             <span>Share</span>
           </button>
         </div>
