@@ -108,8 +108,8 @@
   display: flex;
   align-items: center;
   height: 100%;
-  width: 15rem;
-    justify-content: center;
+  width: 18rem;
+  justify-content: center;
 }
 
 .navbar .nav-container .logo:hover {
@@ -175,9 +175,10 @@ body:has(.page-main-content) .nav-container .button-primary {
 .nav-container .search-bar {
   display: flex;
   align-items: center;
-    justify-content: center;
+  justify-content: center;
   width: 100%;
   max-width: 800px;
+  height: 40px;
   overflow: hidden;
   background-image: linear-gradient(to right, #ffffff, #ffffff 90%, #000000);
   padding: 0 0 0 1rem;
@@ -722,20 +723,27 @@ body:has(.page-main-content) .nav-container .button-primary {
 
 /* Login Button */
 .login-btn {
-  padding: 0.6rem 2rem;
-  border: 2px solid #2a2b33;
-  border-radius: 10px;
-  background-color: #abf8f8;
-  color: #2a2b33;
-  font-size: 14px;
+  margin-right: 20px;
+  width: 80px;
+  height: 30px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  font-size: 16px;
   font-weight: 600;
+  color: var(--font-color);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .login-btn:hover {
-    background-color: #b7eded;
-  border-color: #2a2b33;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px var(--main-color);
+}
+
+.login-btn:active {
+    box-shadow: 0px 0px var(--main-color);
+    transform: translate(3px, 3px);
 }
 
 /* Language Dropdown */
