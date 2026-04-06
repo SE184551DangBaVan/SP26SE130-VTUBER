@@ -229,6 +229,50 @@ export const getAllPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, s
 };
 
 /**
+ * Like a post
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} Response data with success, message, and data
+ */
+export const likePost = async (postId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/like?postId=${postId}`);
+
+    console.log("likePost response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Like post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Unlike a post
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} Response data with success, message, and data
+ */
+export const unlikePost = async (postId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/unlike?postId=${postId}`);
+
+    console.log("unlikePost response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Unlike post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
  * Send AI validation retry request for a post
  * @param {number} postId - Post ID
  * @returns {Promise<Object>} { success, message, data, error }

@@ -3,7 +3,6 @@
 import './Navbar.css'
 import { useRouter } from "next/navigation";
 import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined } from '@mui/icons-material';
-import { useScroll, useMotionValueEvent } from "framer-motion";
 import { useState, useRef, useEffect } from 'react';
 import LogoutButton from '@/functions/AccountActions/LogoutButton';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
@@ -12,7 +11,34 @@ const Navbar = () => {
     const { logout, userAuth, loading } = useAuth();
     const router = useRouter();
     const [navScrollOffset, setNavScrollOffset] = useState(0);
+    const rafRef = useRef(null);
+    const lastScrollValue = useRef(0);
     const [open, setOpen] = useState(true);
+
+    // Throttled scroll handler using requestAnimationFrame
+    useEffect(() => {
+        const handleScroll = () => {
+            if (rafRef.current) return;
+
+            rafRef.current = requestAnimationFrame(() => {
+                const currentScroll = window.scrollY || window.pageYOffset;
+                if (Math.abs(currentScroll - lastScrollValue.current) > 2) {
+                    lastScrollValue.current = currentScroll;
+                    setNavScrollOffset(currentScroll);
+                }
+                rafRef.current = null;
+            });
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+        };
+    }, []);
 
     // User profile data from API
     const [profileData, setProfileData] = useState(null);
@@ -44,11 +70,6 @@ const Navbar = () => {
         { label: "German", value: "German" },
         { label: "Thai", value: "Thai" },
     ];
-
-    const { scrollY } = useScroll();
-    useMotionValueEvent(scrollY, "change", (latest) => {
-        setNavScrollOffset(latest);
-    });
 
     // Fetch user profile data when logged in
     useEffect(() => {

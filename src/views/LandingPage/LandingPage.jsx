@@ -8,16 +8,37 @@ import ForwardButtonIco from '../../assets/UI-Elements/Forward.svg'
 import BackwardButtonIco from '../../assets/UI-Elements/Backward.svg'
 import PlayButtonIco from '../../assets/UI-Elements/Play.svg'
 
-import { useScroll, useMotionValueEvent } from "framer-motion";
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function LandingPage() {
   const [navScrollOffset, setNavScrollOffset] = useState(0);
+  const rafRef = useRef(null);
+  const lastScrollValue = useRef(0);
 
-  const { scrollY } = useScroll();
-    useMotionValueEvent(scrollY, "change", (latest) => {
-      setNavScrollOffset(latest);
-  });
+  // Throttled scroll handler using requestAnimationFrame
+  useEffect(() => {
+    const handleScroll = () => {
+      if (rafRef.current) return;
+
+      rafRef.current = requestAnimationFrame(() => {
+        const currentScroll = window.scrollY || window.pageYOffset;
+        if (Math.abs(currentScroll - lastScrollValue.current) > 2) {
+          lastScrollValue.current = currentScroll;
+          setNavScrollOffset(currentScroll);
+        }
+        rafRef.current = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className='landing-page-container'>

@@ -4,7 +4,7 @@ import Portrait from '../../../../assets/style-retro-wave-and-vaporwave-vintage-
 import Showcase from '../../../../assets/Discord_UI_Components_Mockup.png'
 import PoweredTV from '../../../../components/OperableTerebi/PoweredTV';
 import React, { useEffect, useRef, useState } from "react"
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion } from "framer-motion";
 import ReactIcon from '../../../../assets/react.svg'
 import WebSocket from '../../../../assets/WebSocket_colored_logo.svg'
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -21,11 +21,33 @@ export default function Hero() {
   const [powerPlug, setPowerPlug] = useState(true);
   const [run, setRun] = useState(false);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const rafRef = useRef(null);
+  const lastScrollValue = useRef(0);
 
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrollOffset(latest);
-  });
+  // Throttled scroll handler using requestAnimationFrame
+  useEffect(() => {
+    const handleScroll = () => {
+      if (rafRef.current) return;
+
+      rafRef.current = requestAnimationFrame(() => {
+        const currentScroll = window.scrollY || window.pageYOffset;
+        if (Math.abs(currentScroll - lastScrollValue.current) > 2) {
+          lastScrollValue.current = currentScroll;
+          setScrollOffset(currentScroll);
+        }
+        rafRef.current = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const handleMouseEnter = () => {
     setRun(true);
