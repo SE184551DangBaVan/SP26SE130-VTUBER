@@ -6,6 +6,7 @@ import { useSideBar } from "@/contexts/SideBarContext.tsx";
 import PostModerationContent from "./HubModerations/PostModeration/PostModerationContent.jsx";
 import MemberModerationContent from "./HubModerations/MemberModeration/MemberModerationContent.jsx";
 import BansManagementContent from "./HubModerations/BansManagement/BansManagementContent.jsx";
+import ReportsManagementContent from "./HubModerations/ReportsManagement/ReportsManagementContent.jsx";
 import "./HubModerationPage.css";
 
 export default function HubModerationPage() {
@@ -42,6 +43,12 @@ export default function HubModerationPage() {
         >
           Bans
         </button>
+        <button
+          className={`tab-btn ${activeTab === "reports" ? "active" : ""}`}
+          onClick={() => setActiveTab("reports")}
+        >
+          Reports
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -50,7 +57,9 @@ export default function HubModerationPage() {
           ? <PostModerationContent fanHubId={fanHubId} />
           : activeTab === "members"
           ? <MemberModerationContent fanHubId={fanHubId} />
-          : <BansManagementContent fanHubId={fanHubId} />
+          : activeTab === "bans"
+          ? <BansManagementContent fanHubId={fanHubId} />
+          : <ReportsManagementContent fanHubId={fanHubId} />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services/ModeratorController.jsx";
 import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController.jsx";
 import "./PostModerationContent.css";
@@ -18,13 +18,14 @@ const STATUS_OPTIONS = [
   { value: "REJECTED", label: "Rejected", class: "status-rejected" },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function PostModerationContent({ fanHubId }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [totalPosts, setTotalPosts] = useState(0);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [statusFilter, setStatusFilter] = useState("PENDING");
@@ -38,8 +39,65 @@ export default function PostModerationContent({ fanHubId }) {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [aiCooldown, setAiCooldown] = useState(null);
   const [aiRetrying, setAiRetrying] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Cooldown countdown timer
+  const fetchPosts = useCallback(async (reset = false) => {
+    if (reset) {
+      setLoading(true);
+      setPosts([]);
+      setCurrentPage(0);
+      setHasMore(true);
+      setSelectedPostIds([]);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const pageNo = reset ? 0 : currentPage;
+      let data;
+      if (statusFilter === "PENDING") {
+        data = await getPendingPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      } else if (statusFilter === "ALL") {
+        data = await getAllPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      } else {
+        data = await getPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      }
+
+      let items = [];
+      if (data && typeof data === "object" && data.content) {
+        items = Array.isArray(data.content) ? data.content : [];
+      } else if (Array.isArray(data)) {
+        items = data;
+      }
+
+      if (reset) {
+        setPosts(items);
+      } else {
+        setPosts(prev => [...prev, ...items]);
+      }
+
+      setHasMore(items.length === PAGE_SIZE);
+      setCurrentPage(prev => reset ? 1 : prev + 1);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+      if (reset) setPosts([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+    }
+  }, [fanHubId, currentPage, statusFilter, sortBy]);
+
+  const handleLoadMore = () => {
+    fetchPosts(false);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchPosts(true);
+  };
+
   useEffect(() => {
     if (!aiCooldown || aiCooldown.remainingSeconds <= 0) return;
     const timer = setInterval(() => {
@@ -57,45 +115,12 @@ export default function PostModerationContent({ fanHubId }) {
     return () => clearInterval(timer);
   }, [aiCooldown]);
 
-  // Fetch posts
   useEffect(() => {
     if (!fanHubId) return;
-    async function fetchPosts() {
-      setLoading(true);
-      try {
-        const pageNo = currentPage - 1;
-        let data;
-        if (statusFilter === "PENDING") {
-          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else if (statusFilter === "ALL") {
-          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else {
-          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        }
-        // Check if API returns paginated response with total
-        if (data && typeof data === 'object' && data.content) {
-          setPosts(Array.isArray(data.content) ? data.content : []);
-          setTotalPosts(data.totalElements || (data.content.length || 0));
-        } else if (Array.isArray(data)) {
-          setPosts(data);
-          setTotalPosts(data.length);
-        } else {
-          setPosts([]);
-          setTotalPosts(0);
-        }
-      } catch (err) {
-        console.error("Failed to fetch posts:", err);
-        setPosts([]);
-        setTotalPosts(0);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPosts();
-  }, [fanHubId, statusFilter, sortBy, currentPage]);
+    fetchPosts(true);
+  }, [fanHubId, statusFilter, sortBy]);
 
   const handleSort = (field) => {
-    setCurrentPage(1);
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -149,40 +174,36 @@ export default function PostModerationContent({ fanHubId }) {
     }
   };
 
-  const totalPages = Math.ceil(totalPosts / postsPerPage);
-  const startIndex = (currentPage - 1) * postsPerPage;
-  const endIndex = startIndex + postsPerPage;
-  const paginatedPosts = posts;
-
-  const isAllSelectedOnPage = paginatedPosts.length > 0 && paginatedPosts.every(post => selectedPostIds.includes(post.postId));
-
   const showToast = (message, type) => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
   const handleSelectPost = (postId) => {
-    setSelectedPostIds(prev => 
-      prev.includes(postId) 
-        ? prev.filter(id => id !== postId) 
+    setSelectedPostIds(prev =>
+      prev.includes(postId)
+        ? prev.filter(id => id !== postId)
         : [...prev, postId]
     );
   };
 
   const handleSelectAllOnPage = () => {
-    const pagePostIds = paginatedPosts.map(post => post.postId);
-    const allSelected = pagePostIds.every(id => selectedPostIds.includes(id));
-    
+    const pagePostIds = posts.map(post => post.postId);
+    const allSelected = pagePostIds.length > 0 && pagePostIds.every(id => selectedPostIds.includes(id));
+
     if (allSelected) {
-      // Deselect all on this page
       setSelectedPostIds(prev => prev.filter(id => !pagePostIds.includes(id)));
     } else {
-      // Select all on this page
       setSelectedPostIds(prev => {
         const newIds = pagePostIds.filter(id => !prev.includes(id));
         return [...prev, ...newIds];
       });
     }
+  };
+
+  const refreshAfterBulk = async () => {
+    setSelectedPostIds([]);
+    await fetchPosts(true);
   };
 
   const handleBulkApprove = async () => {
@@ -191,27 +212,7 @@ export default function PostModerationContent({ fanHubId }) {
       const result = await reviewPostsBulk(selectedPostIds, "APPROVED");
       if (result?.success) {
         showToast(`${selectedPostIds.length} post(s) approved successfully!`, "success");
-        setSelectedPostIds([]);
-        // Refresh posts
-        const pageNo = currentPage - 1;
-        let data;
-        if (statusFilter === "PENDING") {
-          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else if (statusFilter === "ALL") {
-          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else {
-          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        }
-        if (data && typeof data === 'object' && data.content) {
-          setPosts(Array.isArray(data.content) ? data.content : []);
-          setTotalPosts(data.totalElements || (data.content.length || 0));
-        } else if (Array.isArray(data)) {
-          setPosts(data);
-          setTotalPosts(data.length);
-        } else {
-          setPosts([]);
-          setTotalPosts(0);
-        }
+        await refreshAfterBulk();
       } else {
         showToast(result?.message || "Failed to approve posts", "error");
       }
@@ -227,27 +228,7 @@ export default function PostModerationContent({ fanHubId }) {
       const result = await reviewPostsBulk(selectedPostIds, "REJECTED");
       if (result?.success) {
         showToast(`${selectedPostIds.length} post(s) rejected successfully!`, "success");
-        setSelectedPostIds([]);
-        // Refresh posts
-        const pageNo = currentPage - 1;
-        let data;
-        if (statusFilter === "PENDING") {
-          data = await getPendingPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else if (statusFilter === "ALL") {
-          data = await getAllPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        } else {
-          data = await getPostsByFanHub(fanHubId, pageNo, postsPerPage, sortBy);
-        }
-        if (data && typeof data === 'object' && data.content) {
-          setPosts(Array.isArray(data.content) ? data.content : []);
-          setTotalPosts(data.totalElements || (data.content.length || 0));
-        } else if (Array.isArray(data)) {
-          setPosts(data);
-          setTotalPosts(data.length);
-        } else {
-          setPosts([]);
-          setTotalPosts(0);
-        }
+        await refreshAfterBulk();
       } else {
         showToast(result?.message || "Failed to reject posts", "error");
       }
@@ -255,18 +236,6 @@ export default function PostModerationContent({ fanHubId }) {
       console.error("Bulk reject error:", err);
       showToast("Error rejecting posts", "error");
     }
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
-    else {
-      if (currentPage <= 3) { for (let i = 1; i <= 4; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push("..."); for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i); }
-      else { pages.push(1); pages.push("..."); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-    }
-    return pages;
   };
 
   const getStatusClass = (status) => {
@@ -318,10 +287,13 @@ export default function PostModerationContent({ fanHubId }) {
       <div className="content-toolbar">
         <div className="status-filter-container">
           <label htmlFor="status-filter">Filter:</label>
-          <select id="status-filter" className="status-filter-dropdown" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); setSelectedPostIds([]); }}>
+          <select id="status-filter" className="status-filter-dropdown" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); }}>
             {STATUS_FILTER_OPTIONS.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}
           </select>
         </div>
+        <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh posts">
+          {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
+        </button>
         {selectedPostIds.length > 0 && (
           <div className="bulk-actions">
             <span className="selected-count">{selectedPostIds.length} selected</span>
@@ -341,9 +313,9 @@ export default function PostModerationContent({ fanHubId }) {
             <thead>
               <tr>
                 <th className="select-column">
-                  <input 
-                    type="checkbox" 
-                    checked={isAllSelectedOnPage} 
+                  <input
+                    type="checkbox"
+                    checked={posts.length > 0 && posts.every(post => selectedPostIds.includes(post.postId))}
                     onChange={handleSelectAllOnPage}
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -359,12 +331,12 @@ export default function PostModerationContent({ fanHubId }) {
               </tr>
             </thead>
             <tbody>
-              {paginatedPosts.map((post, index) => (
-                <tr key={post.postId} className={`post-row ${openDropdownId === post.postId ? 'has-open-dropdown' : ''} ${index === paginatedPosts.length - 1 ? 'last-row' : ''}`} onClick={() => handlePostClick(post)} style={{ cursor: 'pointer' }}>
+              {posts.map((post, index) => (
+                <tr key={post.postId} className={`post-row ${openDropdownId === post.postId ? 'has-open-dropdown' : ''} ${index === posts.length - 1 ? 'last-row' : ''}`} onClick={() => handlePostClick(post)} style={{ cursor: 'pointer' }}>
                   <td className="select-cell" onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedPostIds.includes(post.postId)} 
+                    <input
+                      type="checkbox"
+                      checked={selectedPostIds.includes(post.postId)}
                       onChange={() => handleSelectPost(post.postId)}
                     />
                   </td>
@@ -383,17 +355,20 @@ export default function PostModerationContent({ fanHubId }) {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className="pagination-container">
-              <div className="pagination-info">Showing {startIndex + 1} to {Math.min(endIndex, totalPosts)} of {totalPosts} posts</div>
-              <div className="pagination-controls">
-                <button className="pagination-btn" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>««</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>«</button>
-                {getPageNumbers().map((page, index) => (<button key={index} className={`pagination-btn ${page === currentPage ? "active" : ""} ${page === "..." ? "ellipsis" : ""}`} onClick={() => typeof page === "number" && setCurrentPage(page)} disabled={page === "..."}>{page}</button>))}
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>»</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>»»</button>
-              </div>
+          {/* Load More button */}
+          {hasMore && (
+            <div className="load-more-container">
+              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                ) : (
+                  "Load more"
+                )}
+              </button>
             </div>
+          )}
+          {!hasMore && posts.length > 0 && (
+            <div className="no-more-data">No more posts to load</div>
           )}
         </div>
       )}

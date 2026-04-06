@@ -1,36 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/functions/Auth/useAuth.jsx";
+import { useEffect, useState, useCallback } from "react";
 import { getFanHubBans, revokeBan } from "@/services/MemberController.jsx";
 import "./BansManagementContent.css";
 
+const PAGE_SIZE = 10;
+
 export default function BansManagementContent({ fanHubId }) {
-  const { userAuth } = useAuth();
   const [bans, setBans] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [bansPerPage] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchBans = useCallback(async (reset = false) => {
+    if (reset) {
+      setLoading(true);
+      setBans([]);
+      setCurrentPage(0);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const pageNo = reset ? 0 : currentPage;
+      const data = await getFanHubBans(fanHubId, pageNo, PAGE_SIZE, sortBy);
+
+      let items = [];
+      if (data && typeof data === "object" && data.content) {
+        items = Array.isArray(data.content) ? data.content : [];
+      } else if (Array.isArray(data)) {
+        items = data;
+      }
+
+      if (reset) {
+        setBans(items);
+      } else {
+        setBans(prev => [...prev, ...items]);
+      }
+
+      setHasMore(items.length === PAGE_SIZE);
+      setCurrentPage(prev => reset ? 1 : prev + 1);
+    } catch (err) {
+      console.error("Failed to fetch bans:", err);
+      if (reset) setBans([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+    }
+  }, [fanHubId, currentPage, sortBy]);
+
+  const handleLoadMore = () => {
+    fetchBans(false);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchBans(true);
+  };
 
   useEffect(() => {
     if (!fanHubId) return;
-    async function fetchBans() {
-      setLoading(true);
-      try {
-        const data = await getFanHubBans(fanHubId, 0, 200, sortBy);
-        setBans(data);
-      } catch (err) {
-        console.error("Failed to fetch bans:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBans();
+    fetchBans(true);
   }, [fanHubId, sortBy]);
 
   const showToast = (message, type) => {
@@ -39,7 +78,6 @@ export default function BansManagementContent({ fanHubId }) {
   };
 
   const handleSort = (field) => {
-    setCurrentPage(1);
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -53,9 +91,7 @@ export default function BansManagementContent({ fanHubId }) {
       const result = await revokeBan(banId);
       if (result?.success) {
         showToast("Ban revoked successfully!", "success");
-        // Refresh bans list
-        const data = await getFanHubBans(fanHubId, 0, 200, sortBy);
-        setBans(data);
+        await fetchBans(true);
       } else {
         showToast(result?.message || "Failed to revoke ban", "error");
       }
@@ -73,7 +109,7 @@ export default function BansManagementContent({ fanHubId }) {
   };
 
   useEffect(() => {
-    const handleEscape = (e) => { if (e.key === "Escape") {}; };
+    const handleEscape = (e) => { if (e.key === "Escape") { /* empty */ } };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
@@ -95,28 +131,10 @@ export default function BansManagementContent({ fanHubId }) {
   }, {});
 
   const sortedGroupedBans = Object.values(groupedBans).sort((a, b) => {
-    // Sort by the most recent ban in each group
     const aLatest = Math.max(...a.bans.map(b => new Date(b.createdAt).getTime()));
     const bLatest = Math.max(...b.bans.map(b => new Date(b.createdAt).getTime()));
     return sortDirection === "asc" ? aLatest - bLatest : bLatest - aLatest;
   });
-
-  const totalPages = Math.ceil(sortedGroupedBans.length / bansPerPage);
-  const startIndex = (currentPage - 1) * bansPerPage;
-  const endIndex = startIndex + bansPerPage;
-  const paginatedBans = sortedGroupedBans.slice(startIndex, endIndex);
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
-    else {
-      if (currentPage <= 3) { for (let i = 1; i <= 4; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push("..."); for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i); }
-      else { pages.push(1); pages.push("..."); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-    }
-    return pages;
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -125,9 +143,9 @@ export default function BansManagementContent({ fanHubId }) {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleString("en-US", { 
-      month: "short", 
-      day: "numeric", 
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit"
@@ -148,6 +166,12 @@ export default function BansManagementContent({ fanHubId }) {
 
   return (
     <div className="bans-moderation-content">
+      <div className="content-toolbar">
+        <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh bans">
+          {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
+        </button>
+      </div>
+
       {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
 
       {sortedGroupedBans.length === 0 ? (
@@ -166,7 +190,7 @@ export default function BansManagementContent({ fanHubId }) {
               </tr>
             </thead>
             <tbody>
-              {paginatedBans.map((userBanGroup) => (
+              {sortedGroupedBans.map((userBanGroup) => (
                 <tr key={userBanGroup.userId}>
                   <td className="user-id">#{userBanGroup.userId}</td>
                   <td className="display-name">{userBanGroup.displayName || "-"}</td>
@@ -189,8 +213,8 @@ export default function BansManagementContent({ fanHubId }) {
                     <span className="banned-by-name">{userBanGroup.bans[0].bannedByDisplayName || "-"}</span>
                   </td>
                   <td className="ban-date">
-                    {formatDate(userBanGroup.bans.reduce((latest, ban) => 
-                      new Date(ban.createdAt) > new Date(latest) ? ban.createdAt : latest, 
+                    {formatDate(userBanGroup.bans.reduce((latest, ban) =>
+                      new Date(ban.createdAt) > new Date(latest) ? ban.createdAt : latest,
                       userBanGroup.bans[0].createdAt
                     ))}
                   </td>
@@ -199,17 +223,20 @@ export default function BansManagementContent({ fanHubId }) {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className="pagination-container">
-              <div className="pagination-info">Showing {startIndex + 1} to {Math.min(endIndex, sortedGroupedBans.length)} of {sortedGroupedBans.length} users</div>
-              <div className="pagination-controls">
-                <button className="pagination-btn" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>««</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>«</button>
-                {getPageNumbers().map((page, index) => (<button key={index} className={`pagination-btn ${page === currentPage ? "active" : ""} ${page === "..." ? "ellipsis" : ""}`} onClick={() => typeof page === "number" && setCurrentPage(page)} disabled={page === "..."}>{page}</button>))}
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>»</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>»»</button>
-              </div>
+          {/* Load More button */}
+          {hasMore && (
+            <div className="load-more-container">
+              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                ) : (
+                  "Load more"
+                )}
+              </button>
             </div>
+          )}
+          {!hasMore && bans.length > 0 && (
+            <div className="no-more-data">No more bans to load</div>
           )}
         </div>
       )}
