@@ -33,7 +33,7 @@ body:has(#side-bar.rebound-animation) .create-hub-page-container {
 .posts-loading {
   padding: 40px 16px;
   width: 100%;
-  height: 90vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
