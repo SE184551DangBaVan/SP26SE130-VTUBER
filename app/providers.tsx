@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/functions/Auth/useAuth';
 import { ThemeProvider } from '@/Context';
+import { ReportModalProvider } from '@/contexts/ReportContext';
 import ScrollToTop from '@/components/ScrollToTop/ScrollToTop';
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
@@ -37,17 +38,19 @@ export default function Providers({ children }) {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          draggable
-        />
-        <ScrollToTop />
-        {children}
+        <ReportModalProvider>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            pauseOnHover
+            draggable
+          />
+          <ScrollToTop />
+          {children}
+        </ReportModalProvider>
       </ThemeProvider>
     </AuthProvider>
   );

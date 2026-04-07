@@ -90,3 +90,50 @@ export const reviewPost = async (postId, status) => {
     return null;
   }
 };
+
+/**
+ * Review multiple posts in bulk (approve or reject)
+ * @param {number[]} postIds - Array of post IDs to review
+ * @param {string} status - New status ('APPROVED' or 'REJECTED')
+ * @returns {Promise<Object>} Review result
+ */
+export const reviewPostsBulk = async (postIds, status) => {
+  try {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.warn("No auth token found");
+      return { success: false, message: "No auth token" };
+    }
+
+    if (!postIds || postIds.length === 0) {
+      return { success: false, message: "No posts selected" };
+    }
+
+    const postIdsParam = postIds.join(',');
+    const res = await axios.put(
+      `${API_BASE_URL}/posts/review/bulk?postIds=${postIdsParam}&status=${status}`,
+      {},
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("reviewPostsBulk response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: res.data?.message || "Bulk review failed" };
+  } catch (err) {
+    console.error("Bulk review posts error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return { success: false, message: err.message };
+  }
+};

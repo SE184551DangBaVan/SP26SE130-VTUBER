@@ -114,3 +114,63 @@ export const banFanHubMember = async (payload) => {
         return err.response?.data || { success: false, message: err.message };
     }
 };
+
+/**
+ * Get all bans for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort by field
+ * @returns {Promise<Array>} Bans data
+ */
+export const getFanHubBans = async (fanHubId, pageNo = 0, pageSize = 50, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub-member/bans/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getFanHubBans response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch fan hub bans error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Revoke a ban
+ * @param {number} banId - Ban ID
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const revokeBan = async (banId) => {
+  try {
+    const res = await axiosInstance.put(
+      `/fan-hub-member/ban/revoke?banId=${banId}`,
+      {}
+    );
+
+    console.log("revokeBan response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to revoke ban" };
+  } catch (err) {
+    console.error("Revoke ban error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

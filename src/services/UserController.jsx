@@ -206,3 +206,95 @@ export const selectDisplayBadges = async (userBadgeIds) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Get current logged-in user's profile
+ * @returns {Promise<Object|null>} User profile data or null
+ */
+export const getCurrentUserProfile = async () => {
+  try {
+    const res = await axiosInstance.get(`/user/me`);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+    return null;
+  } catch (err) {
+    console.error("Fetch current user profile error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+/**
+ * Update user profile information
+ * @param {Object} userData - User data to update
+ * @param {string} userData.email - User email
+ * @param {string} userData.displayName - Display name
+ * @param {string} userData.translateLanguage - Translation language preference
+ * @param {string} userData.bio - User bio
+ * @returns {Promise<Object>} Result of the update operation
+ */
+export const updateUserProfile = async (userData) => {
+  try {
+    const res = await axiosInstance.put(
+      `/user/update`,
+      userData
+    );
+
+    console.log("updateUserProfile response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Update user profile error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Upload user avatar and/or frame
+ * @param {File} avatarFile - Avatar image file (MultipartFile)
+ * @param {File} frameFile - Frame image file (MultipartFile, optional)
+ * @returns {Promise<Object>} Result of the upload operation
+ */
+export const uploadAvatarFrame = async (avatarFile, frameFile = null) => {
+  try {
+    const formData = new FormData();
+    
+    if (avatarFile) {
+      formData.append('avatar', avatarFile);
+    }
+    
+    if (frameFile) {
+      formData.append('frame', frameFile);
+    }
+
+    const res = await axiosInstance.post(
+      `/user/upload-avatar-frame`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    console.log("uploadAvatarFrame response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Upload avatar/frame error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

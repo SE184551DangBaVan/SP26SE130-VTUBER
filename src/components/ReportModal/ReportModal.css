@@ -1,0 +1,231 @@
+/* Report Modal - Light Theme */
+
+.report-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+  animation: reportFadeIn 0.2s ease;
+}
+
+@keyframes reportFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes reportSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.report-modal-container {
+  position: relative;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 0;
+  max-width: 460px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: reportSlideIn 0.3s ease;
+  overflow: hidden;
+}
+
+.report-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.report-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.report-modal-close-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.report-modal-close-btn:hover {
+  color: #374151;
+  transform: scale(1.1);
+}
+
+.report-modal-close-btn:active {
+  transform: scale(0.95);
+}
+
+.report-modal-form {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.report-modal-description {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.report-modal-target-name {
+  color: #111827;
+  font-weight: 600;
+}
+
+.report-modal-label {
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.report-modal-label .required {
+  color: #ef4444;
+}
+
+.report-modal-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-modal-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.report-modal-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.report-modal-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.report-modal-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.char-count {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  align-self: flex-end;
+}
+
+.char-count--limit {
+  color: #ef4444;
+}
+
+.report-modal-error {
+  font-size: 0.85rem;
+  color: #ef4444;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.report-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.report-modal-btn {
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  letter-spacing: 0.3px;
+}
+
+.report-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.report-modal-btn--cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.report-modal-btn--cancel:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.report-modal-btn--submit {
+  background: linear-gradient(135deg, #3ba55d, #2d8a4e);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 165, 93, 0.3);
+}
+
+.report-modal-btn--submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 165, 93, 0.4);
+}
+
+.report-modal-btn--submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .report-modal-container {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .report-modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .report-modal-form {
+    padding: 1.25rem;
+  }
+
+  .report-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .report-modal-btn {
+    width: 100%;
+  }
+}

@@ -4,8 +4,9 @@ import './Navbar.css'
 import { useRouter } from "next/navigation";
 import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined } from '@mui/icons-material';
 import { useState, useRef, useEffect } from 'react';
-import LogoutButton from '@/functions/AccountActions/LogoutButton';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
+import { getCurrentUserProfile, updateUserProfile } from '@/services/UserController';
+import { languageOptions } from '@/constants/languageOptions';
 
 const Navbar = () => {
     const { logout, userAuth, loading } = useAuth();
@@ -57,20 +58,6 @@ const Navbar = () => {
     const profileDropdownRef = useRef(null);
     const languageDropdownRef = useRef(null);
 
-    // Available languages for AI Translate
-    const languageOptions = [
-        { label: "English", value: "English" },
-        { label: "Vietnamese", value: "Vietnamese" },
-        { label: "Chinese (Simplified)", value: "Chinese (Simplified)" },
-        { label: "Chinese (Traditional)", value: "Chinese (Traditional)" },
-        { label: "Japanese", value: "Japanese" },
-        { label: "Korean", value: "Korean" },
-        { label: "Spanish", value: "Spanish" },
-        { label: "French", value: "French" },
-        { label: "German", value: "German" },
-        { label: "Thai", value: "Thai" },
-    ];
-
     // Fetch user profile data when logged in
     useEffect(() => {
         const fetchProfile = async () => {
@@ -79,21 +66,9 @@ const Navbar = () => {
                 return;
             }
             try {
-                const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-                const response = await fetch(
-                    "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/user/me",
-                    {
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success && result.data) {
-                        setProfileData(result.data);
-                    }
+                const result = await getCurrentUserProfile();
+                if (result) {
+                    setProfileData(result);
                 }
             } catch (error) {
                 console.error("Failed to fetch user profile:", error);
@@ -131,28 +106,15 @@ const Navbar = () => {
         if (updatingLanguage) return;
         setUpdatingLanguage(true);
         try {
-            const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-            const response = await fetch(
-                "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1/user/update",
-                {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: profileData?.email || userAuth?.email,
-                        displayName: profileData?.displayName || "",
-                        translateLanguage: language,
-                        bio: profileData?.bio || "",
-                    }),
-                }
-            );
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    setProfileData((prev) => ({ ...prev, translateLanguage: language }));
-                }
+            const result = await updateUserProfile({
+                email: profileData?.email || userAuth?.email,
+                displayName: profileData?.displayName || "",
+                translateLanguage: language,
+                bio: profileData?.bio || "",
+            });
+
+            if (result?.success) {
+                setProfileData((prev) => ({ ...prev, translateLanguage: language }));
             }
         } catch (error) {
             console.error("Failed to update language:", error);
@@ -304,7 +266,8 @@ const Navbar = () => {
                                                 <PersonOutline />
                                                 <span>User profile</span>
                                             </button>
-                                            <button className="profile-menu-item">
+                                            <button className="profile-menu-item"
+                                            onClick={() => {router.push("/settings")}}>
                                                 <SettingsOutlined />
                                                 <span>Settings</span>
                                             </button>
@@ -358,6 +321,11 @@ const Navbar = () => {
                                             onClick={() => {router.push("/my-posts")}}>
                                                 <ArticleOutlined />
                                                 <span>Your Posts</span>
+                                            </button>
+                                            <button className="profile-menu-item"
+                                            onClick={() => {router.push("/my-reports")}}>
+                                                <AssignmentOutlined />
+                                                <span>Your Reports</span>
                                             </button>
                                             <button className="profile-menu-item">
                                                 <FeedbackOutlined />
