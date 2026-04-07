@@ -9,13 +9,14 @@ import { useSideBar } from "@/contexts/SideBarContext";
 import { languageOptions } from "@/constants/languageOptions";
 import { showSuccess, showError } from "@/utils/toastUtils";
 
-type SettingsSection = "account" | "profile";
+type SettingsSection = "profile" | "account" | "logout";
 
 export default function SettingsPage() {
   const auth = useAuth();
   const router = useRouter();
   const { sideBarRetractor } = useSideBar();
   const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userData, setUserData] = useState<any | null>(null);
@@ -224,6 +225,11 @@ export default function SettingsPage() {
     handleRemoveAvatarPreview();
   };
 
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    auth.logout();
+  };
+
   // Handle save all changes
   const handleSaveAll = async () => {
     setSaving(true);
@@ -308,6 +314,17 @@ export default function SettingsPage() {
             </svg>
             <span>Account</span>
           </button>
+          <button
+            className={`settings-nav-item ${activeSection === "logout" ? "active logout" : ""}`}
+            onClick={() => setActiveSection("logout")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Logout</span>
+          </button>
         </nav>
       </div>
 
@@ -373,6 +390,25 @@ export default function SettingsPage() {
                 </select>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Logout Section */}
+        {activeSection === "logout" && (
+          <div className="settings-section logout-section">
+            <p className="logout-question">Are you sure you want to logout from your account?</p>
+            <button
+              className="logout-confirm-btn"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+            </button>
           </div>
         )}
 

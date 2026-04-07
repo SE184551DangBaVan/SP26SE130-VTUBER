@@ -57,6 +57,8 @@
   border-right: 1px solid #e0e0e0;
   padding: 24px 0;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-sidebar-title {
@@ -101,6 +103,52 @@
 }
 
 .settings-nav-item svg {
+  flex-shrink: 0;
+}
+
+.settings-nav-item.logout.active {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.settings-nav-item.logout.active:hover {
+  background: #b71c1c;
+}
+
+/* Sidebar Footer */
+.settings-sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.settings-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #d32f2f;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.settings-logout-btn:hover:not(:disabled) {
+  background: #ffebee;
+  border-color: #d32f2f;
+}
+
+.settings-logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-logout-btn svg {
   flex-shrink: 0;
 }
 
@@ -455,6 +503,48 @@
 
 .avatar-preview-footer {
   border-top: 1px solid #eee;
+}
+
+/* Logout Section */
+.logout-section {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.logout-question {
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.logout-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px;
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.logout-confirm-btn:hover:not(:disabled) {
+  background: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.logout-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Password Input */
