@@ -257,11 +257,16 @@ export default function ExplorePage() {
             </div>
 
             <div className="explore-banner-right">
-              {topLoading ? (
+              {!topLoading ? (
                 [1, 2, 3, 4].map((i) => (
-                  <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
-                    <Skeleton />
-                  </SkeletonTheme>
+                  <img
+                    key={i}
+                    src={`${topHub?.highlightImgUrls[i-1]}`}
+                    alt=""
+                    onError={(e) => {
+                      e.target.src = "/picture-not-available-photo.jpg";
+                    }}
+                  />
                 ))
               ) : (
                 [1, 2, 3, 4].map((i) => (

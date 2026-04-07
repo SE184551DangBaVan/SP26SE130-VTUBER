@@ -3,7 +3,7 @@ body:has(.login-wrapper) {
 }
 
 .login-wrapper {
-    --input-focus: #2d8cf0;
+    --input-focus: #909090ab;
     --font-color: #323232;
     --font-color-sub: #666;
     --bg-color: #fff;
@@ -16,6 +16,19 @@ body:has(.login-wrapper) {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    animation: fly-into-view 0.8s ease forwards;
+}
+
+@keyframes fly-into-view {
+  0% {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* switch card */
@@ -29,6 +42,12 @@ body:has(.login-wrapper) {
     gap: 30px;
     width: 50px;
     height: 20px;
+}
+
+.card-side {
+  opacity: 0;
+  animation: fade-into-view 0.4s ease forwards;
+  animation-delay: 0.8s;
 }
 
 .card-side::before {
@@ -72,7 +91,17 @@ body:has(.login-wrapper) {
     bottom: 0;
     background-color: var(--bg-colorcolor);
     transition: 0.3s;
+    opacity: 0;
+    animation: fade-into-view 0.4s ease forwards;
+    animation-delay: 0.8s;
 }
+
+@keyframes fade-into-view {
+  to {
+    opacity: 1;
+  }
+}
+
 
 .slider:before {
     box-sizing: border-box;
@@ -182,6 +211,7 @@ body:has(.login-wrapper) {
     color: var(--font-color);
     padding: 5px 10px;
     outline: none;
+    transition: all 0.3s ease;
 }
 
 .flip-card__input::placeholder {
@@ -190,7 +220,7 @@ body:has(.login-wrapper) {
 }
 
 .flip-card__input:focus {
-    border: 2px solid var(--input-focus);
+  border: 2px solid var(--input-focus);
 }
 
 .toggle-icon {

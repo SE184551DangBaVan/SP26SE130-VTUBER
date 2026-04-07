@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import { SteamNotificationContainer } from "@/utils/SteamNotification";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <div className="noir-container"><div className="noir-tv-overlay"></div></div>
+        <SteamNotificationContainer />
         <Providers>{children}</Providers>
       </body>
     </html>

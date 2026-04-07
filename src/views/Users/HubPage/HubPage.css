@@ -335,39 +335,41 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 
 .post-vote-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  min-width: 40px;
+  gap: 5px;
+  width: 80px;
+  height: 32px;
+  border-radius: 24px;
+  border: 1.6px solid #d7d7d7;
 }
 
 .vote-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 42px;
+  height: 30px;
   background: transparent;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.2s;
-  color: #878a8c;
+  border-radius: 24px 0 0 24px;
+  border: none;
+  margin-right: 5px;
+  border-right: 1.6px solid #d7d7d7;
+  transition: all 0.2s;
+}
+
+.vote-btn.like-btn .like-ico {
+  transform: rotate(10deg);
+  transition: all 0.6s ease;
 }
 
 .vote-btn:hover {
-  background: #f5f5f5;
+  background: #d7d7d7;
 }
 
-.vote-btn.upvote:hover {
-  color: #ff4500;
-  background: #f5f5f5;
-}
-
-.vote-btn.downvote:hover {
-  color: #7193ff;
-  background: #f5f5f5;
+.vote-btn:hover .vote-btn.like-btn .like-ico path {
+  stroke: #fff;
 }
 
 .vote-count {
@@ -376,8 +378,35 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   color: #323232;
 }
 
+.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn .like-ico {
+  transform: rotate(0);
+}
+.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn {
+  background-color: #4160bd;
+}
+.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn .like-ico path {
+  stroke: #fff;  
+}
+
 .vote-count.liked {
-  color: #ff4500;
+  color: #4160bd;
+}
+
+/* Loading spinner for like button */
+.like-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d7d7d7;
+  border-top-color: #323232;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .post-content {
@@ -391,6 +420,7 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 20px 0 15px;
 }
 
 .post-author-info {
@@ -429,11 +459,12 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 }
 
 .post-title {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 600;
   color: #323232;
   margin: 0;
   line-height: 1.4;
+  padding: 0 20px;
 }
 
 .post-text {
@@ -441,6 +472,7 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   color: #323232;
   margin: 0;
   line-height: 1.6;
+  padding: 0 20px;
 }
 
 .post-media {

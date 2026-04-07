@@ -32,6 +32,7 @@
 
 #side-bar-toggle:checked ~ #side-bar-header {
   width: calc(var(--sidebar-width-min) - 16px);
+  min-height: 80px;
   transform: translateX(-10px);
 }
 #side-bar-toggle:checked ~ #side-bar-content, #side-bar-toggle:checked ~ #side-bar-footer {
@@ -150,7 +151,7 @@
   width: var(--sidebar-width);
   left: 16px;
   width: calc(var(--sidebar-width) - 16px);
-  min-height: 80px;
+  min-height: 60px;
   background: transparent;
   border-radius: 16px;
   z-index: 2;
