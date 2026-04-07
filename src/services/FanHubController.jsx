@@ -67,6 +67,32 @@ export const createFanHub = async (payload) => {
 };
 
 /**
+ * Check if the current user is a member of a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object|null>} Object with isMember and roleInHub, or null
+ */
+export const checkIsMember = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub-member/${fanHubId}/is-member`
+    );
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Check is member error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+/**
  * Upload banner, avatar, and background images for a fan hub
  * @param {number} fanHubId - Fan Hub ID
  * @param {File} bannerFile - Banner file

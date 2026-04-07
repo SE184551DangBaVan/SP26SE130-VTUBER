@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import "./MemberModerationContent.css";
-import {banFanHubMember, getHubMembers} from "@/services/MemberController.jsx";
+import { banFanHubMember, getHubMembers } from "@/services/MemberController.jsx";
 
 const BAN_TYPE_OPTIONS = [
   { value: "COMMENT", label: "Comment" },
@@ -12,13 +12,15 @@ const BAN_TYPE_OPTIONS = [
   { value: "INTERACT", label: "Interact" },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function MemberModerationContent({ fanHubId }) {
   const { userAuth } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [membersPerPage] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("joinedAt");
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -26,21 +28,60 @@ export default function MemberModerationContent({ fanHubId }) {
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [banForm, setBanForm] = useState({ reason: "", banType: "COMMENT", bannedUntil: "" });
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMembers = useCallback(async (reset = false) => {
+    if (reset) {
+      setLoading(true);
+      setMembers([]);
+      setCurrentPage(0);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const pageNo = reset ? 0 : currentPage;
+      const data = await getHubMembers(fanHubId, pageNo, PAGE_SIZE, sortBy);
+
+      let items = [];
+      if (data && typeof data === "object" && data.content) {
+        items = Array.isArray(data.content) ? data.content : [];
+      } else if (Array.isArray(data)) {
+        items = data;
+      }
+
+      if (reset) {
+        setMembers(items);
+      } else {
+        setMembers(prev => [...prev, ...items]);
+      }
+
+      setHasMore(items.length === PAGE_SIZE);
+      setCurrentPage(prev => reset ? 1 : prev + 1);
+    } catch (err) {
+      console.error("Failed to fetch members:", err);
+      if (reset) setMembers([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+    }
+  }, [fanHubId, currentPage, sortBy]);
+
+  const handleLoadMore = () => {
+    fetchMembers(false);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchMembers(true);
+  };
 
   useEffect(() => {
     if (!fanHubId) return;
-    async function fetchMembers() {
-      setLoading(true);
-      try {
-        const data = await getHubMembers(fanHubId, 0, 20, sortBy);
-        setMembers(data);
-      } catch (err) {
-        console.error("Failed to fetch members:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchMembers();
+    fetchMembers(true);
   }, [fanHubId, sortBy]);
 
   const showToast = (message, type) => {
@@ -49,7 +90,6 @@ export default function MemberModerationContent({ fanHubId }) {
   };
 
   const handleSort = (field) => {
-    setCurrentPage(1);
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -68,13 +108,13 @@ export default function MemberModerationContent({ fanHubId }) {
         fanHubMemberId: selectedMember.id,
         reason: banForm.reason.trim(),
         banType: banForm.banType,
-          bannedUntil: banForm.bannedUntil
-              ? new Date(banForm.bannedUntil).toISOString()
-              : null,
+        bannedUntil: banForm.bannedUntil
+          ? new Date(banForm.bannedUntil).toISOString()
+          : null,
       });
       if (result?.success) {
         showToast("Member banned successfully!", "success");
-        setMembers((prev) => prev.filter((m) => m.id !== selectedMember.id));
+        await fetchMembers(true);
         closeBanModal();
       } else {
         showToast(result?.message || "Failed to ban member", "error");
@@ -105,32 +145,6 @@ export default function MemberModerationContent({ fanHubId }) {
 
   const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
 
-  const sortedMembers = [...members].sort((a, b) => {
-    let aVal = a[sortBy], bVal = b[sortBy];
-    if (aVal === null || aVal === undefined) aVal = "";
-    if (bVal === null || bVal === undefined) bVal = "";
-    if (sortBy === "joinedAt") { aVal = new Date(aVal).getTime(); bVal = new Date(bVal).getTime(); }
-    if (sortBy === "id") { aVal = Number(aVal); bVal = Number(bVal); }
-    return sortDirection === "asc" ? (aVal > bVal ? 1 : aVal < bVal ? -1 : 0) : (aVal < bVal ? 1 : aVal > bVal ? -1 : 0);
-  });
-
-  const totalPages = Math.ceil(sortedMembers.length / membersPerPage);
-  const startIndex = (currentPage - 1) * membersPerPage;
-  const endIndex = startIndex + membersPerPage;
-  const paginatedMembers = sortedMembers.slice(startIndex, endIndex);
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
-    else {
-      if (currentPage <= 3) { for (let i = 1; i <= 4; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-      else if (currentPage >= totalPages - 2) { pages.push(1); pages.push("..."); for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i); }
-      else { pages.push(1); pages.push("..."); for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i); pages.push("..."); pages.push(totalPages); }
-    }
-    return pages;
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -147,7 +161,6 @@ export default function MemberModerationContent({ fanHubId }) {
 
   const canBanMember = (member) => {
     if (!userAuth?.role) return false;
-    // Moderators cannot ban other moderators
     if (member.roleInHub === "MODERATOR" && userAuth.role !== "VTUBER" && userAuth.role !== "ADMIN") {
       return false;
     }
@@ -158,6 +171,12 @@ export default function MemberModerationContent({ fanHubId }) {
 
   return (
     <div className="member-moderation-content">
+      <div className="content-toolbar">
+        <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh members">
+          {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
+        </button>
+      </div>
+
       {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
 
       {members.length === 0 ? (
@@ -176,7 +195,7 @@ export default function MemberModerationContent({ fanHubId }) {
               </tr>
             </thead>
             <tbody>
-              {paginatedMembers.map((member) => (
+              {members.map((member) => (
                 <tr key={member.id}>
                   <td className="member-id">#{member.id}</td>
                   <td className="display-name">{member.displayName || "-"}</td>
@@ -184,8 +203,8 @@ export default function MemberModerationContent({ fanHubId }) {
                   <td><span className={`role-badge ${getRoleClass(member.roleInHub)}`}>{member.roleInHub || "MEMBER"}</span></td>
                   <td className="joined-date">{formatDate(member.joinedAt)}</td>
                   <td className="action-cell">
-                    <button 
-                      className="ban-btn" 
+                    <button
+                      className="ban-btn"
                       onClick={() => openBanModal(member)}
                       disabled={!canBanMember(member)}
                       title={!canBanMember(member) ? "Only Vtubers/Admins can ban moderators" : ""}
@@ -198,17 +217,20 @@ export default function MemberModerationContent({ fanHubId }) {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className="pagination-container">
-              <div className="pagination-info">Showing {startIndex + 1} to {Math.min(endIndex, sortedMembers.length)} of {sortedMembers.length} members</div>
-              <div className="pagination-controls">
-                <button className="pagination-btn" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>««</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>«</button>
-                {getPageNumbers().map((page, index) => (<button key={index} className={`pagination-btn ${page === currentPage ? "active" : ""} ${page === "..." ? "ellipsis" : ""}`} onClick={() => typeof page === "number" && setCurrentPage(page)} disabled={page === "..."}>{page}</button>))}
-                <button className="pagination-btn" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>»</button>
-                <button className="pagination-btn" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>»»</button>
-              </div>
+          {/* Load More button */}
+          {hasMore && (
+            <div className="load-more-container">
+              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                ) : (
+                  "Load more"
+                )}
+              </button>
             </div>
+          )}
+          {!hasMore && members.length > 0 && (
+            <div className="no-more-data">No more members to load</div>
           )}
         </div>
       )}
@@ -217,32 +239,37 @@ export default function MemberModerationContent({ fanHubId }) {
       {isBanModalOpen && selectedMember && (
         <div className="mm-modal-overlay" onClick={closeBanModal}>
           <div className="mm-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="mm-modal-header"><h2>Ban Member</h2><button className="mm-modal-close" onClick={closeBanModal}>×</button></div>
+            <div className="mm-modal-header">
+              <h2>Ban Member</h2>
+              <button className="mm-modal-close" onClick={closeBanModal}>×</button>
+            </div>
             <div className="mm-modal-body">
               <div className="mm-ban-member-info">
-                <p><strong>Member:</strong> {selectedMember.displayName || selectedMember.username}</p>
-                <p><strong>Role:</strong> {selectedMember.roleInHub || "MEMBER"}</p>
+                <div className="mm-ban-info-grid">
+                  <div className="mm-ban-info-item"><span className="mm-ban-info-label">Member:</span><span className="mm-ban-info-value">{selectedMember.displayName || selectedMember.username}</span></div>
+                  <div className="mm-ban-info-item"><span className="mm-ban-info-label">Role:</span><span className="mm-ban-info-value">{selectedMember.roleInHub || "MEMBER"}</span></div>
+                </div>
               </div>
               <div className="mm-ban-form">
                 <div className="mm-form-group">
-                  <label>Ban Type</label>
-                  <select value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
+                  <label htmlFor="ban-type">Ban Type</label>
+                  <select id="ban-type" value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
                     {BAN_TYPE_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                   </select>
                 </div>
                 <div className="mm-form-group">
-                  <label>Banned Until</label>
-                  <input type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
+                  <label htmlFor="ban-until">Banned Until</label>
+                  <input id="ban-until" type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
                 </div>
                 <div className="mm-form-group full-width">
-                  <label>Reason</label>
-                  <textarea rows={4} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter ban reason..." />
+                  <label htmlFor="ban-reason">Reason</label>
+                  <textarea id="ban-reason" rows={4} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter ban reason..." />
                 </div>
               </div>
-              <div className="mm-ban-actions">
-                <button className="mm-ban-confirm-btn" onClick={handleBanMember}>Confirm Ban</button>
-                <button className="mm-ban-cancel-btn" onClick={closeBanModal}>Cancel</button>
-              </div>
+            </div>
+            <div className="mm-modal-footer">
+              <button className="mm-modal-cancel-btn" onClick={closeBanModal}>Cancel</button>
+              <button className="mm-modal-confirm-btn" onClick={handleBanMember}>Confirm Ban</button>
             </div>
           </div>
         </div>
