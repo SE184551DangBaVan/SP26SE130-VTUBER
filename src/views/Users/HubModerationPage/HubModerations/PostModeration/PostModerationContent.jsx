@@ -377,20 +377,20 @@ export default function PostModerationContent({ fanHubId }) {
       {isModalOpen && selectedPost && (
         <div className="pm-modal-overlay" onClick={closeModal}>
           <div className="pm-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="pm-modal-header"><h2>Post Details</h2><button className="pm-modal-close" onClick={closeModal}>×</button></div>
+            <div className="pm-modal-header">
+              <h2>Post Details</h2>
+              <button className="pm-modal-close" onClick={closeModal}>×</button>
+            </div>
             <div className="pm-modal-body">
-              <div className="pm-info-section">
-                <h3>Post Information</h3>
-                <div className="pm-info-grid">
-                  <div className="pm-info-item"><span className="pm-info-label">Post ID:</span><span className="pm-info-value">#{selectedPost.postId}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">Title:</span><span className="pm-info-value">{selectedPost.title}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">Current Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
-                  <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><span className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</span></div>
-                  <div className="pm-info-item"><span className="pm-info-label">Created:</span><span className="pm-info-value">{formatDate(selectedPost.createdAt)}</span></div>
-                </div>
+              <div className="pm-info-grid">
+                <div className="pm-info-item"><span className="pm-info-label">Post ID:</span><span className="pm-info-value">#{selectedPost.postId}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Title:</span><span className="pm-info-value">{selectedPost.title}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Created:</span><span className="pm-info-value">{formatDate(selectedPost.createdAt)}</span></div>
+                <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><span className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</span></div>
               </div>
               <div className="pm-content-section"><h3>Content</h3><p className="pm-content-full">{selectedPost.content || "No content"}</p></div>
               <div className="pm-media-section">
@@ -411,12 +411,13 @@ export default function PostModerationContent({ fanHubId }) {
               {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
                 <div className="pm-hashtags-section"><h3>Hashtags</h3><div className="pm-hashtags-container">{selectedPost.hashtags.map((hashtag, index) => (<span key={index} className="pm-hashtag-tag">#{hashtag}</span>))}</div></div>
               )}
-              <div className="pm-actions-section pm-quick-actions">
-                <h3>Moderation Actions</h3>
-                <div className="pm-action-buttons">
-                  <button className="pm-action-btn pm-approve-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "APPROVED", selectedPost.status); closeModal(); }}>✓ Approve Post</button>
-                  <button className="pm-action-btn pm-reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
-                  <button className={`pm-action-btn pm-retry-ai-btn ${aiCooldown ? "pm-cooldown" : ""} ${aiRetrying ? "pm-loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>
+            </div>
+            <div className="pm-modal-footer">
+              <div className="pm-modal-footer-content">
+                <div className="pm-moderation-actions">
+                  <button className="pm-modal-action-btn pm-approve-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "APPROVED", selectedPost.status); closeModal(); }}>✓ Approve Post</button>
+                  <button className="pm-modal-action-btn pm-reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
+                  <button className={`pm-modal-action-btn pm-retry-ai-btn ${aiCooldown ? "pm-cooldown" : ""} ${aiRetrying ? "pm-loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>
                     {aiRetrying ? (<>&#x27F3; Sending...</>) : aiCooldown ? (<>&#x21BB; Retry AI ({aiCooldown.cooldownText})</>) : (<>&#x21BB; Retry AI Validation</>)}
                   </button>
                 </div>

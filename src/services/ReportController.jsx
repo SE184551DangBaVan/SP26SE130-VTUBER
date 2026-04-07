@@ -123,6 +123,128 @@ export const getMemberReports = async (fanHubId, pageNo = 0, pageSize = 10, sort
 };
 
 /**
+ * Get all pending post reports for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Array>} Array of pending post reports
+ */
+export const getPendingPostReports = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/posts/reports/pending-posts/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getPendingPostReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Get pending post reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get all pending member reports for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Array>} Array of pending member reports
+ */
+export const getPendingMemberReports = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub-member/reports/pending-members/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getPendingMemberReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Get pending member reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get all post reports submitted by the current user
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Array>} Array of user's post reports
+ */
+export const getMyPostReports = async (pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/posts/reports/my-posts-report?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getMyPostReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Get my post reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get all member reports submitted by the current user
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Array>} Array of user's member reports
+ */
+export const getMyMemberReports = async (pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub-member/reports/my-members-report?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getMyMemberReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Get my member reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
  * Resolve a post report
  * @param {number} reportId - Report ID
  * @param {string} resolveMessage - Resolution message/reason

@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getPostReports,
   getMemberReports,
+  getPendingPostReports,
+  getPendingMemberReports,
   resolvePostReport,
   resolveMemberReport,
 } from "@/services/ReportController";
@@ -68,12 +70,16 @@ function PostReportsTable({ fanHubId }) {
 
     try {
       const pageNo = reset ? 0 : currentPage;
-      const data = await getPostReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      // Use pending API when filter is PENDING, otherwise use all reports API
+      const fetcher = statusFilter === "PENDING" ? getPendingPostReports : getPostReports;
+      const data = await fetcher(fanHubId, pageNo, PAGE_SIZE, sortBy);
 
       let items = Array.isArray(data) ? data : [];
 
-      if (statusFilter !== "ALL") {
-        items = items.filter(r => r.status === statusFilter);
+      // For SOLVED filter, we need to filter client-side from all reports
+      if (statusFilter === "SOLVED") {
+        const allData = await getPostReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
+        items = Array.isArray(allData) ? allData.filter(r => r.reportStatus === "RESOLVED") : [];
       }
 
       if (reset) {
@@ -174,7 +180,6 @@ function PostReportsTable({ fanHubId }) {
     switch (status?.toUpperCase()) {
       case "PENDING": return "report-pending";
       case "RESOLVED": return "report-resolved";
-      case "DISMISSED": return "report-dismissed";
       default: return "report-unknown";
     }
   };
@@ -194,8 +199,7 @@ function PostReportsTable({ fanHubId }) {
           >
             <option value="ALL">All</option>
             <option value="PENDING">Pending</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="DISMISSED">Dismissed</option>
+            <option value="SOLVED">Solved</option>
           </select>
         </div>
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
@@ -215,10 +219,11 @@ function PostReportsTable({ fanHubId }) {
                 <th className="sortable" onClick={() => handleSort("reportId")}>Report ID{getSortIcon("reportId")}</th>
                 <th className="sortable" onClick={() => handleSort("postId")}>Post ID{getSortIcon("postId")}</th>
                 <th>Post Title</th>
+                <th className="sortable" onClick={() => handleSort("authorUsername")}>Post Author{getSortIcon("authorUsername")}</th>
                 <th className="sortable" onClick={() => handleSort("reportedByUsername")}>Reported By{getSortIcon("reportedByUsername")}</th>
                 <th>Reason</th>
-                <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
-                <th className="sortable" onClick={() => handleSort("createdAt")}>Date{getSortIcon("createdAt")}</th>
+                <th className="sortable" onClick={() => handleSort("reportStatus")}>Status{getSortIcon("reportStatus")}</th>
+                <th className="sortable" onClick={() => handleSort("reportCreatedAt")}>Date{getSortIcon("reportCreatedAt")}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -227,17 +232,18 @@ function PostReportsTable({ fanHubId }) {
                 <tr key={report.reportId}>
                   <td className="report-id">#{report.reportId}</td>
                   <td className="post-id">#{report.postId}</td>
-                  <td className="post-title">{report.postTitle || "-"}</td>
+                  <td className="post-title">{report.title || "-"}</td>
+                  <td className="post-author">{report.authorUsername || "-"}</td>
                   <td className="reported-by">{report.reportedByUsername || "-"}</td>
                   <td className="reason-cell">
                     <span className="reason-preview" title={report.reason}>{report.reason}</span>
                   </td>
                   <td className="status-cell">
-                    <span className={`report-status-badge ${getStatusClass(report.status)}`}>{report.status}</span>
+                    <span className={`report-status-badge ${getStatusClass(report.reportStatus)}`}>{report.reportStatus}</span>
                   </td>
-                  <td className="date-cell">{formatDate(report.createdAt)}</td>
+                  <td className="date-cell">{formatDateTime(report.reportCreatedAt)}</td>
                   <td className="action-cell">
-                    {report.status === "PENDING" ? (
+                    {report.reportStatus === "PENDING" ? (
                       <button className="resolve-btn" onClick={() => openResolveModal(report)}>Resolve</button>
                     ) : (
                       <span className="resolved-label">Done</span>
@@ -277,8 +283,16 @@ function PostReportsTable({ fanHubId }) {
               <div className="report-info-grid">
                 <div className="report-info-item"><span className="report-info-label">Report ID:</span><span className="report-info-value">#{selectedReport.reportId}</span></div>
                 <div className="report-info-item"><span className="report-info-label">Post ID:</span><span className="report-info-value">#{selectedReport.postId}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Post Title:</span><span className="report-info-value">{selectedReport.postTitle}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Post Title:</span><span className="report-info-value">{selectedReport.title}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Post Author:</span><span className="report-info-value">{selectedReport.authorUsername || "-"}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername || "-"}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Report Status:</span><span className={`report-status-badge ${getStatusClass(selectedReport.reportStatus)}`}>{selectedReport.reportStatus}</span></div>
+                {selectedReport.resolvedByUsername && (
+                  <div className="report-info-item"><span className="report-info-label">Resolved By:</span><span className="report-info-value">{selectedReport.resolvedByUsername}</span></div>
+                )}
+                {selectedReport.resolveMessage && (
+                  <div className="report-info-item full-width"><span className="report-info-label">Resolve Message:</span><span className="report-info-value report-reason-text">{selectedReport.resolveMessage}</span></div>
+                )}
                 <div className="report-info-item full-width"><span className="report-info-label">Reason:</span><span className="report-info-value report-reason-text">{selectedReport.reason}</span></div>
               </div>
               <div className="resolve-form-group">
@@ -337,12 +351,16 @@ function MemberReportsTable({ fanHubId }) {
 
     try {
       const pageNo = reset ? 0 : currentPage;
-      const data = await getMemberReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      // Use pending API when filter is PENDING, otherwise use all reports API
+      const fetcher = statusFilter === "PENDING" ? getPendingMemberReports : getMemberReports;
+      const data = await fetcher(fanHubId, pageNo, PAGE_SIZE, sortBy);
 
       let items = Array.isArray(data) ? data : [];
 
-      if (statusFilter !== "ALL") {
-        items = items.filter(r => r.status === statusFilter);
+      // For SOLVED filter, we need to filter client-side from all reports
+      if (statusFilter === "SOLVED") {
+        const allData = await getMemberReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
+        items = Array.isArray(allData) ? allData.filter(r => r.status === "RESOLVED") : [];
       }
 
       if (reset) {
@@ -436,7 +454,6 @@ function MemberReportsTable({ fanHubId }) {
     switch (status?.toUpperCase()) {
       case "PENDING": return "report-pending";
       case "RESOLVED": return "report-resolved";
-      case "DISMISSED": return "report-dismissed";
       default: return "report-unknown";
     }
   };
@@ -456,8 +473,7 @@ function MemberReportsTable({ fanHubId }) {
           >
             <option value="ALL">All</option>
             <option value="PENDING">Pending</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="DISMISSED">Dismissed</option>
+            <option value="SOLVED">Solved</option>
           </select>
         </div>
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
@@ -477,6 +493,7 @@ function MemberReportsTable({ fanHubId }) {
                 <th className="sortable" onClick={() => handleSort("reportId")}>Report ID{getSortIcon("reportId")}</th>
                 <th className="sortable" onClick={() => handleSort("reportedByUsername")}>Reported By{getSortIcon("reportedByUsername")}</th>
                 <th className="sortable" onClick={() => handleSort("reportedUsername")}>Reported User{getSortIcon("reportedUsername")}</th>
+                <th>Fan Hub</th>
                 <th>Reason</th>
                 <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
                 <th className="sortable" onClick={() => handleSort("createdAt")}>Date{getSortIcon("createdAt")}</th>
@@ -489,6 +506,7 @@ function MemberReportsTable({ fanHubId }) {
                   <td className="report-id">#{report.reportId}</td>
                   <td className="reported-by">{report.reportedByUsername || "-"}</td>
                   <td className="reported-user">{report.reportedUsername || "-"}</td>
+                  <td className="fan-hub-cell">{report.fanHubName || "-"}</td>
                   <td className="reason-cell">
                     <span className="reason-preview" title={report.reason}>{report.reason}</span>
                   </td>
@@ -536,8 +554,16 @@ function MemberReportsTable({ fanHubId }) {
             <div className="report-resolve-body">
               <div className="report-info-grid">
                 <div className="report-info-item"><span className="report-info-label">Report ID:</span><span className="report-info-value">#{selectedReport.reportId}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername}</span></div>
                 <div className="report-info-item"><span className="report-info-label">Reported User:</span><span className="report-info-value">{selectedReport.reportedDisplayName || selectedReport.reportedUsername}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedReport.fanHubName}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername || "-"}</span></div>
+                <div className="report-info-item"><span className="report-info-label">Report Status:</span><span className={`report-status-badge ${getStatusClass(selectedReport.status)}`}>{selectedReport.status}</span></div>
+                {selectedReport.resolvedByUsername && (
+                  <div className="report-info-item"><span className="report-info-label">Resolved By:</span><span className="report-info-value">{selectedReport.resolvedByUsername}</span></div>
+                )}
+                {selectedReport.resolveMessage && (
+                  <div className="report-info-item full-width"><span className="report-info-label">Resolve Message:</span><span className="report-info-value report-reason-text">{selectedReport.resolveMessage}</span></div>
+                )}
                 <div className="report-info-item full-width"><span className="report-info-label">Reason:</span><span className="report-info-value report-reason-text">{selectedReport.reason}</span></div>
               </div>
               <div className="resolve-form-group">

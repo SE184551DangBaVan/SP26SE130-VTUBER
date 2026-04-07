@@ -239,32 +239,37 @@ export default function MemberModerationContent({ fanHubId }) {
       {isBanModalOpen && selectedMember && (
         <div className="mm-modal-overlay" onClick={closeBanModal}>
           <div className="mm-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="mm-modal-header"><h2>Ban Member</h2><button className="mm-modal-close" onClick={closeBanModal}>×</button></div>
+            <div className="mm-modal-header">
+              <h2>Ban Member</h2>
+              <button className="mm-modal-close" onClick={closeBanModal}>×</button>
+            </div>
             <div className="mm-modal-body">
               <div className="mm-ban-member-info">
-                <p><strong>Member:</strong> {selectedMember.displayName || selectedMember.username}</p>
-                <p><strong>Role:</strong> {selectedMember.roleInHub || "MEMBER"}</p>
+                <div className="mm-ban-info-grid">
+                  <div className="mm-ban-info-item"><span className="mm-ban-info-label">Member:</span><span className="mm-ban-info-value">{selectedMember.displayName || selectedMember.username}</span></div>
+                  <div className="mm-ban-info-item"><span className="mm-ban-info-label">Role:</span><span className="mm-ban-info-value">{selectedMember.roleInHub || "MEMBER"}</span></div>
+                </div>
               </div>
               <div className="mm-ban-form">
                 <div className="mm-form-group">
-                  <label>Ban Type</label>
-                  <select value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
+                  <label htmlFor="ban-type">Ban Type</label>
+                  <select id="ban-type" value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
                     {BAN_TYPE_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                   </select>
                 </div>
                 <div className="mm-form-group">
-                  <label>Banned Until</label>
-                  <input type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
+                  <label htmlFor="ban-until">Banned Until</label>
+                  <input id="ban-until" type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
                 </div>
                 <div className="mm-form-group full-width">
-                  <label>Reason</label>
-                  <textarea rows={4} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter ban reason..." />
+                  <label htmlFor="ban-reason">Reason</label>
+                  <textarea id="ban-reason" rows={4} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter ban reason..." />
                 </div>
               </div>
-              <div className="mm-ban-actions">
-                <button className="mm-ban-confirm-btn" onClick={handleBanMember}>Confirm Ban</button>
-                <button className="mm-ban-cancel-btn" onClick={closeBanModal}>Cancel</button>
-              </div>
+            </div>
+            <div className="mm-modal-footer">
+              <button className="mm-modal-cancel-btn" onClick={closeBanModal}>Cancel</button>
+              <button className="mm-modal-confirm-btn" onClick={handleBanMember}>Confirm Ban</button>
             </div>
           </div>
         </div>
