@@ -1,0 +1,82 @@
+.joined-hubs-wrapper {
+  direction: ltr;
+  padding: 0;
+  margin: 0;
+}
+
+.joined-hubs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px 16px;
+  user-select: none;
+}
+
+.joined-hubs-label {
+  font-family: "Monda", sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: rgba(0, 25, 58, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.joined-hubs-list {
+  padding: 4px 0;
+}
+
+.joined-hub-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  gap: 10px;
+}
+
+.joined-hub-item:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.joined-hub-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.joined-hub-name {
+  font-family: "Monda", sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--sidebar-light-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.view-all-hubs {
+  padding: 8px 16px;
+  font-family: "Monda", sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: rgba(0, 25, 58, 0.5);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-align: left;
+}
+
+.view-all-hubs:hover {
+  color: rgba(0, 25, 58, 0.8);
+}
+
+.joined-hubs-loading,
+.joined-hubs-empty {
+  padding: 12px 16px;
+  font-family: "Monda", sans-serif;
+  font-size: 0.85rem;
+  color: rgba(0, 25, 58, 0.4);
+  text-align: left;
+}

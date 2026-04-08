@@ -58,6 +58,15 @@
   --main-color: #000000;
   --bg-color: #ffffff;
   --font-color: #222222;
+
+  --background: linear-gradient(to bottom right, #EEFEFF, #DDFCFF);
+  --secondary-background: #CDCDCD;
+  --sidebar-width: 256px;
+  --sidebar-width-min: 80px;
+  --sidebar-dark-primary: #ffff;
+  --sidebar-dark-secondary: rgba(0, 0, 0, 0.25);
+  --sidebar-light-primary: #303030;
+  --sidebar-light-secondary: #00193a;
 }
 
 * {

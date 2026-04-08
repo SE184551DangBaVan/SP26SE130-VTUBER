@@ -144,3 +144,28 @@ export const uploadImages = async (fanHubId, bannerFile, avatarFile, backgroundF
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Get fan hub by subdomain
+ * @param {string} subdomain - Fan hub subdomain (e.g., "@GracelessTarnished")
+ * @returns {Promise<Object|null>} Fan hub data or null
+ */
+export const getFanHubBySubdomain = async (subdomain) => {
+  try {
+    const encodedSubdomain = encodeURIComponent(subdomain);
+    const res = await axiosInstance.get(`/fan-hub/subdomain/${encodedSubdomain}`);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Fetch fan hub by subdomain error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};

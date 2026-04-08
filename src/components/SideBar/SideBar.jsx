@@ -7,6 +7,7 @@ import PostsIco from '../../assets/UI-Elements/post.svg'
 import GachaIco from '../../assets/UI-Elements/gacha.svg'
 import NewsIco from '../../assets/UI-Elements/news.svg'
 import './SideBar.css'
+import JoinedHubsContainer from './JoinedHubsContainer'
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useSideBar } from '@/contexts/SideBarContext'
@@ -20,7 +21,18 @@ export default function SideBar() {
 
   // Sync sidebar selection with current route
   useEffect(() => {
-    const currentRoute = pathname === '/create-hub' ? 'create-hub' : pathname.replace('/', '') || 'home';
+    // Map routes to sidebar selection keys
+    const routeToKeyMap = {
+      '/': 'home',
+      '/home': 'home',
+      '/explore': 'explore',
+      '/posts': 'posts',
+      '/news-feed': 'news',
+      '/create-hub': 'create-hub',
+      '/gacha': 'gacha',
+    };
+
+    const currentRoute = routeToKeyMap[pathname] || pathname.replace('/', '') || 'home';
     if (sideBarSelected !== currentRoute) {
       setSideBarSelected(currentRoute);
     }
@@ -46,13 +58,11 @@ export default function SideBar() {
           <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => handleNavigation("posts", "/posts")}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'news' ? 'news' : ''}`} onClick={() => handleNavigation("news", "/news-feed")}><img src={NewsIco.src} alt='' className="fas news-ico"/><span>News</span></div>
           <hr/>
+          <JoinedHubsContainer />
+          <hr/>
           <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'gacha' ? 'gacha' : ''}`} onClick={() => handleNavigation("gacha", "/gacha")}><img src={GachaIco.src} alt='' className="fas"/><span>Gacha</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'exam' ? 'exam' : ''}`} onClick={() => handleNavigation("exam", "/exam")}><School className="fas fa-exam"/><span>Exam List</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'exam-room' ? 'exam-room' : ''}`} onClick={() => handleNavigation("exam-room", "/exam-room")}><ArticleOutlined className="fas fa-exam-room"/><span>Exam Room List</span></div>
-          <hr/>
-          <div className={`side-bar-button ${sideBarSelected === 'template' ? 'template' : ''}`} onClick={() => handleNavigation("template", "/template")}><DvrOutlined className="fas fa-template"/><span>Session Template</span></div>
-          
+
           <div id="side-bar-content-highlight"></div>
         </div>
       </div>
