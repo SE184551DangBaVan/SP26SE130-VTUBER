@@ -12,36 +12,46 @@ export default function JoinedHubsContainer() {
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchJoinedHubs = async () => {
-      try {
-        // Get userID from localStorage or sessionStorage
-        const userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
+  const fetchJoinedHubs = async () => {
+    try {
+      // Get userID from localStorage or sessionStorage
+      const userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
 
-        if (!userId) {
-          setLoading(false);
-          return;
-        }
-
-        // Fetch user data including fanHubsJoined
-        const userData = await getUserById(userId);
-
-        if (userData && userData.fanHubsJoined) {
-          setJoinedHubs(userData.fanHubsJoined);
-        }
-
+      if (!userId) {
         setLoading(false);
-      } catch (error) {
-        console.error('Error fetching joined hubs:', error);
-        setLoading(false);
+        return;
       }
-    };
 
+      // Fetch user data including fanHubsJoined
+      const userData = await getUserById(userId);
+
+      if (userData && userData.fanHubsJoined) {
+        setJoinedHubs(userData.fanHubsJoined);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching joined hubs:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchJoinedHubs();
   }, []);
 
-  const handleHubClick = (subdomain) => {
-    router.push(`/hub/${subdomain}`);
+  // Listen for hub updates (e.g., when user joins a new hub)
+  useEffect(() => {
+    const handleHubUpdate = () => {
+      fetchJoinedHubs();
+    };
+
+    window.addEventListener('hubsUpdated', handleHubUpdate);
+    return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
+  }, []);
+
+  const handleHubClick = (fanHubId) => {
+    router.push(`/hub/${fanHubId}`);
   };
 
   const toggleShowAll = () => {
@@ -52,10 +62,6 @@ export default function JoinedHubsContainer() {
   const displayHubs = showAll ? joinedHubs : joinedHubs.slice(0, 3);
   const hasMoreHubs = joinedHubs.length > 3;
 
-  // Don't render if no hubs joined
-  if (joinedHubs.length === 0 && !loading) {
-    return null;
-  }
 
   return (
     <div className="joined-hubs-wrapper">
@@ -74,10 +80,10 @@ export default function JoinedHubsContainer() {
               <div
                 key={hub.fanHubId}
                 className="joined-hub-item"
-                onClick={() => handleHubClick(hub.subdomain)}
+                onClick={() => handleHubClick(hub.fanHubId)}
               >
                 <img
-                  src={hub.avatarUrl || '/default-avatar.png'}
+                  src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
                   alt={hub.hubName}
                   className="joined-hub-avatar"
                 />

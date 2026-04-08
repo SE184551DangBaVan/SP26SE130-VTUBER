@@ -225,18 +225,21 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   background-position: 0 50%;
   background-repeat: no-repeat;
   box-shadow: 0 0 10px #0d0c22;
-  animation: dynamic-background 250s ease infinite;
+  animation: dynamic-background 300s ease infinite;
 }
 
 @keyframes dynamic-background {
   0% {
-    background-position: 0 0%;
+    background-position: 0 50%;
   }
-  50% {
+  20% {
     background-position: 0 100%;
   }
-  100% {
+  80% {
     background-position: 0 0%;
+  }
+  100% {
+    background-position: 0 50%;
   }
 }
 

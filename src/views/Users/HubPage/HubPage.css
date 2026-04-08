@@ -489,9 +489,10 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   color: #878a8c;
 }
 
-.post-title {
+.hub-content-wrapper .post-title {
   font-size: 24px;
   font-weight: 600;
+  max-width: unset;
   color: #323232;
   margin: 0;
   line-height: 1.4;
@@ -520,6 +521,127 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   display: block;
   object-fit: contain !important;
   background-color: #666;
+}
+
+/* Image Gallery Carousel (Reddit-style) */
+.post-media.image-gallery {
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.image-carousel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 500px;
+  background-color: #000;
+}
+
+.carousel-image-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.carousel-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.carousel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
+.carousel-prev {
+  left: 12px;
+}
+
+.carousel-next {
+  right: 12px;
+}
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.indicator-dot:hover {
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
+.indicator-dot.active {
+  background-color: #fff;
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
+/* Keyboard navigation support */
+.carousel-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.indicator-dot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .post-hashtags {
@@ -1033,18 +1155,192 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 }
 
 /* ===========================
-   Edit Images Modal
+   Edit Hub Modal
    =========================== */
 
-.edit-images-modal {
-  max-width: 500px;
-  max-height: 600px;
+.edit-hub-modal {
+  max-width: 650px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-.edit-images-form {
+.edit-hub-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+}
+
+.edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.edit-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.edit-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #323232;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #2d8cf0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323232;
+}
+
+.form-group input[type='text'],
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  color: #555;
+  background-color: #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type='text']:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #2d8cf0;
+  box-shadow: 0 0 0 3px rgba(45, 140, 240, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group input[type='text'],
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: #f8f9fa;
+}
+
+.form-group input[type='text']:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #2d8cf0;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(45, 140, 240, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.color-picker-wrapper input[type='color'] {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  background: #fff;
+}
+
+.color-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  font-family: monospace;
+}
+
+.category-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-chip:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.category-chip.active {
+  background: #2d8cf0;
+  border-color: #2d8cf0;
+  color: #fff;
+}
+
+.chip-check {
+  width: 14px;
+  height: 14px;
+}
+
+.checkbox-group {
+  margin-top: 4px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #323232;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2d8cf0;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
 }
 
 .explore-preview-grid {
@@ -1179,6 +1475,18 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+}
+
+.edit-images-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Edit Images Modal (keeping for backward compatibility) */
+.edit-images-modal {
+  max-width: 500px;
+  max-height: 600px;
 }
 
 .join-fanhub-section {

@@ -395,20 +395,85 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
 }
 
 function ImagePostContent({ post, onClick }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const handleDotClick = (e, index) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
       {post.content && <p className='post-text'>{post.content}</p>}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <div className='post-media image-media'>
-          <img
-            src={post.mediaUrls[0]}
-            alt={post.title || 'Post image'}
-            onError={(e) => {
-              e.target.src = '/placeholder-image.png';
-            }}
-          />
-        </div>
+        post.mediaUrls.length === 1 ? (
+          <div className='post-media image-media'>
+            <img
+              src={post.mediaUrls[0]}
+              alt={post.title || 'Post image'}
+              onError={(e) => {
+                e.target.src = '/placeholder-image.png';
+              }}
+            />
+          </div>
+        ) : (
+          <div className='post-media image-gallery'>
+            <div className='image-carousel'>
+              <button 
+                className='carousel-btn carousel-prev' 
+                onClick={handlePrevImage}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              
+              <div className='carousel-image-container'>
+                <img
+                  src={post.mediaUrls[currentImageIndex]}
+                  alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
+                  onError={(e) => {
+                    e.target.src = '/placeholder-image.png';
+                  }}
+                />
+              </div>
+
+              <button 
+                className='carousel-btn carousel-next' 
+                onClick={handleNextImage}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
+              <div className='carousel-indicators'>
+                {post.mediaUrls.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                    onClick={(e) => handleDotClick(e, index)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )
       )}
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
