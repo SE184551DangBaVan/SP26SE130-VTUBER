@@ -1,0 +1,15 @@
+.news-feed-page-container {
+    max-width: 90%;
+    margin-top: 80px;
+    padding: 1.5rem;
+    background-color: red;
+    min-height: calc(100vh - 80px);
+    color: #000;
+    font-family: 'Inter', sans-serif;
+    transition: margin-left 0.3s ease;
+}
+
+/* this should be the same as var(--sidebar-width), but for some reasons i cant use it*/
+.news-feed-page-container.sidebar-expanded {
+    margin-left: var(--sidebar-width) ;
+}
