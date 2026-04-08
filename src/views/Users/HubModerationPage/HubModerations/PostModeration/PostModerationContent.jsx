@@ -27,7 +27,6 @@ export default function PostModerationContent({ fanHubId }) {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("desc");
   const [statusFilter, setStatusFilter] = useState("PENDING");
 
   const [selectedPostIds, setSelectedPostIds] = useState([]);
@@ -121,12 +120,7 @@ export default function PostModerationContent({ fanHubId }) {
   }, [fanHubId, statusFilter, sortBy]);
 
   const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
+    setSortBy(field);
   };
 
   const handleStatusChange = async (postId, newStatus, currentStatus) => {
@@ -278,7 +272,7 @@ export default function PostModerationContent({ fanHubId }) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isModalOpen, isMediaViewerOpen]);
 
-  const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
+  const getSortIcon = (field) => sortBy === field ? " ↑" : " ↕";
 
   if (loading) return <div className="loading">Loading posts for moderation...</div>;
 
@@ -320,13 +314,13 @@ export default function PostModerationContent({ fanHubId }) {
                     onClick={(e) => e.stopPropagation()}
                   />
                 </th>
-                <th className="sortable" onClick={() => handleSort("postId")}>Post ID{getSortIcon("postId")}</th>
-                <th className="sortable" onClick={() => handleSort("authorDisplayName")}>Author{getSortIcon("authorDisplayName")}</th>
+                <th className="sortable" onClick={() => handleSort("id")}>Post ID{getSortIcon("id")}</th>
+                <th>Author</th>
                 <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
-                <th className="sortable" onClick={() => handleSort("title")}>Title{getSortIcon("title")}</th>
+                <th>Title</th>
                 <th>Content</th>
-                <th>Current Status</th>
-                <th>AI Validation</th>
+                <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
+                <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
                 <th className="sortable" onClick={() => handleSort("createdAt")}>Created Date{getSortIcon("createdAt")}</th>
               </tr>
             </thead>

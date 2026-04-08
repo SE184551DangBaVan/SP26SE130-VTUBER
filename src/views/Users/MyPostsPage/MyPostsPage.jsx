@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getUserPosts } from "@/services/PostController";
+import { useRouter } from "next/navigation";
 import "./MyPostsPage.css";
 import {useSideBar} from "@/contexts/SideBarContext.tsx";
 
@@ -9,12 +10,13 @@ import {useSideBar} from "@/contexts/SideBarContext.tsx";
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
 
 export default function MyPostsPage() {
+  const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [userId, setUserId] = useState(null);
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const [postsPerPage] = useState(10);
 
   // Sorting state
@@ -34,29 +36,53 @@ export default function MyPostsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!userId) return;
-
-    async function fetchUserPosts() {
+  // Fetch posts with pagination
+  const fetchPosts = async (reset = false) => {
+    if (reset) {
       setLoading(true);
-      try {
-        const data = await getUserPosts(userId, 0, 100, sortBy);
-        setPosts(data);
-      } catch (err) {
-        console.error("Failed to fetch user posts:", err);
-      } finally {
-        setLoading(false);
-      }
+      setPosts([]);
+      setCurrentPage(0);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
     }
 
-    fetchUserPosts();
-  }, [userId]);
+    try {
+      const pageNo = reset ? 0 : currentPage;
+      const data = await getUserPosts(userId, pageNo, postsPerPage, sortBy);
+
+      let items = Array.isArray(data) ? data : [];
+
+      if (reset) {
+        setPosts(items);
+      } else {
+        setPosts(prev => [...prev, ...items]);
+      }
+
+      // If we got fewer posts than requested, there's no more data
+      setHasMore(items.length === postsPerPage);
+      setCurrentPage(prev => reset ? 1 : prev + 1);
+    } catch (err) {
+      console.error("Failed to fetch user posts:", err);
+      if (reset) setPosts([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    fetchPosts(true);
+  }, [userId, sortBy]);
+
+  const handleLoadMore = () => {
+    fetchPosts(false);
+  };
 
   // Handle sorting
   const handleSort = (field) => {
-    // Reset to page 1 when sorting changes
-    setCurrentPage(1);
-    
     if (sortBy === field) {
       // Toggle direction if same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -67,7 +93,7 @@ export default function MyPostsPage() {
     }
   };
 
-  // Sort posts based on current sortBy and sortDirection
+  // Sort posts based on current sortBy and sortDirection (all loaded posts)
   const sortedPosts = [...posts].sort((a, b) => {
     let aVal = a[sortBy];
     let bVal = b[sortBy];
@@ -122,40 +148,6 @@ export default function MyPostsPage() {
       return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
     }
   });
-
-  const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
-  const startIndex = (currentPage - 1) * postsPerPage;
-  const endIndex = startIndex + postsPerPage;
-  const paginatedPosts = sortedPosts.slice(startIndex, endIndex);
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push("...");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push("...");
-        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push("...");
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
-  };
 
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
@@ -224,6 +216,11 @@ export default function MyPostsPage() {
   const handlePostClick = (post) => {
     setSelectedPost(post);
     setIsModalOpen(true);
+  };
+
+  const handleViewPost = (post) => {
+    // Navigate to post detail page
+    router.push(`/post/${post.postId}`);
   };
 
   const closeModal = () => {
@@ -304,7 +301,7 @@ export default function MyPostsPage() {
             </tr>
           </thead>
           <tbody>
-            {paginatedPosts.map((post) => (
+            {sortedPosts.map((post) => (
               <tr 
                 key={post.postId} 
                 className="post-row"
@@ -368,59 +365,26 @@ export default function MyPostsPage() {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="pagination-container">
-            <div className="pagination-info">
-              Showing {startIndex + 1} to {Math.min(endIndex, sortedPosts.length)} of {sortedPosts.length} posts
-            </div>
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                title="First Page"
-              >
-                ««
-              </button>
-              <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                title="Previous Page"
-              >
-                «
-              </button>
-              
-              {getPageNumbers().map((page, index) => (
-                <button
-                  key={index}
-                  className={`pagination-btn ${page === currentPage ? "active" : ""} ${page === "..." ? "ellipsis" : ""}`}
-                  onClick={() => typeof page === "number" && setCurrentPage(page)}
-                  disabled={page === "..."}
-                >
-                  {page}
-                </button>
-              ))}
-              
-              <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                title="Next Page"
-              >
-                »
-              </button>
-              <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                title="Last Page"
-              >
-                »»
-              </button>
-            </div>
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="load-more-container">
+            <button 
+              className="load-more-btn" 
+              onClick={handleLoadMore} 
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <>
+                  <span className="load-more-spinner">⟳</span> Loading...
+                </>
+              ) : (
+                "Load more"
+              )}
+            </button>
           </div>
+        )}
+        {!hasMore && posts.length > 0 && (
+          <div className="no-more-data">No more posts to load</div>
         )}
       </div>
 
@@ -494,39 +458,44 @@ export default function MyPostsPage() {
                 <h3>Media ({selectedPost.media?.length || 0})</h3>
                 {selectedPost.media && selectedPost.media.length > 0 ? (
                   <div className="media-grid">
-                    {selectedPost.media.map((mediaItem) => (
-                      <div key={mediaItem.mediaId} className="media-card">
-                        <div className="media-preview">
-                          {mediaItem.mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (
-                            <video controls className="media-video">
-                              <source src={mediaItem.mediaUrl} type="video/mp4" />
-                              Your browser does not support the video tag.
-                            </video>
-                          ) : (
-                            <img 
-                              src={mediaItem.mediaUrl} 
-                              alt={`Media ${mediaItem.mediaId}`}
-                              className="media-image"
-                              onError={(e) => {
-                                e.target.src = VIDEO_PLACEHOLDER;
-                                e.target.onerror = null;
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="media-info">
-                          <div className="media-id">Media ID: #{mediaItem.mediaId}</div>
-                          <div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>
-                            {mediaItem.aiValidationStatus || "UNKNOWN"}
+                    {selectedPost.media.map((mediaItem) => {
+                      // Detect if it's a video based on URL extension
+                      const urlLower = mediaItem.mediaUrl?.toLowerCase();
+                      const isVideo = urlLower?.includes('.mp4') || urlLower?.includes('.webm') || urlLower?.includes('.ogg');
+
+                      return (
+                        <div key={mediaItem.mediaId} className="media-card">
+                          <div className="media-preview">
+                            {isVideo ? (
+                              <video controls className="media-video">
+                                <source src={mediaItem.mediaUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <img
+                                src={mediaItem.mediaUrl}
+                                alt={`Media ${mediaItem.mediaId}`}
+                                className="media-image"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                }}
+                              />
+                            )}
                           </div>
-                          {mediaItem.aiValidationComment && (
-                            <div className="media-ai-comment" title={mediaItem.aiValidationComment}>
-                              {mediaItem.aiValidationComment}
+                          <div className="media-info">
+                            <div className="media-id">Media ID: #{mediaItem.mediaId}</div>
+                            <div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>
+                              {mediaItem.aiValidationStatus || "UNKNOWN"}
                             </div>
-                          )}
+                            {mediaItem.aiValidationComment && (
+                              <div className="media-ai-comment" title={mediaItem.aiValidationComment}>
+                                {mediaItem.aiValidationComment}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="no-media-message">No media attached to this post</div>
@@ -544,6 +513,18 @@ export default function MyPostsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="modal-close-btn" onClick={closeModal}>
+                Close
+              </button>
+              <button 
+                className="modal-view-post-btn" 
+                onClick={() => handleViewPost(selectedPost)}
+              >
+                View Full Post
+              </button>
             </div>
           </div>
         </div>

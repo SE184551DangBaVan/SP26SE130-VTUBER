@@ -5,6 +5,8 @@ import {
   getMyPostReports,
   getMyMemberReports,
 } from "@/services/ReportController";
+import { getPostById } from "@/services/PostController";
+import { useRouter } from "next/navigation";
 import { useSideBar } from "@/contexts/SideBarContext";
 import "./MyReportsPage.css";
 
@@ -39,6 +41,7 @@ export default function MyReportsPage() {
 
 /* ───────── My Post Reports Table ───────── */
 function MyPostReportsTable() {
+  const router = useRouter();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -51,6 +54,8 @@ function MyPostReportsTable() {
 
   const [selectedReport, setSelectedReport] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [postMedia, setPostMedia] = useState(null);
+  const [loadingMedia, setLoadingMedia] = useState(false);
 
   const fetchReports = useCallback(async (reset = false) => {
     if (reset) {
@@ -111,14 +116,37 @@ function MyPostReportsTable() {
     }
   };
 
-  const openDetailModal = (report) => {
+  const openDetailModal = async (report) => {
     setSelectedReport(report);
     setIsDetailModalOpen(true);
+    
+    // Fetch post media if postId exists
+    if (report.postId) {
+      setLoadingMedia(true);
+      try {
+        const postData = await getPostById(report.postId);
+        if (postData && postData.media) {
+          setPostMedia(postData.media);
+        } else {
+          setPostMedia(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch post media:", error);
+        setPostMedia(null);
+      } finally {
+        setLoadingMedia(false);
+      }
+    }
   };
 
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
     setSelectedReport(null);
+    setPostMedia(null);
+  };
+
+  const handleViewPost = (postId) => {
+    router.push(`/post/${postId}`);
   };
 
   const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
@@ -241,9 +269,56 @@ function MyPostReportsTable() {
                 )}
                 <div className="my-report-info-item full-width"><span className="my-report-info-label">Reason:</span><span className="my-report-reason-text">{selectedReport.reason}</span></div>
               </div>
+
+              {/* Post Media Section */}
+              {loadingMedia ? (
+                <div className="my-report-media-loading">Loading media...</div>
+              ) : postMedia && postMedia.length > 0 ? (
+                <div className="my-report-media-section">
+                  <h3>Post Media ({postMedia.length})</h3>
+                  <div className="my-report-media-grid">
+                    {postMedia.map((mediaItem) => {
+                      const mediaType = mediaItem.mediaType || mediaItem.mediaUrl?.split('.').pop()?.toLowerCase();
+                      const isVideo = mediaType === 'mp4' || mediaType === 'webm' || mediaType === 'ogg' || mediaItem.mediaType?.startsWith('video/');
+                      
+                      return (
+                        <div key={mediaItem.mediaId} className="my-report-media-item">
+                          {isVideo ? (
+                            <video controls className="my-report-media-video">
+                              <source src={mediaItem.mediaUrl} type={mediaItem.mediaType || "video/mp4"} />
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <img
+                              src={mediaItem.mediaUrl}
+                              alt={`Media ${mediaItem.mediaId}`}
+                              className="my-report-media-image"
+                              onError={(e) => {
+                                e.target.src = "/picture-not-available-photo.jpg";
+                                e.target.onerror = null;
+                              }}
+                            />
+                          )}
+                          <div className="my-report-media-info">
+                            <span className="my-report-media-type">{isVideo ? 'Video' : 'Image'}</span>
+                            {mediaItem.aiValidationStatus && (
+                              <span className={`my-report-media-ai-status ${mediaItem.aiValidationStatus === 'AI_SAFE' ? 'ai-safe' : mediaItem.aiValidationStatus === 'AI_UNSAFE' ? 'ai-unsafe' : 'ai-pending'}`}>
+                                {mediaItem.aiValidationStatus}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                !loadingMedia && <div className="my-report-no-media">No media attached to this post</div>
+              )}
             </div>
             <div className="my-report-detail-actions">
               <button className="my-detail-close-btn" onClick={closeDetailModal}>Close</button>
+              <button className="my-detail-view-btn" onClick={() => handleViewPost(selectedReport.postId)}>View Post</button>
             </div>
           </div>
         </div>

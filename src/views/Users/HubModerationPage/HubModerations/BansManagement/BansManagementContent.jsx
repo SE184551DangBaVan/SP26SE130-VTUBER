@@ -12,8 +12,7 @@ export default function BansManagementContent({ fanHubId }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("desc");
+  const [sortBy] = useState("createdAt");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [refreshing, setRefreshing] = useState(false);
@@ -77,15 +76,6 @@ export default function BansManagementContent({ fanHubId }) {
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
-  };
-
   const handleRevokeBan = async (banId) => {
     try {
       const result = await revokeBan(banId);
@@ -113,8 +103,6 @@ export default function BansManagementContent({ fanHubId }) {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
-
-  const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
 
   // Group bans by userId to show multiple bans for same user
   const groupedBans = bans.reduce((acc, ban) => {
@@ -181,12 +169,12 @@ export default function BansManagementContent({ fanHubId }) {
           <table className="moderation-table">
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleSort("userId")}>User ID{getSortIcon("userId")}</th>
-                <th className="sortable" onClick={() => handleSort("displayName")}>Display Name{getSortIcon("displayName")}</th>
-                <th className="sortable" onClick={() => handleSort("username")}>Username{getSortIcon("username")}</th>
+                <th>User ID</th>
+                <th>Display Name</th>
+                <th>Username</th>
                 <th>Ban Types</th>
                 <th>Banned By</th>
-                <th className="sortable" onClick={() => handleSort("createdAt")}>Latest Ban Date{getSortIcon("createdAt")}</th>
+                <th>Latest Ban Date</th>
               </tr>
             </thead>
             <tbody>

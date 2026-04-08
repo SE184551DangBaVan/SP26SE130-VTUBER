@@ -22,7 +22,6 @@ export default function MemberModerationContent({ fanHubId }) {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("joinedAt");
-  const [sortDirection, setSortDirection] = useState("asc");
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
@@ -90,13 +89,10 @@ export default function MemberModerationContent({ fanHubId }) {
   };
 
   const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
+    setSortBy(field);
   };
+
+  const getSortIcon = (field) => sortBy === field ? " ↑" : " ↕";
 
   const handleBanMember = async () => {
     if (!selectedMember || !banForm.reason.trim()) {
@@ -143,8 +139,6 @@ export default function MemberModerationContent({ fanHubId }) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isBanModalOpen]);
 
-  const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
-
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -187,9 +181,9 @@ export default function MemberModerationContent({ fanHubId }) {
             <thead>
               <tr>
                 <th className="sortable" onClick={() => handleSort("id")}>Member ID{getSortIcon("id")}</th>
-                <th className="sortable" onClick={() => handleSort("displayName")}>Display Name{getSortIcon("displayName")}</th>
-                <th className="sortable" onClick={() => handleSort("username")}>Username{getSortIcon("username")}</th>
-                <th>Role</th>
+                <th>Display Name</th>
+                <th>Username</th>
+                <th className="sortable" onClick={() => handleSort("roleInHub")}>Role{getSortIcon("roleInHub")}</th>
                 <th className="sortable" onClick={() => handleSort("joinedAt")}>Joined Date{getSortIcon("joinedAt")}</th>
                 <th>Actions</th>
               </tr>
