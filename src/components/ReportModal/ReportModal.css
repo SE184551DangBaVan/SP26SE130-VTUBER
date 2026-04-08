@@ -56,6 +56,11 @@
   margin: 0;
 }
 
+.report-modal-title {
+  text-align: center;
+  width: 100%;
+}
+
 .report-modal-close-btn {
   background: none;
   border: none;
@@ -103,6 +108,45 @@
 
 .report-modal-label .required {
   color: #ef4444;
+}
+
+/* Predefined Reason Options */
+.report-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-reason-option {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.report-reason-option:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.report-reason-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.report-reason-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .report-modal-textarea {

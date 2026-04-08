@@ -1,64 +1,141 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getPostsFeed, likePost, unlikePost } from '@/services/PostController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { useAuth } from '@/functions/Auth/useAuth';
+import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
+import PostDetails from './PostDetails';
+import { BASE_URL } from '@/config';
 import './PostsPage.css';
-import { CommentRounded, ShareRounded } from '@mui/icons-material';
+import { CommentRounded, ShareRounded, MoreHoriz, Translate, AutoAwesome, Flag } from '@mui/icons-material';
+
+const POSTS_PER_PAGE = 7;
 
 export default function PostsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { userAuth } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [sortOrder, setSortOrder] = useState('latest');
+  const [serverPage, setServerPage] = useState(0);
+  const observer = useRef();
+  const scrollPositionRef = useRef(0);
+
+  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
+    setLoading(true);
+    try {
+      const newPosts = await getPostsFeed(pageNum, POSTS_PER_PAGE, sortBy);
+
+      if (newPosts.length < POSTS_PER_PAGE) {
+        setHasMore(false);
+      }
+
+      const filteredPosts = newPosts.filter(
+        post => post.postType !== 'ANNOUNCEMENT' && post.postType !== 'EVENT_SCHEDULE'
+      );
+
+      if (filteredPosts.length > 0) {
+        if (append && pageNum !== 0) {
+          setPosts(prev => [...prev, ...filteredPosts]);
+        } else {
+          setPosts(filteredPosts);
+        }
+        setServerPage(pageNum + 1);
+      } else if (newPosts.length === POSTS_PER_PAGE) {
+        const nextPage = pageNum + 1;
+        setServerPage(nextPage);
+        await fetchPosts(nextPage, sortBy, append);
+        return;
+      } else {
+        if (pageNum === 0) setPosts([]);
+        setServerPage(pageNum + 1);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-        const allPosts = await getPostsFeed(0, 50, sortBy);
-
-        const sortedPosts = [...allPosts].sort((a, b) => {
-          const dateA = new Date(a.createdAt);
-          const dateB = new Date(b.createdAt);
-          return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
-        });
-
-        setPosts(sortedPosts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
+    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    setServerPage(0);
+    setHasMore(true);
+    fetchPosts(0, sortBy);
   }, [sortOrder]);
+
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+          fetchPosts(serverPage, sortBy);
+        }
+      }, { rootMargin: '200px' });
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore, serverPage, sortOrder, fetchPosts]
+  );
 
   const handleSortChange = (e) => {
     setSortOrder(e.target.value);
   };
 
   const handlePostClick = (post) => {
-    // Store post data in localStorage for SelectedPostPage to retrieve
     localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
-    router.push(`/post/${post.postId}`);
+    scrollPositionRef.current = window.scrollY;
+    router.push(`/posts?id=${post.postId}`, { scroll: false });
+  };
+
+  const handleCommentsClick = (post) => {
+    if (!userAuth) {
+      router.push('/login');
+      return;
+    }
+    scrollPositionRef.current = window.scrollY;
+    router.push(`/posts?id=${post.postId}`, { scroll: false });
+  };
+
+  const handleShareClick = (post) => {
+    if (!userAuth) {
+      router.push('/login');
+      return;
+    }
+    const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showSteamSuccess('Link copied!', 'Shared');
+    }).catch(() => {
+      showSteamError('Failed to copy link', 'Error');
+    });
   };
 
   const handleHubClick = (fanHubId) => {
     router.push(`/hub/${fanHubId}`);
   };
 
+  // Restore scroll position when modal closes
+  useEffect(() => {
+    const postIdParam = searchParams.get('id');
+    const shareIdParam = searchParams.get('shareId');
+    if (!postIdParam && !shareIdParam && scrollPositionRef.current > 0) {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current);
+        scrollPositionRef.current = 0;
+      });
+    }
+  }, [searchParams]);
+
   return (
     <div className='posts-page-container'>
       <div className='posts-page-content'>
-        <div className='posts-page-header'>
-          <h1>All Posts</h1>
-          <p>Discover posts from all FanHubs</p>
-        </div>
-
         <div className='posts-sort-bar'>
           <div className='sort-controls'>
             <label>Sort by:</label>
@@ -69,7 +146,7 @@ export default function PostsPage() {
           </div>
         </div>
 
-        {loading ? (
+        {loading && posts.length === 0 ? (
           <div className='posts-loading'>
             <div className='loading-spinner'>Loading posts...</div>
           </div>
@@ -79,38 +156,81 @@ export default function PostsPage() {
           </div>
         ) : (
           <div className='posts-feed'>
-            {posts.map((post) => (
-              <PostCard 
-                key={post.postId} 
-                post={post} 
-                onClick={() => handlePostClick(post)}
-                onHubClick={handleHubClick}
-              />
-            ))}
+            {posts.map((post, index) => {
+              if (posts.length === index + 1) {
+                return (
+                  <div ref={lastPostElementRef} key={post.postId}>
+                    <PostCard
+                      post={post}
+                      onClick={() => handlePostClick(post)}
+                      onCommentsClick={() => handleCommentsClick(post)}
+                      onShareClick={() => handleShareClick(post)}
+                      onHubClick={handleHubClick}
+                      userAuth={userAuth}
+                      router={router}
+                    />
+                  </div>
+                );
+              } else {
+                return (
+                  <PostCard
+                    key={post.postId}
+                    post={post}
+                    onClick={() => handlePostClick(post)}
+                    onCommentsClick={() => handleCommentsClick(post)}
+                    onShareClick={() => handleShareClick(post)}
+                    onHubClick={handleHubClick}
+                    userAuth={userAuth}
+                    router={router}
+                  />
+                );
+              }
+            })}
+            {loading && (
+              <div className='infinite-scroll-loader'>Loading more posts...</div>
+            )}
           </div>
         )}
       </div>
+      <PostDetails scrollPositionRef={scrollPositionRef} />
     </div>
   );
 }
 
-function PostCard({ post, onClick, onHubClick }) {
+function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, userAuth, router }) {
+  const { openReportModal } = useReportModal();
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [extraMenuOpen, setExtraMenuOpen] = useState(false);
+  const menuRef = useRef();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setExtraMenuOpen(false);
+      }
+    };
+    if (extraMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [extraMenuOpen]);
 
   const handleLike = async (e) => {
     e.stopPropagation();
-    
     if (likeLoading) return;
-    
+    if (!userAuth) {
+      router.push('/login');
+      return;
+    }
+
     setLikeLoading(true);
-    
+
     try {
       let result;
-      
+
       if (isLiked) {
-        // Unlike the post
         result = await unlikePost(post.postId);
         if (result?.success) {
           setIsLiked(false);
@@ -118,7 +238,6 @@ function PostCard({ post, onClick, onHubClick }) {
           showSteamSuccess(result.data || 'Post unliked successfully.', result.message || 'Unliked');
         }
       } else {
-        // Like the post
         result = await likePost(post.postId);
         if (result?.success) {
           setIsLiked(true);
@@ -146,106 +265,261 @@ function PostCard({ post, onClick, onHubClick }) {
 
   const handleCommentsClick = (e) => {
     e.stopPropagation();
-    localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
-    onClick();
+    if (onCommentsClick) {
+      onCommentsClick(post);
+    }
   };
 
-  const renderMedia = () => {
-    if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
+  const handleAISummary = (e) => {
+    e.stopPropagation();
+    console.log('AI Summary clicked for post:', post.postId);
+  };
 
-    if (post.postType === 'VIDEO') {
-      return (
-        <div className='post-media video-media'>
-          <video onClick={(e) => e.stopPropagation()} controls>
-            <source src={post.mediaUrls[0]} type='video/mp4' />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      );
+  const handleAITranslate = (e) => {
+    e.stopPropagation();
+    console.log('AI Translate clicked for post:', post.postId);
+  };
+
+  const handleExtraOptionsToggle = (e) => {
+    e.stopPropagation();
+    setExtraMenuOpen(prev => !prev);
+  };
+
+  const handleReportPost = (e) => {
+    e.stopPropagation();
+    setExtraMenuOpen(false);
+    if (!userAuth) {
+      router.push('/login');
+      return;
     }
+    openReportModal({
+      type: REPORT_TYPE.POST,
+      targetId: post.postId,
+      targetName: post.title || `Post #${post.postId}`,
+    });
+  };
 
-    return (
-      <div className='post-media image-media'>
-        <img
-          src={post.mediaUrls[0]}
-          alt={post.title}
-          onClick={(e) => e.stopPropagation()}
-          onError={(e) => {
-            e.target.src = '/placeholder-image.png';
-          }}
-        />
-      </div>
-    );
+  const handleAvatarClick = (e) => {
+    e.stopPropagation();
+    router.push(`/user/${post.authorUsername}`);
+  };
+
+  const renderPostTypeContent = () => {
+    switch (post.postType) {
+      case 'IMAGE':
+        return <ImagePostContent post={post} onClick={onClick} />;
+      case 'VIDEO':
+        return <VideoPostContent post={post} onClick={onClick} />;
+      case 'TEXT':
+        return <TextPostContent post={post} onClick={onClick} />;
+      case 'POLL':
+        return <PollPostContent post={post} onClick={onClick} />;
+      case 'ANNOUNCEMENT':
+      case 'EVENT_SCHEDULE':
+        return null; // Ignored as per requirements
+      default:
+        return <TextPostContent post={post} onClick={onClick} />;
+    }
   };
 
   return (
     <div className='post-card' onClick={onClick}>
-      <div className='post-content'>
-        <div className='post-header'>
-          <div className='post-author-info'>
-            <img
-              className='post-author-avatar'
-              src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-              alt={post.authorDisplayName}
-              onError={(e) => {
-                e.target.src = '/profile-pic-undefined.jpg';
-              }}
-            />
-            <div className='post-author-details'>
-              <span className='author-display-name'>{post.authorDisplayName}</span>
-              <span className='author-username'>@{post.authorUsername}</span>
-            </div>
-          </div>
-          <div className='post-meta-right'>
+      <div className='post-header'>
+        <div className='post-author-info'>
+          <img
+            className='post-author-avatar'
+            src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
+            alt={post.authorDisplayName}
+            title="Go to author profile"
+            onClick={handleAvatarClick}
+            onError={(e) => {
+              e.target.src = '/profile-pic-undefined.jpg';
+            }}
+          />
+          <div className='post-author-details'>
+            <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
             <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
-            {post.fanHubName && post.fanHubId && (
-              <span className='fanhub-badge' onClick={handleHubClick}>
-                fh/{post.fanHubName}
-              </span>
+          </div>
+        </div>
+        <div className='post-actions-menu'>
+          <button className='menu-btn' onClick={handleAISummary} title='AI Summary'>
+            <AutoAwesome fontSize='small' />
+          </button>
+          <button className='menu-btn' onClick={handleAITranslate} title='AI Translate'>
+            <Translate fontSize='small' />
+          </button>
+          <div className='extra-menu-wrapper' ref={menuRef}>
+            <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+              <MoreHoriz fontSize='small' />
+            </button>
+            {extraMenuOpen && (
+              <div className='extra-dropdown'>
+                <button className='dropdown-item' onClick={handleReportPost}>
+                  <Flag fontSize='small' />
+                  <span>Report post</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
+      </div>
 
-        <h3 className='post-title'>{post.title}</h3>
+      {renderPostTypeContent()}
 
-        {post.content && (
-          <p className='post-text'>{post.content}</p>
-        )}
-
-        {renderMedia()}
-
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className='post-hashtags'>
-            {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag'>#{tag}</span>
-            ))}
-          </div>
-        )}
-
-        <div className='post-actions'>
-          <div className='post-vote-section'>
-            <button className='vote-btn like-btn' onClick={handleLike} disabled={likeLoading}>
-              {likeLoading ? (
-                <span className='like-loading-spinner' />
-              ) : (
-                <svg className='like-ico' xmlns="http://www.w3.org/2000/svg" width="58" height="58" viewBox="0 0 58 58" fill="none">
-                  <path d="M22.7111 39.1439L34.9947 35.8525C36.6662 35.4047 37.8883 34.475 37.4672 32.9031L37.0349 28.4449C36.798 27.6719 36.2643 27.0242 35.5509 26.6439C34.8374 26.2635 34.0023 26.1814 33.2284 26.4155L30.1984 27.2274C30.0095 27.2771 29.8123 27.2865 29.6196 27.255C29.4268 27.2235 29.2429 27.1518 29.0797 27.0445C28.9165 26.9373 28.7777 26.7968 28.6723 26.6324C28.5669 26.468 28.4974 26.2832 28.4681 26.0901L27.9624 22.0404C27.855 21.6473 27.5968 21.3124 27.2438 21.1086C26.8908 20.9048 26.4717 20.8486 26.0775 20.9522C25.8782 21.0026 25.6909 21.0922 25.5267 21.2157C25.3624 21.3393 25.2244 21.4944 25.1208 21.672C25.0172 21.8495 24.95 22.0459 24.9232 22.2497C24.8964 22.4535 24.9105 22.6606 24.9646 22.8589L25.1452 25.0975C25.4622 27.5893 24.2488 29.1494 22.3295 30.5785" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20.737 32.3162C21.1298 32.211 21.3629 31.8072 21.2576 31.4144C21.1524 31.0216 20.7486 30.7884 20.3558 30.8937C19.963 30.999 19.7299 31.4027 19.8351 31.7955C19.9404 32.1884 20.3441 32.4215 20.737 32.3162Z" fill="black"/>
-                </svg>
-              )}
-            </button>
-            <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-          </div>
+      <div className='post-footer'>
+        <div className='post-footer-left'>
+          <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
+            {likeLoading ? (
+              <span className='like-loading-spinner' />
+            ) : (
+              <svg className='like-icon' xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "white" : "none"}>
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isLiked ? "white" : "none"} stroke={isLiked ? "white" : "currentColor"} strokeWidth="2"/>
+              </svg>
+            )}
+            <span className='action-count'>{formatCount(likeCount)}</span>
+          </button>
           <button className='action-btn' onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
-            <span>Comments</span>
-          </button>
-          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
-            <ShareRounded fontSize='small' />
-            <span>Share</span>
+            <span>Comment</span>
           </button>
         </div>
+        <button className='action-btn share-btn' onClick={(e) => {
+          e.stopPropagation();
+          onShareClick?.(post);
+        }}>
+          <ShareRounded fontSize='small' />
+        </button>
       </div>
+    </div>
+  );
+}
+
+function ImagePostContent({ post, onClick }) {
+  return (
+    <div className='post-content'>
+      {post.title && <h3 className='post-title'>{post.title}</h3>}
+      {post.content && <p className='post-text'>{post.content}</p>}
+      {post.mediaUrls && post.mediaUrls.length > 0 && (
+        <div className='post-media image-media'>
+          <img
+            src={post.mediaUrls[0]}
+            alt={post.title || 'Post image'}
+            onError={(e) => {
+              e.target.src = '/placeholder-image.png';
+            }}
+          />
+        </div>
+      )}
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className='post-hashtags'>
+          {post.hashtags.map((tag, idx) => (
+            <span key={idx} className='hashtag'>#{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VideoPostContent({ post, onClick }) {
+  return (
+    <div className='post-content'>
+      {post.title && <h3 className='post-title'>{post.title}</h3>}
+      {post.content && <p className='post-text'>{post.content}</p>}
+      {post.mediaUrls && post.mediaUrls.length > 0 && (
+        <div className='post-media video-media'>
+          <video controls>
+            <source src={post.mediaUrls[0]} type='video/mp4' />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className='post-hashtags'>
+          {post.hashtags.map((tag, idx) => (
+            <span key={idx} className='hashtag'>#{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TextPostContent({ post, onClick }) {
+  return (
+    <div className='post-content'>
+      {post.title && <h3 className='post-title'>{post.title}</h3>}
+      {post.content && <p className='post-text'>{post.content}</p>}
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className='post-hashtags'>
+          {post.hashtags.map((tag, idx) => (
+            <span key={idx} className='hashtag'>#{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PollPostContent({ post, onClick }) {
+  const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
+  const totalVotes = post.totalVotes || 0;
+
+  const handleOptionClick = (e, optionIndex) => {
+    e.stopPropagation();
+    setSelectedOption(optionIndex + 1);
+    console.log('Poll option clicked:', optionIndex);
+    // TODO: Implement poll voting API call
+  };
+
+  const getVotePercentage = (optionIndex) => {
+    if (totalVotes === 0) return 0;
+    const votes = post.voteCounts?.[optionIndex + 1] || 0;
+    return Math.round((votes / totalVotes) * 100);
+  };
+
+  return (
+    <div className='post-content'>
+      {post.title && <h3 className='post-title'>{post.title}</h3>}
+      {post.content && <p className='post-text'>{post.content}</p>}
+      {post.voteOptions && (
+        <div className='poll-options'>
+          {post.voteOptions.map((option, index) => {
+            const percentage = getVotePercentage(index);
+            const isSelected = selectedOption === index + 1;
+            
+            return (
+              <div
+                key={index}
+                className={`poll-option ${isSelected ? 'selected' : ''}`}
+                onClick={(e) => handleOptionClick(e, index)}
+              >
+                <div className='poll-option-background'>
+                  {selectedOption && (
+                    <div 
+                      className='poll-option-fill' 
+                      style={{ width: `${percentage}%` }}
+                    />
+                  )}
+                </div>
+                <div className='poll-option-content'>
+                  <span className='poll-option-text'>{option}</span>
+                  {selectedOption && (
+                    <span className='poll-option-percentage'>{percentage}%</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className='post-hashtags'>
+          {post.hashtags.map((tag, idx) => (
+            <span key={idx} className='hashtag'>#{tag}</span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -261,4 +535,11 @@ function formatTimeAgo(dateString) {
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
 
   return date.toLocaleDateString();
+}
+
+function formatCount(count) {
+  if (count === null || count === undefined) return '0';
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
 }

@@ -9,7 +9,7 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore'];
+const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore', '/posts/*'];
 
 export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
@@ -43,9 +43,13 @@ export const AuthProvider = ({ children }) => {
 
     // Helper to check if current path is public
     const isPublic = useMemo(() => {
-        return PUBLIC_ROUTES.some(route =>
-            pathname === route || pathname.startsWith(`${route}/`)
-        );
+        return PUBLIC_ROUTES.some(route => {
+            if (route.endsWith('/*')) {
+                const base = route.slice(0, -2); // e.g. "/posts"
+                return pathname === base || pathname.startsWith(`${base}/`);
+            }
+            return pathname === route || pathname.startsWith(`${route}/`);
+        });
     }, [pathname]);
 
 
