@@ -21,7 +21,6 @@ export default function MyPostsPage() {
 
   // Sorting state
   const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("asc");
 
   // Modal state for post details
   const [selectedPost, setSelectedPost] = useState(null);
@@ -81,19 +80,12 @@ export default function MyPostsPage() {
     fetchPosts(false);
   };
 
-  // Handle sorting
+  // Handle sorting - always sorts descending, no toggle
   const handleSort = (field) => {
-    if (sortBy === field) {
-      // Toggle direction if same field
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      // New field, default to ascending
-      setSortBy(field);
-      setSortDirection("asc");
-    }
+    setSortBy(field);
   };
 
-  // Sort posts based on current sortBy and sortDirection (all loaded posts)
+  // Sort posts based on current sortBy (always descending)
   const sortedPosts = [...posts].sort((a, b) => {
     let aVal = a[sortBy];
     let bVal = b[sortBy];
@@ -108,10 +100,10 @@ export default function MyPostsPage() {
       bVal = new Date(bVal).getTime();
     }
 
-    // Special handling for postId (numeric)
-    if (sortBy === "postId") {
-      aVal = Number(aVal);
-      bVal = Number(bVal);
+    // Special handling for id (numeric) - maps to postId in API
+    if (sortBy === "id") {
+      aVal = Number(a.postId);
+      bVal = Number(b.postId);
     }
 
     // Special handling for status (order: approved, pending, rejected)
@@ -142,11 +134,8 @@ export default function MyPostsPage() {
       bVal = aiValidationOrder[bVal?.toLowerCase()] ?? 999;
     }
 
-    if (sortDirection === "asc") {
-      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-    } else {
-      return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-    }
+    // Always sort descending
+    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
   });
 
   const getStatusClass = (status) => {
@@ -255,10 +244,10 @@ export default function MyPostsPage() {
     );
   }
 
-  // Get sort icon for column header
+  // Get sort icon - always shows descending indicator
   const getSortIcon = (field) => {
     if (sortBy !== field) return " ↕";
-    return sortDirection === "asc" ? " ↑" : " ↓";
+    return " ↓";
   };
 
   return (
@@ -271,21 +260,14 @@ export default function MyPostsPage() {
         <table className="user-posts-table">
           <thead>
             <tr>
-              <th className="sortable" onClick={() => handleSort("postId")}>
-                Post ID{getSortIcon("postId")}
+              <th className="sortable" onClick={() => handleSort("id")}>
+                ID{getSortIcon("id")}
               </th>
-              <th className="sortable" onClick={() => handleSort("fanHubName")}>
-                Fan Hub{getSortIcon("fanHubName")}
-              </th>
-              {/*<th className="sortable" onClick={() => handleSort("authorDisplayName")}>*/}
-              {/*  Author{getSortIcon("authorDisplayName")}*/}
-              {/*</th>*/}
+              <th>Fan Hub</th>
               <th className="sortable" onClick={() => handleSort("postType")}>
                 Type{getSortIcon("postType")}
               </th>
-              <th className="sortable" onClick={() => handleSort("title")}>
-                Title{getSortIcon("title")}
-              </th>
+              <th>Title</th>
               <th>Content</th>
               <th className="sortable" onClick={() => handleSort("status")}>
                 Status{getSortIcon("status")}
@@ -293,8 +275,6 @@ export default function MyPostsPage() {
               <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>
                 AI Validation{getSortIcon("aiValidationStatus")}
               </th>
-              {/*<th className="non-sortable">Media</th>*/}
-              {/*<th>Hashtags</th>*/}
               <th className="sortable" onClick={() => handleSort("createdAt")}>
                 Created Date{getSortIcon("createdAt")}
               </th>
@@ -302,15 +282,14 @@ export default function MyPostsPage() {
           </thead>
           <tbody>
             {sortedPosts.map((post) => (
-              <tr 
-                key={post.postId} 
+              <tr
+                key={post.postId}
                 className="post-row"
                 onClick={() => handlePostClick(post)}
                 style={{ cursor: 'pointer' }}
               >
                 <td className="post-id">#{post.postId}</td>
                 <td className="fan-hub-name">{post.fanHubName}</td>
-                {/*<td className="author-display-name">{post.authorDisplayName}</td>*/}
                 <td className="post-type">
                   <span className="post-type-badge">{getPostTypeLabel(post.postType)}</span>
                 </td>
@@ -329,34 +308,12 @@ export default function MyPostsPage() {
                   </span>
                   {post.aiValidationComment && (
                     <div className="ai-validation-comment" title={post.aiValidationComment}>
-                      {post.aiValidationComment.length > 50 
-                        ? post.aiValidationComment.substring(0, 50) + "..." 
+                      {post.aiValidationComment.length > 50
+                        ? post.aiValidationComment.substring(0, 50) + "..."
                         : post.aiValidationComment}
                     </div>
                   )}
                 </td>
-                {/*<td className="post-media" onClick={(e) => e.stopPropagation()}>*/}
-                {/*  {getMediaThumbnail(post) ? (*/}
-                {/*    <img*/}
-                {/*      src={getMediaThumbnail(post)}*/}
-                {/*      alt={`${post.postType} media`}*/}
-                {/*      className="media-thumbnail"*/}
-                {/*    />*/}
-                {/*  ) : (*/}
-                {/*    <span className="no-media">No media</span>*/}
-                {/*  )}*/}
-                {/*</td>*/}
-                {/*<td className="post-hashtags" onClick={(e) => e.stopPropagation()}>*/}
-                {/*  {post.hashtags && post.hashtags.length > 0 ? (*/}
-                {/*    <div className="hashtags-container">*/}
-                {/*      {post.hashtags.map((hashtag, index) => (*/}
-                {/*        <span key={index} className="hashtag-tag">#{hashtag}</span>*/}
-                {/*      ))}*/}
-                {/*    </div>*/}
-                {/*  ) : (*/}
-                {/*    <span className="no-hashtags">-</span>*/}
-                {/*  )}*/}
-                {/*</td>*/}
                 <td className="post-created-date" onClick={(e) => e.stopPropagation()}>
                   <span className="date-display">{formatDate(post.createdAt)}</span>
                 </td>
