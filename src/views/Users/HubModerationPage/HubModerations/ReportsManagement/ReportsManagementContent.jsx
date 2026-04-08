@@ -47,9 +47,8 @@ function PostReportsTable({ fanHubId }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("desc");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy] = useState("createdAt");
+  const [statusFilter, setStatusFilter] = useState("PENDING");
   const [refreshing, setRefreshing] = useState(false);
 
   const [selectedReport, setSelectedReport] = useState(null);
@@ -118,15 +117,6 @@ function PostReportsTable({ fanHubId }) {
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
-  };
-
   const openResolveModal = (report) => {
     setSelectedReport(report);
     setResolveMessage("");
@@ -161,8 +151,6 @@ function PostReportsTable({ fanHubId }) {
       setResolving(false);
     }
   };
-
-  const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -216,14 +204,14 @@ function PostReportsTable({ fanHubId }) {
           <table className="moderation-table">
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleSort("reportId")}>Report ID{getSortIcon("reportId")}</th>
-                <th className="sortable" onClick={() => handleSort("postId")}>Post ID{getSortIcon("postId")}</th>
+                <th>Report ID</th>
+                <th>Post ID</th>
                 <th>Post Title</th>
-                <th className="sortable" onClick={() => handleSort("authorUsername")}>Post Author{getSortIcon("authorUsername")}</th>
-                <th className="sortable" onClick={() => handleSort("reportedByUsername")}>Reported By{getSortIcon("reportedByUsername")}</th>
+                <th>Post Author</th>
+                <th>Reported By</th>
                 <th>Reason</th>
-                <th className="sortable" onClick={() => handleSort("reportStatus")}>Status{getSortIcon("reportStatus")}</th>
-                <th className="sortable" onClick={() => handleSort("reportCreatedAt")}>Date{getSortIcon("reportCreatedAt")}</th>
+                <th>Status</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -328,9 +316,8 @@ function MemberReportsTable({ fanHubId }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDirection, setSortDirection] = useState("desc");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy] = useState("createdAt");
+  const [statusFilter, setStatusFilter] = useState("PENDING");
   const [refreshing, setRefreshing] = useState(false);
 
   const [selectedReport, setSelectedReport] = useState(null);
@@ -399,15 +386,6 @@ function MemberReportsTable({ fanHubId }) {
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
-  };
-
   const openResolveModal = (report) => {
     setSelectedReport(report);
     setResolveMessage("");
@@ -442,8 +420,6 @@ function MemberReportsTable({ fanHubId }) {
       setResolving(false);
     }
   };
-
-  const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -490,13 +466,13 @@ function MemberReportsTable({ fanHubId }) {
           <table className="moderation-table">
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleSort("reportId")}>Report ID{getSortIcon("reportId")}</th>
-                <th className="sortable" onClick={() => handleSort("reportedByUsername")}>Reported By{getSortIcon("reportedByUsername")}</th>
-                <th className="sortable" onClick={() => handleSort("reportedUsername")}>Reported User{getSortIcon("reportedUsername")}</th>
+                <th>Report ID</th>
+                <th>Reported By</th>
+                <th>Reported User</th>
                 <th>Fan Hub</th>
                 <th>Reason</th>
-                <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
-                <th className="sortable" onClick={() => handleSort("createdAt")}>Date{getSortIcon("createdAt")}</th>
+                <th>Status</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>

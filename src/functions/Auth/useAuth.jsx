@@ -192,6 +192,7 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.clear();
     localStorage.clear();
     window.dispatchEvent(new Event("storage"));
+    router.push("/login");
   };
 
   const clearAuth = () => {

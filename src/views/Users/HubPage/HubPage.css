@@ -127,6 +127,37 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   color: #2d8cf0;
 }
 
+/* Moderation Header Button */
+.moderation-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #323232;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.moderation-header-btn:hover {
+  background: #f5f5f5;
+  border-color: #ff9800;
+  transform: translateY(-1px);
+}
+
+.moderation-header-btn:active {
+  transform: translateY(0);
+}
+
+.moderation-header-btn svg {
+  color: #ff9800;
+}
+
 .hub-content-wrapper {
   margin-top: 120px;
   display: grid;
