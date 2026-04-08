@@ -17,7 +17,7 @@ body:has(.login-wrapper) {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    animation: fly-into-view 0.8s ease forwards;
+    animation: fly-into-view 0.4s ease forwards;
 }
 
 @keyframes fly-into-view {
@@ -47,7 +47,7 @@ body:has(.login-wrapper) {
 .card-side {
   opacity: 0;
   animation: fade-into-view 0.4s ease forwards;
-  animation-delay: 0.8s;
+  animation-delay: 0.4s;
 }
 
 .card-side::before {
@@ -93,7 +93,7 @@ body:has(.login-wrapper) {
     transition: 0.3s;
     opacity: 0;
     animation: fade-into-view 0.4s ease forwards;
-    animation-delay: 0.8s;
+    animation-delay: 0.4s;
 }
 
 @keyframes fade-into-view {

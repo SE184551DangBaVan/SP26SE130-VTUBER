@@ -234,7 +234,7 @@ const Navbar = () => {
                                             />
                                             <div className="profile-greeting">
                                                 <span className="greeting-text">Greetings,</span>
-                                                <span className="username-text">{profileData?.displayName || userAuth.email}!</span>
+                                                <span className="username-text" title={`${profileData?.displayName || userAuth.email}`}>{profileData?.displayName || userAuth.email}!</span>
                                             </div>
                                         </div>
 

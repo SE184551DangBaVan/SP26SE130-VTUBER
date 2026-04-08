@@ -129,6 +129,10 @@
 }
 
 
+#side-bar-content .side-bar-button .fas.news-ico {
+  transform: scale(1.25);
+}
+
 #side-bar hr {
   margin: 0;
   position: relative;

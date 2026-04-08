@@ -6,11 +6,11 @@ import './CreateHubPage.css';
 import { getFanHubs, createFanHub, uploadImages } from '@/services/FanHubController';
 import HubPage from '@/views/Users/HubPage/HubPage';
 
-import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
-import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
+import LoadingImg5 from '../../../assets/Decor/loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];

@@ -12,11 +12,11 @@ import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded } from '@mui/icons-material';
 
-import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
-import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
+import LoadingImg5 from '../../../assets/Decor/loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
@@ -894,24 +894,24 @@ export default function HubPage({ ownedHub }) {
 
             <div className='modal-footer'>
               <button
-                className='cancel-btn'
+                className='cancel-btn stylised-btn cancel'
                 onClick={handleEditClose}
                 disabled={uploading}
               >
-                Cancel
+                <span className='spinner stylised-text' >Cancel</span> 
               </button>
               <button
-                className='confirm-btn'
+                className='confirm-btn stylised-btn'
                 onClick={handleSaveImages}
                 disabled={uploading || (!bannerFile && !avatarFile && backgroundFiles.length === 0)}
               >
                 {uploading ? (
                   <>
-                    <span className='spinner' />
-                    Uploading...
+                    <span className='spinner stylised-text'>
+                    Uploading...</span>
                   </>
                 ) : (
-                  'Save Changes'
+                  <span className='stylised-text'>Save Changes</span>
                 )}
               </button>
             </div>

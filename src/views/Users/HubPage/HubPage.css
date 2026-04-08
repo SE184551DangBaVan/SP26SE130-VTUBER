@@ -856,14 +856,13 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   padding: 14px 18px;
   margin: 4px;
   border-radius: 12px 12px 6px 6px;
-  background-color: #000;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: #00b984;
   text-shadow: 0 0 10px #ffffff60;
 }
 
@@ -883,16 +882,13 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 }
 
 .modal-close:hover {
-  color: #ffffff;
-  text-shadow: 0 0 10px #ffffff60;
+  color: #ff0000;
 }
 
 .modal-body {
   padding: 12px;
   margin: -4px 6px 6px 6px;
   max-height: 400px;
-  border: 8px solid #000;
-  border-radius: 16px;
   overflow-y: scroll;
 }
 
@@ -916,13 +912,13 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 .modal-description {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #fff;
+  color: #555;
   line-height: 1.6;
 }
 
 .modal-description strong {
   font-weight: 600;
-  color: aquamarine;
+  color: rgb(43, 128, 198);
 }
 
 .modal-note {
