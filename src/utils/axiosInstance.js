@@ -3,10 +3,8 @@ import axios from "axios";
 const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json"
-  }
+  baseURL: API_BASE_URL
+  // Don't set default Content-Type here - it will be set in the interceptor
 });
 
 let isRefreshing = false;
@@ -84,13 +82,23 @@ const refreshAuthToken = async (refreshToken) => {
   }
 };
 
-// Request interceptor - add auth token to requests
+// Request interceptor - add auth token and set Content-Type appropriately
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Set Content-Type based on the data type
+    if (config.data instanceof FormData) {
+      // For FormData, don't set Content-Type - let browser set it with boundary
+      console.log('FormData detected - Content-Type will be set automatically by browser');
+    } else if (config.data && typeof config.data === 'object') {
+      // For regular JSON requests, set application/json
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     return config;
   },
   (error) => {
