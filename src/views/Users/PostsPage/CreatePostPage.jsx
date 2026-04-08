@@ -104,7 +104,6 @@ export default function CreatePostPage() {
       await createPost(postData, mediaToUpload, mediaKey);
       
       updateToast(toastId, 'success', 'Post created successfully!');
-      showSuccess('Post created successfully!');
       
       // Navigate back to hub page
       router.push(`/hub/${fanHubId}`);

@@ -128,6 +128,9 @@
   transition: color 0.5s ease, width 0.3s ease;
 }
 
+#side-bar-content .side-bar-button .fas.news-ico {
+  transform: scale(1.25);
+}
 
 #side-bar hr {
   margin: 0;
@@ -297,6 +300,11 @@ label[for=side-bar-toggle] {
 .side-bar-button.posts {pointer-events: none; padding-left: 20px;}
 .side-bar-button.posts ~ #side-bar-content-highlight {
   top: 124px;
+}
+
+.side-bar-button.news {pointer-events: none; padding-left: 20px;}
+.side-bar-button.news ~ #side-bar-content-highlight {
+  top: 178px;
 }
 
 .side-bar-button.createHub {pointer-events: none; opacity: 0.2;}

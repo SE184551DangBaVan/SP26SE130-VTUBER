@@ -105,13 +105,19 @@ export const createPost = async (postData, mediaFiles = null, mediaKey = 'images
     const formData = new FormData();
 
     // Add request JSON data
-    formData.append('request', JSON.stringify({
-      fanHubId: postData.fanHubId,
-      postType: postData.postType || 'TEXT',
-      title: postData.title,
-      content: postData.content || '',
-      hashtags: postData.hashtags || []
-    }));
+    formData.append(
+      'request',
+      new Blob(
+        [JSON.stringify({
+          fanHubId: postData.fanHubId,
+          postType: postData.postType || 'TEXT',
+          title: postData.title,
+          content: postData.content || '',
+          hashtags: postData.hashtags || []
+        })],
+        { type: 'application/json' }
+      )
+    );
 
     // Add media files if provided
     if (mediaFiles) {
@@ -121,11 +127,9 @@ export const createPost = async (postData, mediaFiles = null, mediaKey = 'images
       });
     }
 
-    const res = await axiosInstance.post('/posts', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Don't set Content-Type manually - axios interceptor will handle it
+    // The browser will set it with the correct boundary for FormData
+    const res = await axiosInstance.post('/posts', formData);
 
     console.log("createPost response:", res.data);
 

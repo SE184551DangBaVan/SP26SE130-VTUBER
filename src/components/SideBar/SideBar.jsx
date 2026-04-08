@@ -5,6 +5,7 @@ import HomeIco from '../../assets/UI-Elements/home.svg'
 import ExploreIco from '../../assets/UI-Elements/search.svg'
 import PostsIco from '../../assets/UI-Elements/post.svg'
 import GachaIco from '../../assets/UI-Elements/gacha.svg'
+import NewsIco from '../../assets/UI-Elements/news.svg'
 import './SideBar.css'
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from 'next/navigation'
@@ -43,10 +44,10 @@ export default function SideBar() {
           <div className={`side-bar-button ${sideBarSelected === 'home' ? 'home' : ''}`} onClick={() => handleNavigation("home", "/home")}><img src={HomeIco.src} alt='' className="fas"/><span>Home</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => handleNavigation("explore", "/explore")}><img src={ExploreIco.src} alt='' className="fas"/><span>Explore</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => handleNavigation("posts", "/posts")}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'news' ? 'news' : ''}`} onClick={() => handleNavigation("news", "/news-feed")}><img src={NewsIco.src} alt='' className="fas news-ico"/><span>News</span></div>
           <hr/>
+          <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'gacha' ? 'gacha' : ''}`} onClick={() => handleNavigation("gacha", "/gacha")}><img src={GachaIco.src} alt='' className="fas"/><span>Gacha</span></div>
-          <div className={`side-bar-button ${sideBarSelected === 'student' ? 'student' : ''}`} onClick={() => handleNavigation("student", "/student")}><Groups2 className="fas fa-student"/><span>Agenda</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'exam' ? 'exam' : ''}`} onClick={() => handleNavigation("exam", "/exam")}><School className="fas fa-exam"/><span>Exam List</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'exam-room' ? 'exam-room' : ''}`} onClick={() => handleNavigation("exam-room", "/exam-room")}><ArticleOutlined className="fas fa-exam-room"/><span>Exam Room List</span></div>
           <hr/>
