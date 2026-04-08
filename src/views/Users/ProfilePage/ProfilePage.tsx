@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import "./ProfilePage.css";
 import { getUserByUsername, selectDisplayBadges, updateUserProfile, uploadAvatarFrame } from "@/services/UserController";
 import { useAuth } from "@/functions/Auth/useAuth";
+import { showSuccess, showError } from "@/utils/toastUtils";
 
 export default function ProfilePage({ username }: { username: string }) {
   const auth = useAuth();
@@ -112,7 +113,7 @@ export default function ProfilePage({ username }: { username: string }) {
 
   const handleSaveBadges = async () => {
     if (selectedBadges.length > 3) {
-      alert("You can only select up to 3 badges");
+      showError("You can only select up to 3 badges");
       return;
     }
 
@@ -128,8 +129,9 @@ export default function ProfilePage({ username }: { username: string }) {
       }
       setIsModalOpen(false);
       setSelectedBadges([]);
+      showSuccess("Display badges updated successfully!");
     } else {
-      alert(result?.message || "Failed to update display badges");
+      showError(result?.message || "Failed to update display badges");
     }
   };
 
@@ -139,7 +141,7 @@ export default function ProfilePage({ username }: { username: string }) {
         return prev.filter((id) => id !== badgeId);
       } else {
         if (prev.length >= 3) {
-          alert("You can only select up to 3 badges");
+          showError("You can only select up to 3 badges");
           return prev;
         }
         return [...prev, badgeId];
@@ -160,7 +162,7 @@ export default function ProfilePage({ username }: { username: string }) {
 
   const handleSaveName = async () => {
     if (!editNameValue || editNameValue.trim() === "") {
-      alert("Display name cannot be empty");
+      showError("Display name cannot be empty");
       return;
     }
 
@@ -178,8 +180,9 @@ export default function ProfilePage({ username }: { username: string }) {
       });
       setIsEditingName(false);
       setEditNameValue("");
+      showSuccess("Display name updated successfully!");
     } else {
-      alert(result?.message || "Failed to update display name");
+      showError(result?.message || "Failed to update display name");
     }
   };
 
@@ -209,8 +212,9 @@ export default function ProfilePage({ username }: { username: string }) {
       });
       setIsEditingBio(false);
       setEditBioValue("");
+      showSuccess("Bio updated successfully!");
     } else {
-      alert(result?.message || "Failed to update bio");
+      showError(result?.message || "Failed to update bio");
     }
   };
 
@@ -232,12 +236,12 @@ export default function ProfilePage({ username }: { username: string }) {
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert("Please select an image file");
+      showError("Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      showError("File size must be less than 5MB");
       return;
     }
 
@@ -302,14 +306,14 @@ export default function ProfilePage({ username }: { username: string }) {
 
   const handlePreviewAccept = async () => {
     if (!selectedFile) {
-      alert("No file selected");
+      showError("No file selected");
       return;
     }
 
     setIsUploading(true);
     try {
       const result = await uploadAvatarFrame(selectedFile);
-      
+
       if (result?.success) {
         // Refresh user data
         const data = await getUserByUsername(username);
@@ -320,20 +324,20 @@ export default function ProfilePage({ username }: { username: string }) {
             hasFrame: data.frameUrl !== null,
           });
         }
-        
+
         setIsPreviewModalOpen(false);
         setSelectedFile(null);
         if (previewUrl) {
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl("");
         }
-        alert("Avatar updated successfully!");
+        showSuccess("Avatar updated successfully!");
       } else {
-        alert(result?.message || "Failed to upload avatar");
+        showError(result?.message || "Failed to upload avatar");
       }
     } catch (error) {
       console.error("Avatar upload error:", error);
-      alert("Failed to upload avatar");
+      showError("Failed to upload avatar");
     } finally {
       setIsUploading(false);
     }

@@ -4,13 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
-import { getPostsByFanHub, likePost, unlikePost } from '@/services/PostController';
+import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
-import { uploadImages } from '@/services/FanHubController';
-import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
-import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { uploadImages, checkIsMember } from '@/services/FanHubController';
+import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './HubPage.css';
-import { GroupRounded, CommentRounded, EditRounded, ShareRounded } from '@mui/icons-material';
+import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
 
 import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
 import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
@@ -124,6 +123,11 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
+  // Handle moderation hub click
+  const handleModerationClick = () => {
+    router.push(`/hub/${activeFanHubId}/moderation`);
+  };
+
   // Fetch hub data if fanHubId is provided via params (not owned hub)
   useEffect(() => {
     if (fanHubIdFromParams && !ownedHub) {
@@ -178,30 +182,18 @@ export default function HubPage({ ownedHub }) {
   useEffect(() => {
     const fetchUserMembership = async () => {
       if (!activeFanHubId || !currentUserId) return;
-
-      // If owner, they're implicitly a member with full access
-      if (isOwner) {
-        setIsMember(true);
-        setUserRoleInHub('OWNER');
-        return;
-      }
-
       try {
-        // Fetch current user's profile to check fanHubsJoined
-        const userData = await getUserById(currentUserId);
-        
-        if (userData && userData.fanHubsJoined) {
-          // Check if this hub is in the user's joined hubs
-          const isUserMember = userData.fanHubsJoined.some(
-            (hub) => hub.fanHubId === activeFanHubId
-          );
-          
-          setIsMember(isUserMember);
-          
-          // If user is a member, set their role (default to MEMBER since we can't get specific role from fanHubsJoined)
-          if (isUserMember) {
-            setUserRoleInHub('MEMBER');
-          }
+        // Use checkIsMember to get the user's role in this hub
+        const memberData = await checkIsMember(activeFanHubId);
+
+        console.log("MemberData:" + JSON.stringify(memberData));
+
+        if (memberData && memberData.isMember) {
+          setIsMember(true);
+          setUserRoleInHub(memberData.roleInHub || 'MEMBER');
+        } else {
+          setIsMember(false);
+          setUserRoleInHub(null);
         }
       } catch (error) {
         console.error('Error fetching user membership:', error);
@@ -210,7 +202,6 @@ export default function HubPage({ ownedHub }) {
 
     fetchUserMembership();
   }, [activeFanHubId, currentUserId, isOwner]);
-
   useEffect(() => {
     const fetchMembers = async () => {
       if (!activeFanHubId) return;
@@ -523,6 +514,16 @@ export default function HubPage({ ownedHub }) {
               </div>
             </div>
             <div className='hub-header-actions'>
+              {(userRoleInHub === 'MODERATOR' || userRoleInHub === 'VTUBER') && (
+                <button
+                  className='moderation-header-btn'
+                  onClick={handleModerationClick}
+                  title='Moderation Hub'
+                >
+                  <Shield fontSize='small' />
+                  <span>Moderation</span>
+                </button>
+              )}
               <button
                 className='create-post-header-btn'
                 onClick={handleCreatePostClick}
