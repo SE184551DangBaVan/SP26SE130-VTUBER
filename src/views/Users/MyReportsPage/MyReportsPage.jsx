@@ -146,7 +146,7 @@ function MyPostReportsTable() {
   };
 
   const handleViewPost = (postId) => {
-    router.push(`/post/${postId}`);
+    window.open(`/posts?id=${postId}`, '_blank');
   };
 
   const getSortIcon = (field) => sortBy !== field ? " ↕" : sortDirection === "asc" ? " ↑" : " ↓";

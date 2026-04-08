@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   getPostReports,
   getMemberReports,
@@ -42,6 +43,7 @@ export default function ReportsManagementContent({ fanHubId }) {
 
 /* ───────── Post Reports Table ───────── */
 function PostReportsTable({ fanHubId }) {
+  const router = useRouter();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -150,6 +152,10 @@ function PostReportsTable({ fanHubId }) {
     } finally {
       setResolving(false);
     }
+  };
+
+  const handleViewPost = (postId) => {
+    window.open(`/posts?id=${postId}`, '_blank');
   };
 
   const formatDate = (dateString) => {
@@ -283,6 +289,21 @@ function PostReportsTable({ fanHubId }) {
                 )}
                 <div className="report-info-item full-width"><span className="report-info-label">Reason:</span><span className="report-info-value report-reason-text">{selectedReport.reason}</span></div>
               </div>
+
+              {/* Post Media */}
+              {selectedReport.mediaUrls && selectedReport.mediaUrls.length > 0 && (
+                <div className="report-media-section">
+                  <span className="report-info-label">Post Media:</span>
+                  <div className="report-media-grid">
+                    {selectedReport.mediaUrls.map((url, idx) => (
+                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="report-media-thumb">
+                        <img src={url} alt={`Media ${idx + 1}`} onError={(e) => { e.target.src = "/placeholder-image.png"; }} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="resolve-form-group">
                 <label htmlFor="resolve-message">Resolution Message <span className="required">*</span></label>
                 <textarea
@@ -298,6 +319,7 @@ function PostReportsTable({ fanHubId }) {
             </div>
             <div className="report-resolve-actions">
               <button className="resolve-cancel-btn" onClick={closeResolveModal} disabled={resolving}>Cancel</button>
+              <button className="resolve-view-btn" onClick={() => handleViewPost(selectedReport.postId)}>View Post</button>
               <button className="resolve-confirm-btn" onClick={handleResolve} disabled={resolving || !resolveMessage.trim()}>
                 {resolving ? "Resolving..." : "Confirm Resolve"}
               </button>

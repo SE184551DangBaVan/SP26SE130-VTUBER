@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { reportPost, reportMember } from "@/services/ReportController";
-import { REPORT_TYPE, REPORT_TYPE_LABELS } from "./reportTypes";
+import { REPORT_TYPE, REPORT_TYPE_LABELS, REPORT_REASONS } from "./reportTypes";
 import "./ReportModal.css";
 
 const REASON_MIN_LENGTH = 10;
 const REASON_MAX_LENGTH = 500;
+const OTHER_REASON = "Other";
 
 /**
  * Global Report Modal component.
@@ -21,14 +22,18 @@ const REASON_MAX_LENGTH = 500;
  *   targetName - optional display label for context
  */
 export default function ReportModal({ isOpen, onClose, type, targetId, targetName }) {
-  const [reason, setReason] = useState("");
+  const [selectedReason, setSelectedReason] = useState(null);
+  const [otherReason, setOtherReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const finalReason = selectedReason === OTHER_REASON ? otherReason : selectedReason || "";
 
   // Reset form state whenever the modal opens with new data
   useEffect(() => {
     if (isOpen) {
-      setReason("");
+      setSelectedReason(null);
+      setOtherReason("");
       setIsSubmitting(false);
       setError("");
     }
@@ -45,13 +50,26 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const handleReasonSelect = (reason) => {
+    setSelectedReason(reason);
+    if (reason !== OTHER_REASON) {
+      setOtherReason("");
+    }
+    setError("");
+  };
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
       setError("");
 
-      if (reason.trim().length < REASON_MIN_LENGTH) {
-        setError(`Reason must be at least ${REASON_MIN_LENGTH} characters`);
+      if (selectedReason === OTHER_REASON) {
+        if (otherReason.trim().length < REASON_MIN_LENGTH) {
+          setError(`Reason must be at least ${REASON_MIN_LENGTH} characters`);
+          return;
+        }
+      } else if (!selectedReason) {
+        setError("Please select a reason for reporting");
         return;
       }
 
@@ -65,9 +83,9 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
       try {
         let response;
         if (type === REPORT_TYPE.POST) {
-          response = await reportPost(targetId, reason.trim());
+          response = await reportPost(targetId, finalReason.trim());
         } else if (type === REPORT_TYPE.MEMBER) {
-          response = await reportMember(targetId, reason.trim());
+          response = await reportMember(targetId, finalReason.trim());
         } else {
           throw new Error("Unknown report type");
         }
@@ -85,7 +103,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
         setIsSubmitting(false);
       }
     },
-    [reason, type, targetId, onClose]
+    [selectedReason, otherReason, finalReason, type, targetId, onClose]
   );
 
   const handleBackdropClick = (e) => {
@@ -98,13 +116,14 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
 
   const typeLabel = REPORT_TYPE_LABELS[type] || "Content";
   const displayLabel = targetName || typeLabel;
+  const isOtherSelected = selectedReason === OTHER_REASON;
 
   return (
     <div className="report-modal-backdrop" onClick={handleBackdropClick}>
       <div className="report-modal-container" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
         {/* Header */}
         <div className="report-modal-header">
-          <h2 id="report-modal-title">Report {typeLabel}</h2>
+          <h2 id="report-modal-title" className="report-modal-title">Report</h2>
           <button className="report-modal-close-btn" onClick={onClose} aria-label="Close report modal">
             &times;
           </button>
@@ -113,27 +132,49 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
         {/* Body */}
         <form onSubmit={handleSubmit} className="report-modal-form">
           <p className="report-modal-description">
-            You are reporting: <span className="report-modal-target-name">{displayLabel}</span>
+            Why are you reporting this {typeLabel.toLowerCase()}?
           </p>
 
-          <label htmlFor="report-reason" className="report-modal-label">
+          <label className="report-modal-label">
             Reason <span className="required">*</span>
           </label>
-          <textarea
-            id="report-reason"
-            className="report-modal-textarea"
-            placeholder={`Describe why you are reporting this ${typeLabel}...`}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            maxLength={REASON_MAX_LENGTH}
-            rows={5}
-            disabled={isSubmitting}
-          />
+
+          {/* Predefined Reason Options */}
+          <div className="report-reasons-list">
+            {REPORT_REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                className={`report-reason-option ${selectedReason === reason ? "selected" : ""}`}
+                onClick={() => handleReasonSelect(reason)}
+                disabled={isSubmitting}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+
+          {/* Other Reason Textarea */}
+          {isOtherSelected && (
+            <textarea
+              id="report-reason-other"
+              className="report-modal-textarea"
+              placeholder="Please describe the issue in detail..."
+              value={otherReason}
+              onChange={(e) => setOtherReason(e.target.value)}
+              maxLength={REASON_MAX_LENGTH}
+              rows={4}
+              disabled={isSubmitting}
+              autoFocus
+            />
+          )}
 
           <div className="report-modal-footer">
-            <span className={`char-count ${reason.length >= REASON_MAX_LENGTH ? "char-count--limit" : ""}`}>
-              {reason.length}/{REASON_MAX_LENGTH}
-            </span>
+            {isOtherSelected && (
+              <span className={`char-count ${otherReason.length >= REASON_MAX_LENGTH ? "char-count--limit" : ""}`}>
+                {otherReason.length}/{REASON_MAX_LENGTH}
+              </span>
+            )}
 
             {error && <p className="report-modal-error">{error}</p>}
 
@@ -149,7 +190,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
               <button
                 type="submit"
                 className="report-modal-btn report-modal-btn--submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !finalReason.trim()}
               >
                 {isSubmitting ? "Submitting..." : "Submit Report"}
               </button>
