@@ -6,7 +6,7 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
-import { uploadImages, checkIsMember } from '@/services/FanHubController';
+import { uploadImages, checkIsMember, updateFanHub } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
@@ -60,6 +60,16 @@ export default function HubPage({ ownedHub }) {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [backgroundPreviews, setBackgroundPreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  // State for hub info editing
+  const [editHubName, setEditHubName] = useState('');
+  const [editSubdomain, setEditSubdomain] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editThemeColor, setEditThemeColor] = useState('#555');
+  const [editCategories, setEditCategories] = useState([]);
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
+  const [editRequiresApproval, setEditRequiresApproval] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
@@ -364,12 +374,23 @@ export default function HubPage({ ownedHub }) {
 
   // Handle edit button click
   const handleEditClick = () => {
+    // Populate form with current hub data
+    setEditHubName(hubData.hubName || '');
+    setEditSubdomain(hubData.subdomain || '');
+    setEditDescription(hubData.description || '');
+    setEditThemeColor(hubData.themeColor || '#555');
+    setEditCategories(hubData.categories || []);
+    setEditIsPrivate(hubData.isPrivate || false);
+    setEditRequiresApproval(hubData.requiresApproval || false);
+
+    // Reset image uploads
     setBannerFile(null);
     setAvatarFile(null);
     setBackgroundFiles([]);
     setBannerPreview(null);
     setAvatarPreview(null);
     setBackgroundPreviews([]);
+    setHasChanges(false);
     setShowEditModal(true);
   };
 
@@ -382,50 +403,116 @@ export default function HubPage({ ownedHub }) {
     setBannerPreview(null);
     setAvatarPreview(null);
     setBackgroundPreviews([]);
+    setEditHubName('');
+    setEditSubdomain('');
+    setEditDescription('');
+    setEditThemeColor('#555');
+    setEditCategories([]);
+    setEditIsPrivate(false);
+    setEditRequiresApproval(false);
+    setHasChanges(false);
   };
 
-  // Handle save image changes
-  const handleSaveImages = async () => {
-    if (!bannerFile && !avatarFile && backgroundFiles.length === 0) {
-      showError('Please select at least one image to upload');
-      return;
-    }
+  // Toggle category in edit form
+  const toggleEditCategory = (cat) => {
+    setEditCategories((prev) =>
+      prev.includes(cat)
+        ? prev.filter((c) => c !== cat)
+        : [...prev, cat]
+    );
+  };
 
+  // Check if any changes have been made
+  useEffect(() => {
+    if (!showEditModal) return;
+
+    const hubInfoChanged = 
+      editHubName !== hubData.hubName ||
+      editSubdomain !== hubData.subdomain ||
+      editDescription !== hubData.description ||
+      editThemeColor !== hubData.themeColor ||
+      JSON.stringify(editCategories) !== JSON.stringify(hubData.categories) ||
+      editIsPrivate !== hubData.isPrivate ||
+      editRequiresApproval !== hubData.requiresApproval;
+
+    const imagesSelected = bannerFile || avatarFile || backgroundFiles.length > 0;
+
+    setHasChanges(hubInfoChanged || imagesSelected);
+  }, [editHubName, editSubdomain, editDescription, editThemeColor, editCategories, editIsPrivate, editRequiresApproval, bannerFile, avatarFile, backgroundFiles, showEditModal]);
+
+  // Handle save changes (hub info + images)
+  const handleSaveEdit = async () => {
     setUploading(true);
-    const toastId = showLoading('Uploading images...');
+    const toastId = showLoading('Saving changes...');
 
     try {
-      // Limit backgrounds to max 4
-      const backgroundsToUpload = backgroundFiles.slice(0, 4);
+      // Step 1: Update hub info if there are changes
+      const hubInfoChanged = 
+        editHubName !== hubData.hubName ||
+        editSubdomain !== hubData.subdomain ||
+        editDescription !== hubData.description ||
+        editThemeColor !== hubData.themeColor ||
+        JSON.stringify(editCategories) !== JSON.stringify(hubData.categories) ||
+        editIsPrivate !== hubData.isPrivate ||
+        editRequiresApproval !== hubData.requiresApproval;
 
-      const uploadRes = await uploadImages(
-        activeFanHubId,
-        bannerFile,
-        avatarFile,
-        backgroundsToUpload
-      );
+      if (hubInfoChanged) {
+        const updatePayload = {
+          hubName: editHubName || hubData.hubName,
+          subdomain: editSubdomain || hubData.subdomain,
+          description: editDescription || hubData.description,
+          themeColor: editThemeColor || hubData.themeColor,
+          category: editCategories.length > 0 ? editCategories : hubData.categories,
+          isPrivate: editIsPrivate,
+          requiresApproval: editRequiresApproval,
+        };
 
-      if (uploadRes?.success) {
-        updateToast(toastId, 'success', 'Images updated successfully!');
+        const updateRes = await updateFanHub(activeFanHubId, updatePayload);
 
-        // Refresh hub data to show new images
-        const { getFanHubs } = await import('@/services/FanHubController');
-        const hubs = await getFanHubs();
-        const updatedHub = hubs.find(h =>
-          h.fanHubId === activeFanHubId ||
-          h.ownerUsername === hubData.ownerUsername
+        if (!updateRes?.success) {
+          updateToast(toastId, 'error', updateRes?.message || 'Failed to update hub info');
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Step 2: Upload images if any selected
+      const imagesSelected = bannerFile || avatarFile || backgroundFiles.length > 0;
+      
+      if (imagesSelected) {
+        const backgroundsToUpload = backgroundFiles.slice(0, 4);
+
+        const uploadRes = await uploadImages(
+          activeFanHubId,
+          bannerFile,
+          avatarFile,
+          backgroundsToUpload
         );
 
-        if (updatedHub) {
-          setHubData(updatedHub);
+        if (!uploadRes?.success) {
+          updateToast(toastId, 'error', uploadRes?.message || 'Failed to upload images');
+          setUploading(false);
+          return;
         }
-
-        handleEditClose();
-      } else {
-        updateToast(toastId, 'error', uploadRes?.message || 'Failed to upload images');
       }
+
+      updateToast(toastId, 'success', 'Hub updated successfully!');
+
+      // Refresh hub data to show updates
+      const { getFanHubs } = await import('@/services/FanHubController');
+      const hubs = await getFanHubs();
+      const updatedHub = hubs.find(h =>
+        h.fanHubId === activeFanHubId ||
+        h.ownerUsername === hubData.ownerUsername
+      );
+
+      if (updatedHub) {
+        setHubData(updatedHub);
+      }
+
+      handleEditClose();
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Save error:', error);
       updateToast(toastId, 'error', 'Network error. Please try again.');
     } finally {
       setUploading(false);
@@ -434,7 +521,7 @@ export default function HubPage({ ownedHub }) {
 
   // Filter posts by type (IMAGE, VIDEO for now)
   const filteredPosts = posts.filter(post =>
-    post.postType === 'IMAGE' || post.postType === 'VIDEO'
+    post.postType === 'IMAGE' || post.postType === 'VIDEO' || post.postType === 'TEXT'
   );
 
   const handleSortChange = (e) => {
@@ -488,6 +575,7 @@ export default function HubPage({ ownedHub }) {
           height: `calc(450px - ${navScrollOffset*0.65}px)`,
           backgroundImage: hubData.bannerUrl ? `url(${hubData.bannerUrl})` : '#75a4c8',
           backgroundSize: 'cover',
+          backgroundPosition: 'center',
           borderBottom: hubData.themeColor ? `4px solid ${hubData.themeColor}` : '4px solid #ccc',
         }}
       >
@@ -779,116 +867,211 @@ export default function HubPage({ ownedHub }) {
         </div>
       )}
 
-      {/* Edit Images Modal */}
+      {/* Edit Hub Modal */}
       {showEditModal && (
         <div className='modal-overlay' onClick={handleEditClose}>
-          <div className='modal-content edit-images-modal' onClick={(e) => e.stopPropagation()}>
+          <div className='modal-content edit-hub-modal' onClick={(e) => e.stopPropagation()}>
             <div className='modal-header'>
-              <h2>Edit Banner & Avatar</h2>
+              <h2>Edit FanHub</h2>
               <button className='modal-close' onClick={handleEditClose}>×</button>
             </div>
 
             <div className='modal-body'>
-              <p className='modal-description'>
-                Upload new images to update your FanHub appearance.
-              </p>
-
-              <div className='edit-images-form'>
-                <div className='image-upload-group'>
-                  <label htmlFor='edit-banner-upload'>Banner Image</label>
-                  <div className='image-upload-wrapper'>
+              <div className='edit-hub-form'>
+                {/* Hub Info Section */}
+                <div className='edit-section'>
+                  <h3>Hub Information</h3>
+                  
+                  <div className='form-group'>
+                    <label htmlFor='edit-hub-name'>Hub Name</label>
                     <input
-                      type='file'
-                      id='edit-banner-upload'
-                      accept='image/*'
-                      onChange={handleBannerChange}
-                      className='image-upload-input'
+                      type='text'
+                      id='edit-hub-name'
+                      value={editHubName}
+                      onChange={(e) => setEditHubName(e.target.value)}
+                      placeholder='Enter hub name'
                     />
-                    <label htmlFor='edit-banner-upload' className='image-upload-btn'>
-                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                        <circle cx='8.5' cy='8.5' r='1.5' />
-                        <polyline points='21 15 16 10 5 21' />
-                      </svg>
-                      {bannerFile ? 'Change Banner' : 'Upload Banner'}
-                    </label>
-                    {bannerFile && (
-                      <span className='image-file-name'>{bannerFile.name}</span>
-                    )}
                   </div>
-                  {bannerPreview && (
-                    <div className='image-preview banner-preview'>
-                      <img src={bannerPreview} alt='Banner preview' />
+
+                  <div className='form-group'>
+                    <label htmlFor='edit-subdomain'>Subdomain</label>
+                    <input
+                      type='text'
+                      id='edit-subdomain'
+                      value={editSubdomain}
+                      onChange={(e) => setEditSubdomain(e.target.value)}
+                      placeholder='@YourHub'
+                    />
+                  </div>
+
+                  <div className='form-group'>
+                    <label htmlFor='edit-description'>Description</label>
+                    <textarea
+                      id='edit-description'
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder='Describe your hub...'
+                      rows='4'
+                    />
+                  </div>
+
+                  <div className='form-group'>
+                    <label htmlFor='edit-theme-color'>Theme Color</label>
+                    <div className='color-picker-wrapper'>
+                      <input
+                        type='color'
+                        id='edit-theme-color'
+                        value={editThemeColor}
+                        onChange={(e) => setEditThemeColor(e.target.value)}
+                      />
+                      <span className='color-value'>{editThemeColor}</span>
                     </div>
-                  )}
-                </div>
-
-                <div className='image-upload-group'>
-                  <label htmlFor='edit-avatar-upload'>Avatar Image</label>
-                  <div className='image-upload-wrapper'>
-                    <input
-                      type='file'
-                      id='edit-avatar-upload'
-                      accept='image/*'
-                      onChange={handleAvatarChange}
-                      className='image-upload-input'
-                    />
-                    <label htmlFor='edit-avatar-upload' className='image-upload-btn'>
-                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                        <circle cx='8.5' cy='8.5' r='1.5' />
-                        <polyline points='21 15 16 10 5 21' />
-                      </svg>
-                      {avatarFile ? 'Change Avatar' : 'Upload Avatar'}
-                    </label>
-                    {avatarFile && (
-                      <span className='image-file-name'>{avatarFile.name}</span>
-                    )}
                   </div>
-                  {avatarPreview && (
-                    <div className='image-preview avatar-preview'>
-                      <img src={avatarPreview} alt='Avatar preview' />
-                    </div>
-                  )}
-                </div>
 
-                <div className='image-upload-group'>
-                  <label htmlFor='edit-background-upload'>Background Images</label>
-                  <span className='field-hint'>Add background images (max 4)</span>
-                  <div className='image-upload-wrapper'>
-                    <input
-                      type='file'
-                      id='edit-background-upload'
-                      accept='image/*'
-                      multiple
-                      onChange={handleBackgroundChange}
-                      className='image-upload-input'
-                    />
-                    <label htmlFor='edit-background-upload' className='image-upload-btn'>
-                      <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                        <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                        <circle cx='8.5' cy='8.5' r='1.5' />
-                        <polyline points='21 15 16 10 5 21' />
-                      </svg>
-                      {backgroundFiles.length > 0 ? 'Change Images' : 'Upload Backgrounds'}
-                    </label>
-                  </div>
-                  {backgroundPreviews.length > 0 && (
-                    <div className='explore-preview-grid'>
-                      {backgroundPreviews.map((preview, index) => (
-                        <div key={index} className='explore-preview-item'>
-                          <img src={preview} alt={`Background ${index + 1}`} />
-                          <button
-                            type='button'
-                            className='remove-image-btn'
-                            onClick={() => removeBackgroundImage(index)}
-                          >
-                            ×
-                          </button>
-                        </div>
+                  <div className='form-group'>
+                    <label>Categories</label>
+                    <div className='category-select'>
+                      {['Game', 'Just Chatting', 'Music', 'ASMR', 'Cooking', 'Art', 'Cosplay'].map((cat) => (
+                        <button
+                          key={cat}
+                          type='button'
+                          className={`category-chip ${editCategories.includes(cat) ? 'active' : ''}`}
+                          onClick={() => toggleEditCategory(cat)}
+                        >
+                          {cat}
+                          {editCategories.includes(cat) && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className='chip-check'>
+                              <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                          )}
+                        </button>
                       ))}
                     </div>
-                  )}
+                  </div>
+
+                  <div className='form-group checkbox-group'>
+                    <label className='checkbox-label'>
+                      <input
+                        type='checkbox'
+                        checked={editIsPrivate}
+                        onChange={(e) => setEditIsPrivate(e.target.checked)}
+                      />
+                      <span>Private Hub</span>
+                    </label>
+                  </div>
+
+                  <div className='form-group checkbox-group'>
+                    <label className='checkbox-label'>
+                      <input
+                        type='checkbox'
+                        checked={editRequiresApproval}
+                        onChange={(e) => setEditRequiresApproval(e.target.checked)}
+                      />
+                      <span>Requires Approval</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Images Section */}
+                <div className='edit-section'>
+                  <h3>Images</h3>
+                  
+                  <div className='image-upload-group'>
+                    <label htmlFor='edit-banner-upload'>Banner Image</label>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='edit-banner-upload'
+                        accept='image/*'
+                        onChange={handleBannerChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='edit-banner-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {bannerFile ? 'Change Banner' : 'Upload Banner'}
+                      </label>
+                      {bannerFile && (
+                        <span className='image-file-name'>{bannerFile.name}</span>
+                      )}
+                    </div>
+                    {bannerPreview && (
+                      <div className='image-preview banner-preview'>
+                        <img src={bannerPreview} alt='Banner preview' />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='image-upload-group'>
+                    <label htmlFor='edit-avatar-upload'>Avatar Image</label>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='edit-avatar-upload'
+                        accept='image/*'
+                        onChange={handleAvatarChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='edit-avatar-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {avatarFile ? 'Change Avatar' : 'Upload Avatar'}
+                      </label>
+                      {avatarFile && (
+                        <span className='image-file-name'>{avatarFile.name}</span>
+                      )}
+                    </div>
+                    {avatarPreview && (
+                      <div className='image-preview avatar-preview'>
+                        <img src={avatarPreview} alt='Avatar preview' />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='image-upload-group'>
+                    <label htmlFor='edit-background-upload'>Background Images</label>
+                    <span className='field-hint'>Add background images (max 4)</span>
+                    <div className='image-upload-wrapper'>
+                      <input
+                        type='file'
+                        id='edit-background-upload'
+                        accept='image/*'
+                        multiple
+                        onChange={handleBackgroundChange}
+                        className='image-upload-input'
+                      />
+                      <label htmlFor='edit-background-upload' className='image-upload-btn'>
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
+                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                          <circle cx='8.5' cy='8.5' r='1.5' />
+                          <polyline points='21 15 16 10 5 21' />
+                        </svg>
+                        {backgroundFiles.length > 0 ? 'Change Images' : 'Upload Backgrounds'}
+                      </label>
+                    </div>
+                    {backgroundPreviews.length > 0 && (
+                      <div className='explore-preview-grid'>
+                        {backgroundPreviews.map((preview, index) => (
+                          <div key={index} className='explore-preview-item'>
+                            <img src={preview} alt={`Background ${index + 1}`} />
+                            <button
+                              type='button'
+                              className='remove-image-btn'
+                              onClick={() => removeBackgroundImage(index)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -899,18 +1082,17 @@ export default function HubPage({ ownedHub }) {
                 onClick={handleEditClose}
                 disabled={uploading}
               >
-                <span className='spinner stylised-text' >Cancel</span> 
+                <span className='stylised-text'>Cancel</span>
               </button>
               <button
                 className='confirm-btn stylised-btn'
-                onClick={handleSaveImages}
-                disabled={uploading || (!bannerFile && !avatarFile && backgroundFiles.length === 0)}
+                onClick={handleSaveEdit}
+                disabled={uploading || !hasChanges}
               >
                 {uploading ? (
-                  <>
-                    <span className='spinner stylised-text'>
-                    Uploading...</span>
-                  </>
+                  <span className='stylised-text'>
+                    <span className='spinner'></span>Saving...
+                  </span>
                 ) : (
                   <span className='stylised-text'>Save Changes</span>
                 )}
@@ -927,6 +1109,7 @@ export default function HubPage({ ownedHub }) {
 function PostCard({ post, onClick }) {
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleLike = (e) => {
     e.stopPropagation();
@@ -938,6 +1121,20 @@ function PostCard({ post, onClick }) {
     e.stopPropagation();
     localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
     onClick();
+  };
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+    );
   };
 
   const renderMedia = () => {
@@ -954,15 +1151,69 @@ function PostCard({ post, onClick }) {
       );
     }
 
+    // Single image
+    if (post.mediaUrls.length === 1) {
+      return (
+        <div className='post-media image-media'>
+          <img
+            src={post.mediaUrls[0]}
+            alt={post.title}
+            onError={(e) => {
+              e.target.src = '/placeholder-image.png';
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Multiple images - Reddit-style carousel
     return (
-      <div className='post-media image-media'>
-        <img
-          src={post.mediaUrls[0]}
-          alt={post.title}
-          onError={(e) => {
-            e.target.src = '/placeholder-image.png';
-          }}
-        />
+      <div className='post-media image-gallery'>
+        <div className='image-carousel'>
+          <button 
+            className='carousel-btn carousel-prev' 
+            onClick={handlePrevImage}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          
+          <div className='carousel-image-container'>
+            <img
+              src={post.mediaUrls[currentImageIndex]}
+              alt={`${post.title} - Image ${currentImageIndex + 1}`}
+              onError={(e) => {
+                e.target.src = '/placeholder-image.png';
+              }}
+            />
+          </div>
+
+          <button 
+            className='carousel-btn carousel-next' 
+            onClick={handleNextImage}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          {post.mediaUrls.length > 1 && (
+            <div className='carousel-indicators'>
+              {post.mediaUrls.map((_, index) => (
+                <button
+                  key={index}
+                  className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };

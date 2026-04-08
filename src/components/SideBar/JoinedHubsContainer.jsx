@@ -40,8 +40,8 @@ export default function JoinedHubsContainer() {
     fetchJoinedHubs();
   }, []);
 
-  const handleHubClick = (subdomain) => {
-    router.push(`/hub/${subdomain}`);
+  const handleHubClick = (fanHubId) => {
+    router.push(`/hub/${fanHubId}`);
   };
 
   const toggleShowAll = () => {
@@ -74,10 +74,10 @@ export default function JoinedHubsContainer() {
               <div
                 key={hub.fanHubId}
                 className="joined-hub-item"
-                onClick={() => handleHubClick(hub.subdomain)}
+                onClick={() => handleHubClick(hub.fanHubId)}
               >
                 <img
-                  src={hub.avatarUrl || '/default-avatar.png'}
+                  src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
                   alt={hub.hubName}
                   className="joined-hub-avatar"
                 />

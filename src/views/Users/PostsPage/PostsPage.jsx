@@ -98,6 +98,7 @@ function PostCard({ post, onClick, onHubClick }) {
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleLike = async (e) => {
     e.stopPropagation();
@@ -150,6 +151,20 @@ function PostCard({ post, onClick, onHubClick }) {
     onClick();
   };
 
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => 
+      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
   const renderMedia = () => {
     if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
 
@@ -164,16 +179,71 @@ function PostCard({ post, onClick, onHubClick }) {
       );
     }
 
+    // Single image
+    if (post.mediaUrls.length === 1) {
+      return (
+        <div className='post-media image-media'>
+          <img
+            src={post.mediaUrls[0]}
+            alt={post.title}
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.target.src = '/placeholder-image.png';
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Multiple images - Reddit-style carousel
     return (
-      <div className='post-media image-media'>
-        <img
-          src={post.mediaUrls[0]}
-          alt={post.title}
-          onClick={(e) => e.stopPropagation()}
-          onError={(e) => {
-            e.target.src = '/placeholder-image.png';
-          }}
-        />
+      <div className='post-media image-gallery'>
+        <div className='image-carousel'>
+          <button 
+            className='carousel-btn carousel-prev' 
+            onClick={handlePrevImage}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          
+          <div className='carousel-image-container'>
+            <img
+              src={post.mediaUrls[currentImageIndex]}
+              alt={`${post.title} - Image ${currentImageIndex + 1}`}
+              onClick={(e) => e.stopPropagation()}
+              onError={(e) => {
+                e.target.src = '/placeholder-image.png';
+              }}
+            />
+          </div>
+
+          <button 
+            className='carousel-btn carousel-next' 
+            onClick={handleNextImage}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          {post.mediaUrls.length > 1 && (
+            <div className='carousel-indicators'>
+              {post.mediaUrls.map((_, index) => (
+                <button
+                  key={index}
+                  className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };

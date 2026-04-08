@@ -113,7 +113,9 @@ export const createPost = async (postData, mediaFiles = null, mediaKey = 'images
           postType: postData.postType || 'TEXT',
           title: postData.title,
           content: postData.content || '',
-          hashtags: postData.hashtags || []
+          hashtags: postData.hashtags || [],
+          isAnnouncement: postData.isAnnouncement || false,
+          isSchedule: postData.isSchedule || false
         })],
         { type: 'application/json' }
       )
@@ -183,6 +185,38 @@ export const getUserPosts = async (userId, pageNo = 0, pageSize = 50, sortBy = "
     return [];
   } catch (err) {
     console.error("Fetch user posts error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get announcements and events for a specific fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort by field
+ * @returns {Promise<Array>} Announcements and events data
+ */
+export const getAnnouncementsAndEvents = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const url = `/posts/fan-hub/${fanHubId}/announcements-events?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`;
+
+    const res = await axiosInstance.get(url);
+
+    console.log("getAnnouncementsAndEvents response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      // Filter only APPROVED posts
+      return res.data.data.filter(post => post.status === "APPROVED");
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch announcements and events error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,
