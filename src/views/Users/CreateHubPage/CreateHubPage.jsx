@@ -6,8 +6,8 @@ import './CreateHubPage.css';
 import { getFanHubs, createFanHub, uploadImages } from '@/services/FanHubController';
 import HubPage from '@/views/Users/HubPage/HubPage';
 
-import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
 import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'

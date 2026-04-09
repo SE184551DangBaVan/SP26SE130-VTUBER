@@ -13,11 +13,11 @@ import PostDetails from '../PostsPage/PostDetails';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
 
-import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
-import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
+import LoadingImg5 from '../../../assets/Decor/loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
