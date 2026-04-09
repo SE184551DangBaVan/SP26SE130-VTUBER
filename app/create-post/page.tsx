@@ -1,7 +1,11 @@
 'use client';
-
+import UserLayout from '@/components/UserLayout/UserLayout';
 import CreatePostPage from '@/views/Users/PostsPage/CreatePostPage';
 
 export default function CreatePost() {
-  return <CreatePostPage />;
+  return (
+      <UserLayout>
+          <CreatePostPage />
+      </UserLayout>
+  )
 }

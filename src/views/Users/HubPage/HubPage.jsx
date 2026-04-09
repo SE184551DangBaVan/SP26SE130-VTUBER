@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
-import { uploadImages, checkIsMember, updateFanHub } from '@/services/FanHubController';
+import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
+import { updateFanHub } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
+import PostDetails from '../PostsPage/PostDetails';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
 
-import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
-import LoadingImg5 from '../../../assets/Decor/loading-5.gif'
+import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
@@ -24,7 +26,8 @@ export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const fanHubIdFromParams = params?.fanHubId;
+  const searchParams = useSearchParams();
+  const subdomainFromParams = params?.subdomain;
 
   // Generate random loading image on mount
   const [randomLoadingImage, setRandomLoadingImage] = useState(null);
@@ -34,6 +37,8 @@ export default function HubPage({ ownedHub }) {
     setRandomLoadingImage(loadingImages[randomIndex]);
   }, []);
 
+  // i want the loading screen to appear only once, and never again
+  const [firstLoad, setFirstLoad] = useState(false);
   const [hubData, setHubData] = useState(ownedHub || null);
   const [posts, setPosts] = useState([]);
   const [members, setMembers] = useState([]);
@@ -74,6 +79,7 @@ export default function HubPage({ ownedHub }) {
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
   const lastScrollValue = useRef(0);
+  const scrollPositionRef = useRef(0);
 
   // Throttled scroll handler using requestAnimationFrame
   useEffect(() => {
@@ -128,26 +134,24 @@ export default function HubPage({ ownedHub }) {
     if (!canCreatePost) {
       setShowCreatePostModal(true);
     } else {
-      // Navigate to create post page with fanHubId
-      router.push(`/create-post?fanHubId=${activeFanHubId}`);
+      // Store the fanHubId in session storage for auto-selection
+      sessionStorage.setItem('createPostPreSelectedHub', activeFanHubId);
+      // Navigate to create post page
+      router.push(`/create-post`);
     }
   };
 
   // Handle moderation hub click
   const handleModerationClick = () => {
-    router.push(`/hub/${activeFanHubId}/moderation`);
+    router.push(`/hub/${hubData.subdomain}/moderation`);
   };
 
-  // Fetch hub data if fanHubId is provided via params (not owned hub)
+  // Fetch hub data if subdomain is provided via params (not owned hub)
   useEffect(() => {
-    if (fanHubIdFromParams && !ownedHub) {
+    if (subdomainFromParams && !ownedHub) {
       const fetchHubData = async () => {
         try {
-          // We need to get all hubs and find the matching one
-          // Or use a dedicated getFanHubById endpoint if available
-          const { getFanHubs } = await import('@/services/FanHubController');
-          const hubs = await getFanHubs();
-          const foundHub = hubs.find(h => h.fanHubId === parseInt(fanHubIdFromParams));
+          const foundHub = await getFanHubBySubdomain(subdomainFromParams);
           if (foundHub) {
             setHubData(foundHub);
           }
@@ -157,37 +161,80 @@ export default function HubPage({ ownedHub }) {
       };
       fetchHubData();
     }
-  }, [fanHubIdFromParams, ownedHub]);
+  }, [subdomainFromParams, ownedHub]);
 
-  // Determine which fanHubId to use
-  const activeFanHubId = fanHubIdFromParams ? parseInt(fanHubIdFromParams) : ownedHub?.fanHubId;
+  // Determine which fanHubId to use (from fetched hubData or ownedHub)
+  const activeFanHubId = hubData?.fanHubId || ownedHub?.fanHubId;
 
-  // Fetch posts for the hub
-  useEffect(() => {
-    const fetchPosts = async () => {
-      if (!activeFanHubId) return;
+  // Infinite scroll state
+  const [hasMore, setHasMore] = useState(true);
+  const [serverPage, setServerPage] = useState(0);
+  const observer = useRef();
 
-      setPostsLoading(true);
-      try {
-        const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-        const hubPosts = await getPostsByFanHub(activeFanHubId, 0, 50, sortBy);
+  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
+    if (!activeFanHubId) return;
 
-        const sortedPosts = [...hubPosts].sort((a, b) => {
-          const dateA = new Date(a.createdAt);
-          const dateB = new Date(b.createdAt);
-          return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
-        });
+    setPostsLoading(true);
+    try {
+      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy);
 
-        setPosts(sortedPosts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setPostsLoading(false);
+      if (hubPosts.length < 7) {
+        setHasMore(false);
       }
-    };
 
-    fetchPosts();
+      const sortedPosts = [...hubPosts].sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return sortBy === 'createdAt' ? dateB - dateA : dateA - dateB;
+      });
+
+      if (sortedPosts.length > 0) {
+        if (append && pageNum !== 0) {
+          setPosts(prev => [...prev, ...sortedPosts]);
+        } else {
+          setPosts(sortedPosts);
+        }
+        setServerPage(pageNum + 1);
+      } else if (hubPosts.length === 7) {
+        const nextPage = pageNum + 1;
+        setServerPage(nextPage);
+        await fetchPosts(nextPage, sortBy, append);
+        return;
+      } else {
+        if (pageNum === 0) setPosts([]);
+        setServerPage(pageNum + 1);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setPostsLoading(false);
+        setFirstLoad(true);
+    }
+  }, [activeFanHubId]);
+
+  useEffect(() => {
+    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    setServerPage(0);
+    setHasMore(true);
+    fetchPosts(0, sortBy);
   }, [activeFanHubId, sortOrder]);
+
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (postsLoading) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+          fetchPosts(serverPage, sortBy);
+        }
+      }, { rootMargin: '200px' });
+
+      if (node) observer.current.observe(node);
+    },
+    [postsLoading, hasMore, serverPage, sortOrder, fetchPosts]
+  );
 
   useEffect(() => {
     const fetchUserMembership = async () => {
@@ -196,7 +243,6 @@ export default function HubPage({ ownedHub }) {
         // Use checkIsMember to get the user's role in this hub
         const memberData = await checkIsMember(activeFanHubId);
 
-        console.log("MemberData:" + JSON.stringify(memberData));
 
         if (memberData && memberData.isMember) {
           setIsMember(true);
@@ -422,7 +468,7 @@ export default function HubPage({ ownedHub }) {
   useEffect(() => {
     if (!showEditModal) return;
 
-    const hubInfoChanged = 
+    const hubInfoChanged =
       editHubName !== hubData.hubName ||
       editSubdomain !== hubData.subdomain ||
       editDescription !== hubData.description ||
@@ -443,7 +489,7 @@ export default function HubPage({ ownedHub }) {
 
     try {
       // Step 1: Update hub info if there are changes
-      const hubInfoChanged = 
+      const hubInfoChanged =
         editHubName !== hubData.hubName ||
         editSubdomain !== hubData.subdomain ||
         editDescription !== hubData.description ||
@@ -474,7 +520,7 @@ export default function HubPage({ ownedHub }) {
 
       // Step 2: Upload images if any selected
       const imagesSelected = bannerFile || avatarFile || backgroundFiles.length > 0;
-      
+
       if (imagesSelected) {
         const backgroundsToUpload = backgroundFiles.slice(0, 4);
 
@@ -529,9 +575,10 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
-  // Handle post click - navigate to post detail page
+  // Handle post click - navigate to hub page with post id in URL
   const handlePostClick = (post) => {
-    router.push(`/post/${post.postId}`);
+    scrollPositionRef.current = window.scrollY;
+    router.push(`/hub/${hubData.subdomain}?id=${post.postId}`, { scroll: false });
   };
 
   // Show loading if no hub data
@@ -672,7 +719,7 @@ export default function HubPage({ ownedHub }) {
             </div>
           </div>
 
-          {postsLoading ? (
+          {(postsLoading && !firstLoad) ? (
             <div className='posts-loading'>
               LOADING POSTS
               {randomLoadingImage && (
@@ -699,9 +746,38 @@ export default function HubPage({ ownedHub }) {
               <p>No Posts Yet.</p>
             </div>
           ) : (
-            filteredPosts.map((post) => (
-              <PostCard key={post.postId} post={post} onClick={() => handlePostClick(post)} />
-            ))
+            <>
+              {filteredPosts.map((post, index) => {
+                if (filteredPosts.length === index + 1) {
+                  return (
+                    <div ref={lastPostElementRef} key={post.postId}>
+                      <PostCard
+                        post={post}
+                        onClick={() => handlePostClick(post)}
+                        onCommentsClick={() => handlePostClick(post)}
+                      />
+                    </div>
+                  );
+                } else {
+                  return (
+                    <PostCard
+                      key={post.postId}
+                      post={post}
+                      onClick={() => handlePostClick(post)}
+                      onCommentsClick={() => handlePostClick(post)}
+                    />
+                  );
+                }
+              })}
+              {postsLoading && (
+                <div className='infinite-scroll-loader'>Loading more posts...</div>
+              )}
+              {!postsLoading && !hasMore && filteredPosts.length > 0 && (
+                <div className='no-more-posts-message'>
+                  That's all for now, there'll be more soon! ✨
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -801,6 +877,13 @@ export default function HubPage({ ownedHub }) {
         </div>
       </div>
 
+      {/* Post Details Modal - triggered by URL params */}
+      {searchParams.get('id') && (
+        <PostDetails
+          scrollPositionRef={scrollPositionRef}
+        />
+      )}
+
       {/* Promote to Moderator Modal */}
       {showPromoteModal && selectedMember && (
         <div className='modal-overlay' onClick={handlePromoteCancel}>
@@ -877,7 +960,7 @@ export default function HubPage({ ownedHub }) {
                 {/* Hub Info Section */}
                 <div className='edit-section'>
                   <h3>Hub Information</h3>
-                  
+
                   <div className='form-group'>
                     <label htmlFor='edit-hub-name'>Hub Name</label>
                     <input
@@ -971,7 +1054,7 @@ export default function HubPage({ ownedHub }) {
                 {/* Images Section */}
                 <div className='edit-section'>
                   <h3>Images</h3>
-                  
+
                   <div className='image-upload-group'>
                     <label htmlFor='edit-banner-upload'>Banner Image</label>
                     <div className='image-upload-wrapper'>
@@ -1121,14 +1204,14 @@ function PostCard({ post, onClick }) {
 
   const handlePrevImage = (e) => {
     e.stopPropagation();
-    setCurrentImageIndex(prev => 
+    setCurrentImageIndex(prev =>
       prev === 0 ? post.mediaUrls.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = (e) => {
     e.stopPropagation();
-    setCurrentImageIndex(prev => 
+    setCurrentImageIndex(prev =>
       prev === post.mediaUrls.length - 1 ? 0 : prev + 1
     );
   };
@@ -1166,15 +1249,15 @@ function PostCard({ post, onClick }) {
     return (
       <div className='post-media image-gallery'>
         <div className='image-carousel'>
-          <button 
-            className='carousel-btn carousel-prev' 
+          <button
+            className='carousel-btn carousel-prev'
             onClick={handlePrevImage}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          
+
           <div className='carousel-image-container'>
             <img
               src={post.mediaUrls[currentImageIndex]}
@@ -1185,8 +1268,8 @@ function PostCard({ post, onClick }) {
             />
           </div>
 
-          <button 
-            className='carousel-btn carousel-next' 
+          <button
+            className='carousel-btn carousel-next'
             onClick={handleNextImage}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1285,6 +1368,6 @@ function formatTimeAgo(dateString) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  
+
   return date.toLocaleDateString();
 }

@@ -6,12 +6,19 @@ import { getPostsFeed, likePost, unlikePost } from '@/services/PostController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
-import PostDetails from './PostDetails';
 import { BASE_URL } from '@/config';
+import PostDetails from './PostDetails';
+import {
+    ShareRounded,
+    CommentRounded,
+    AutoAwesome,
+    Translate,
+    MoreHoriz,
+    Flag,
+} from '@mui/icons-material';
 import './PostsPage.css';
-import { CommentRounded, ShareRounded, MoreHoriz, Translate, AutoAwesome, Flag } from '@mui/icons-material';
 
-const POSTS_PER_PAGE = 7;
+const POSTS_PER_PAGE = 4;
 
 export default function PostsPage() {
   const router = useRouter();
@@ -26,7 +33,11 @@ export default function PostsPage() {
   const scrollPositionRef = useRef(0);
 
   const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
-    setLoading(true);
+    // Only show full page loader on initial load
+    if (pageNum === 0 && posts.length === 0) {
+      setLoading(true);
+    }
+
     try {
       const newPosts = await getPostsFeed(pageNum, POSTS_PER_PAGE, sortBy);
 
@@ -57,9 +68,12 @@ export default function PostsPage() {
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
-      setLoading(false);
+      // Only hide loader on initial load
+      if (pageNum === 0 && posts.length === 0) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [posts.length]);
 
   useEffect(() => {
     const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
@@ -117,8 +131,13 @@ export default function PostsPage() {
     });
   };
 
-  const handleHubClick = (fanHubId) => {
-    router.push(`/hub/${fanHubId}`);
+  const handleHubClick = (post) => {
+    // Navigate using the subdomain from the post's fan hub
+    if (post.fanHubSubdomain) {
+      router.push(`/hub/${post.fanHubSubdomain}`);
+    } else {
+      console.warn('Post does not have fanHubSubdomain');
+    }
   };
 
   // Restore scroll position when modal closes
@@ -189,6 +208,11 @@ export default function PostsPage() {
             {loading && (
               <div className='infinite-scroll-loader'>Loading more posts...</div>
             )}
+            {!loading && !hasMore && posts.length > 0 && (
+              <div className='no-more-posts-message'>
+                That's all for now, there'll be more soon! ✨
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -198,292 +222,292 @@ export default function PostsPage() {
 }
 
 function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, userAuth, router }) {
-  const { openReportModal } = useReportModal();
-  const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
-  const [likeLoading, setLikeLoading] = useState(false);
-  const [extraMenuOpen, setExtraMenuOpen] = useState(false);
-  const menuRef = useRef();
+    const { openReportModal } = useReportModal();
+    const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
+    const [likeCount, setLikeCount] = useState(post.likeCount);
+    const [likeLoading, setLikeLoading] = useState(false);
+    const [extraMenuOpen, setExtraMenuOpen] = useState(false);
+    const menuRef = useRef();
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setExtraMenuOpen(false);
-      }
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setExtraMenuOpen(false);
+            }
+        };
+        if (extraMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [extraMenuOpen]);
+
+    const handleLike = async (e) => {
+        e.stopPropagation();
+        if (likeLoading) return;
+        if (!userAuth) {
+            router.push('/login');
+            return;
+        }
+
+        setLikeLoading(true);
+
+        try {
+            let result;
+
+            if (isLiked) {
+                result = await unlikePost(post.postId);
+                if (result?.success) {
+                    setIsLiked(false);
+                    setLikeCount(prev => prev - 1);
+                    showSteamSuccess(result.data || 'Post unliked successfully.', result.message || 'Unliked');
+                }
+            } else {
+                result = await likePost(post.postId);
+                if (result?.success) {
+                    setIsLiked(true);
+                    setLikeCount(prev => prev + 1);
+                    showSteamSuccess(result.data || 'Post liked successfully!', result.message || 'Liked');
+                }
+            }
+        } catch (error) {
+            console.error('Like/Unlike error:', error);
+            showSteamError(
+                error?.response?.data?.message || 'Failed to like/unlike post',
+                'Error'
+            );
+        } finally {
+            setLikeLoading(false);
+        }
     };
-    if (extraMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [extraMenuOpen]);
 
-  const handleLike = async (e) => {
-    e.stopPropagation();
-    if (likeLoading) return;
-    if (!userAuth) {
-      router.push('/login');
-      return;
-    }
-
-    setLikeLoading(true);
-
-    try {
-      let result;
-
-      if (isLiked) {
-        result = await unlikePost(post.postId);
-        if (result?.success) {
-          setIsLiked(false);
-          setLikeCount(prev => prev - 1);
-          showSteamSuccess(result.data || 'Post unliked successfully.', result.message || 'Unliked');
+    const handleHubClick = (e) => {
+        e.stopPropagation();
+        if (onHubClick && post) {
+            onHubClick(post);
         }
-      } else {
-        result = await likePost(post.postId);
-        if (result?.success) {
-          setIsLiked(true);
-          setLikeCount(prev => prev + 1);
-          showSteamSuccess(result.data || 'Post liked successfully!', result.message || 'Liked');
+    };
+
+    const handleCommentsClick = (e) => {
+        e.stopPropagation();
+        if (onCommentsClick) {
+            onCommentsClick(post);
         }
-      }
-    } catch (error) {
-      console.error('Like/Unlike error:', error);
-      showSteamError(
-        error?.response?.data?.message || 'Failed to like/unlike post',
-        'Error'
-      );
-    } finally {
-      setLikeLoading(false);
-    }
-  };
+    };
 
-  const handleHubClick = (e) => {
-    e.stopPropagation();
-    if (onHubClick && post.fanHubId) {
-      onHubClick(post.fanHubId);
-    }
-  };
+    const handleAISummary = (e) => {
+        e.stopPropagation();
+        console.log('AI Summary clicked for post:', post.postId);
+    };
 
-  const handleCommentsClick = (e) => {
-    e.stopPropagation();
-    if (onCommentsClick) {
-      onCommentsClick(post);
-    }
-  };
+    const handleAITranslate = (e) => {
+        e.stopPropagation();
+        console.log('AI Translate clicked for post:', post.postId);
+    };
 
-  const handleAISummary = (e) => {
-    e.stopPropagation();
-    console.log('AI Summary clicked for post:', post.postId);
-  };
+    const handleExtraOptionsToggle = (e) => {
+        e.stopPropagation();
+        setExtraMenuOpen(prev => !prev);
+    };
 
-  const handleAITranslate = (e) => {
-    e.stopPropagation();
-    console.log('AI Translate clicked for post:', post.postId);
-  };
+    const handleReportPost = (e) => {
+        e.stopPropagation();
+        setExtraMenuOpen(false);
+        if (!userAuth) {
+            router.push('/login');
+            return;
+        }
+        openReportModal({
+            type: REPORT_TYPE.POST,
+            targetId: post.postId,
+            targetName: post.title || `Post #${post.postId}`,
+        });
+    };
 
-  const handleExtraOptionsToggle = (e) => {
-    e.stopPropagation();
-    setExtraMenuOpen(prev => !prev);
-  };
+    const handleAvatarClick = (e) => {
+        e.stopPropagation();
+        router.push(`/user/${post.authorUsername}`);
+    };
 
-  const handleReportPost = (e) => {
-    e.stopPropagation();
-    setExtraMenuOpen(false);
-    if (!userAuth) {
-      router.push('/login');
-      return;
-    }
-    openReportModal({
-      type: REPORT_TYPE.POST,
-      targetId: post.postId,
-      targetName: post.title || `Post #${post.postId}`,
-    });
-  };
+    const renderPostTypeContent = () => {
+        switch (post.postType) {
+            case 'IMAGE':
+                return <ImagePostContent post={post} onClick={onClick} />;
+            case 'VIDEO':
+                return <VideoPostContent post={post} onClick={onClick} />;
+            case 'TEXT':
+                return <TextPostContent post={post} onClick={onClick} />;
+            case 'POLL':
+                return <PollPostContent post={post} onClick={onClick} />;
+            case 'ANNOUNCEMENT':
+            case 'EVENT_SCHEDULE':
+                return null; // Ignored as per requirements
+            default:
+                return <TextPostContent post={post} onClick={onClick} />;
+        }
+    };
 
-  const handleAvatarClick = (e) => {
-    e.stopPropagation();
-    router.push(`/user/${post.authorUsername}`);
-  };
+    return (
+        <div className='post-card' onClick={onClick}>
+            <div className='post-header'>
+                <div className='post-author-info'>
+                    <img
+                        className='post-author-avatar'
+                        src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
+                        alt={post.authorDisplayName}
+                        title="Go to author profile"
+                        onClick={handleAvatarClick}
+                        onError={(e) => {
+                            e.target.src = '/profile-pic-undefined.jpg';
+                        }}
+                    />
+                    <div className='post-author-details'>
+                        <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
+                        <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
+                    </div>
+                </div>
+                <div className='post-actions-menu'>
+                    <button className='menu-btn' onClick={handleAISummary} title='AI Summary'>
+                        <AutoAwesome fontSize='small' />
+                    </button>
+                    <button className='menu-btn' onClick={handleAITranslate} title='AI Translate'>
+                        <Translate fontSize='small' />
+                    </button>
+                    <div className='extra-menu-wrapper' ref={menuRef}>
+                        <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+                            <MoreHoriz fontSize='small' />
+                        </button>
+                        {extraMenuOpen && (
+                            <div className='extra-dropdown'>
+                                <button className='dropdown-item' onClick={handleReportPost}>
+                                    <Flag fontSize='small' />
+                                    <span>Report post</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
-  const renderPostTypeContent = () => {
-    switch (post.postType) {
-      case 'IMAGE':
-        return <ImagePostContent post={post} onClick={onClick} />;
-      case 'VIDEO':
-        return <VideoPostContent post={post} onClick={onClick} />;
-      case 'TEXT':
-        return <TextPostContent post={post} onClick={onClick} />;
-      case 'POLL':
-        return <PollPostContent post={post} onClick={onClick} />;
-      case 'ANNOUNCEMENT':
-      case 'EVENT_SCHEDULE':
-        return null; // Ignored as per requirements
-      default:
-        return <TextPostContent post={post} onClick={onClick} />;
-    }
-  };
+            {renderPostTypeContent()}
 
-  return (
-    <div className='post-card' onClick={onClick}>
-      <div className='post-header'>
-        <div className='post-author-info'>
-          <img
-            className='post-author-avatar'
-            src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-            alt={post.authorDisplayName}
-            title="Go to author profile"
-            onClick={handleAvatarClick}
-            onError={(e) => {
-              e.target.src = '/profile-pic-undefined.jpg';
-            }}
-          />
-          <div className='post-author-details'>
-            <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
-            <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
-          </div>
-        </div>
-        <div className='post-actions-menu'>
-          <button className='menu-btn' onClick={handleAISummary} title='AI Summary'>
-            <AutoAwesome fontSize='small' />
-          </button>
-          <button className='menu-btn' onClick={handleAITranslate} title='AI Translate'>
-            <Translate fontSize='small' />
-          </button>
-          <div className='extra-menu-wrapper' ref={menuRef}>
-            <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
-              <MoreHoriz fontSize='small' />
-            </button>
-            {extraMenuOpen && (
-              <div className='extra-dropdown'>
-                <button className='dropdown-item' onClick={handleReportPost}>
-                  <Flag fontSize='small' />
-                  <span>Report post</span>
+            <div className='post-footer'>
+                <div className='post-footer-left'>
+                    <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
+                        {likeLoading ? (
+                            <span className='like-loading-spinner' />
+                        ) : (
+                            <svg className='like-icon' xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "white" : "none"}>
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isLiked ? "white" : "none"} stroke={isLiked ? "white" : "currentColor"} strokeWidth="2"/>
+                            </svg>
+                        )}
+                        <span className='action-count'>{formatCount(likeCount)}</span>
+                    </button>
+                    <button className='action-btn' onClick={handleCommentsClick}>
+                        <CommentRounded fontSize='small' />
+                        <span>Comment</span>
+                    </button>
+                </div>
+                <button className='action-btn share-btn' onClick={(e) => {
+                    e.stopPropagation();
+                    onShareClick?.(post);
+                }}>
+                    <ShareRounded fontSize='small' />
                 </button>
-              </div>
-            )}
-          </div>
+            </div>
         </div>
-      </div>
-
-      {renderPostTypeContent()}
-
-      <div className='post-footer'>
-        <div className='post-footer-left'>
-          <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
-            {likeLoading ? (
-              <span className='like-loading-spinner' />
-            ) : (
-              <svg className='like-icon' xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "white" : "none"}>
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isLiked ? "white" : "none"} stroke={isLiked ? "white" : "currentColor"} strokeWidth="2"/>
-              </svg>
-            )}
-            <span className='action-count'>{formatCount(likeCount)}</span>
-          </button>
-          <button className='action-btn' onClick={handleCommentsClick}>
-            <CommentRounded fontSize='small' />
-            <span>Comment</span>
-          </button>
-        </div>
-        <button className='action-btn share-btn' onClick={(e) => {
-          e.stopPropagation();
-          onShareClick?.(post);
-        }}>
-          <ShareRounded fontSize='small' />
-        </button>
-      </div>
-    </div>
-  );
+    );
 }
 
 function ImagePostContent({ post, onClick }) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const handlePrevImage = (e) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev => 
-      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
-    );
-  };
+    const handlePrevImage = (e) => {
+        e.stopPropagation();
+        setCurrentImageIndex(prev =>
+            prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+        );
+    };
 
-  const handleNextImage = (e) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev => 
-      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
-    );
-  };
+    const handleNextImage = (e) => {
+        e.stopPropagation();
+        setCurrentImageIndex(prev =>
+            prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+        );
+    };
 
-  const handleDotClick = (e, index) => {
-    e.stopPropagation();
-    setCurrentImageIndex(index);
-  };
+    const handleDotClick = (e, index) => {
+        e.stopPropagation();
+        setCurrentImageIndex(index);
+    };
 
-  return (
-    <div className='post-content'>
-      {post.title && <h3 className='post-title'>{post.title}</h3>}
-      {post.content && <p className='post-text'>{post.content}</p>}
-      {post.mediaUrls && post.mediaUrls.length > 0 && (
-        post.mediaUrls.length === 1 ? (
-          <div className='post-media image-media'>
-            <img
-              src={post.mediaUrls[0]}
-              alt={post.title || 'Post image'}
-              onError={(e) => {
-                e.target.src = '/placeholder-image.png';
-              }}
-            />
-          </div>
-        ) : (
-          <div className='post-media image-gallery'>
-            <div className='image-carousel'>
-              <button 
-                className='carousel-btn carousel-prev' 
-                onClick={handlePrevImage}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              
-              <div className='carousel-image-container'>
-                <img
-                  src={post.mediaUrls[currentImageIndex]}
-                  alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
-                  onError={(e) => {
-                    e.target.src = '/placeholder-image.png';
-                  }}
-                />
-              </div>
+    return (
+        <div className='post-content'>
+            {post.title && <h3 className='post-title'>{post.title}</h3>}
+            {post.content && <p className='post-text'>{post.content}</p>}
+            {post.mediaUrls && post.mediaUrls.length > 0 && (
+                post.mediaUrls.length === 1 ? (
+                    <div className='post-media image-media'>
+                        <img
+                            src={post.mediaUrls[0]}
+                            alt={post.title || 'Post image'}
+                            onError={(e) => {
+                                e.target.src = '/placeholder-image.png';
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <div className='post-media image-gallery'>
+                        <div className='image-carousel'>
+                            <button
+                                className='carousel-btn carousel-prev'
+                                onClick={handlePrevImage}
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="15 18 9 12 15 6" />
+                                </svg>
+                            </button>
 
-              <button 
-                className='carousel-btn carousel-next' 
-                onClick={handleNextImage}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
+                            <div className='carousel-image-container'>
+                                <img
+                                    src={post.mediaUrls[currentImageIndex]}
+                                    alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
+                                    onError={(e) => {
+                                        e.target.src = '/placeholder-image.png';
+                                    }}
+                                />
+                            </div>
 
-              <div className='carousel-indicators'>
-                {post.mediaUrls.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
-                    onClick={(e) => handleDotClick(e, index)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-      )}
-      {post.hashtags && post.hashtags.length > 0 && (
-        <div className='post-hashtags'>
-          {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag'>#{tag}</span>
-          ))}
+                            <button
+                                className='carousel-btn carousel-next'
+                                onClick={handleNextImage}
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </button>
+
+                            <div className='carousel-indicators'>
+                                {post.mediaUrls.map((_, index) => (
+                                    <button
+                                        key={index}
+                                        className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                                        onClick={(e) => handleDotClick(e, index)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )
+            )}
+            {post.hashtags && post.hashtags.length > 0 && (
+                <div className='post-hashtags'>
+                    {post.hashtags.map((tag, idx) => (
+                        <span key={idx} className='hashtag'>#{tag}</span>
+                    ))}
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 function VideoPostContent({ post, onClick }) {
@@ -552,7 +576,7 @@ function PollPostContent({ post, onClick }) {
           {post.voteOptions.map((option, index) => {
             const percentage = getVotePercentage(index);
             const isSelected = selectedOption === index + 1;
-            
+
             return (
               <div
                 key={index}
@@ -561,8 +585,8 @@ function PollPostContent({ post, onClick }) {
               >
                 <div className='poll-option-background'>
                   {selectedOption && (
-                    <div 
-                      className='poll-option-fill' 
+                    <div
+                      className='poll-option-fill'
                       style={{ width: `${percentage}%` }}
                     />
                   )}

@@ -69,3 +69,26 @@
 .member-moderation-content {
   max-width: 100%;
 }
+
+/* Loading and Error States */
+.moderation-loading,
+.moderation-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.moderation-loading p {
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.moderation-error p {
+  font-size: 1.1rem;
+  color: #d32f2f;
+  font-weight: 500;
+}

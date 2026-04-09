@@ -350,60 +350,11 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   font-size: 14px;
 }
 
-.post-card {
-  display: flex;
-  gap: 4px;
-  padding: 12px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  transition: border-color 0.2s;
-}
-
-.post-card:hover {
-  border-color: #b0b0b0;
-}
-
-.post-vote-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-  width: 80px;
-  height: 32px;
-  border-radius: 24px;
-  border: 1.6px solid #d7d7d7;
-}
-
-.vote-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 30px;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 24px 0 0 24px;
-  border: none;
-  margin-right: 5px;
-  border-right: 1.6px solid #d7d7d7;
-  transition: all 0.2s;
-}
-
-.vote-btn.like-btn .like-ico {
-  transform: rotate(10deg);
-  transition: all 0.6s ease;
-}
-
-.vote-btn:hover {
-  background: #d7d7d7;
-}
-
-.vote-btn:hover .vote-btn.like-btn .like-ico path {
-  stroke: #fff;
-}
-
-.vote-count {
+/* No More Posts Message */
+.no-more-posts-message {
+  text-align: center;
+  padding: 32px 20px;
+  color: #999;
   font-size: 14px;
   font-weight: 700;
   color: #323232;
@@ -655,36 +606,12 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   font-size: 13px;
   color: #2d8cf0;
   font-weight: 500;
+  margin-top: 16px;
+  border-top: 1px solid #e8e8e8;
 }
 
-.post-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #878a8c;
-  transition: background 0.2s;
-}
-
-.action-btn:hover {
-  background: #f5f5f5;
-}
-
-.action-btn svg {
-  font-size: 18px;
-}
+/* Post styles - now using shared PostCard component from PostsPage */
+/* These styles are imported via PostCard.jsx -> PostsPage.css */
 
 .hub-status {
   display: flex;

@@ -4,24 +4,34 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import UserLayout from "@/components/UserLayout/UserLayout";
 import HubModerationPage from '@/views/Users/HubModerationPage/HubModerationPage';
-import { checkIsMember } from "@/services/FanHubController";
+import { checkIsMember, getFanHubBySubdomain } from "@/services/FanHubController";
 
 export default function HubPostsModerationRoute() {
     const params = useParams();
     const router = useRouter();
-    const fanHubId = params?.fanHubId ? parseInt(params.fanHubId as string, 10) : null;
+    const subdomain = params?.subdomain as string;
+    const [fanHubId, setFanHubId] = useState<number | null>(null);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const checkAuthorization = async () => {
-            if (!fanHubId) {
+        const fetchHubAndCheckAuth = async () => {
+            if (!subdomain) {
                 setIsAuthorized(false);
                 return;
             }
 
             try {
-                const memberData = await checkIsMember(fanHubId);
+                const hubData = await getFanHubBySubdomain(subdomain);
                 
+                if (!hubData || !hubData.fanHubId) {
+                    setIsAuthorized(false);
+                    return;
+                }
+
+                setFanHubId(hubData.fanHubId);
+
+                const memberData = await checkIsMember(hubData.fanHubId);
+
                 if (memberData && memberData.isMember) {
                     // Only MODERATOR and VTUBER can access moderation
                     const allowedRoles = ["MODERATOR", "VTUBER"];
@@ -39,8 +49,8 @@ export default function HubPostsModerationRoute() {
             }
         };
 
-        checkAuthorization();
-    }, [fanHubId]);
+        fetchHubAndCheckAuth();
+    }, [subdomain]);
 
     // Show loading state while checking authorization
     if (isAuthorized === null) {
@@ -76,8 +86,8 @@ export default function HubPostsModerationRoute() {
                     <p style={{ color: "#666", margin: 0 }}>
                         You don't have permission to access this page. Only Moderators and VTubers can access moderation.
                     </p>
-                    <button 
-                        onClick={() => router.push(`/hub/${fanHubId}`)}
+                    <button
+                        onClick={() => router.push(`/hub/${subdomain}`)}
                         style={{
                             padding: "10px 24px",
                             background: "#000",

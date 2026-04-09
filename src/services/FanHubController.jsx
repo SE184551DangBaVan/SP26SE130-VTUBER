@@ -152,6 +152,7 @@ export const uploadImages = async (fanHubId, bannerFile, avatarFile, backgroundF
  */
 export const getFanHubBySubdomain = async (subdomain) => {
   try {
+      console.log("fetching fanhub by subdomain")
     const encodedSubdomain = encodeURIComponent(subdomain);
     const res = await axiosInstance.get(`/fan-hub/subdomain/${encodedSubdomain}`);
 
@@ -162,6 +163,61 @@ export const getFanHubBySubdomain = async (subdomain) => {
     return null;
   } catch (err) {
     console.error("Fetch fan hub by subdomain error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+/**
+ * Get current user's joined fan hubs
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Array>} Array of joined fan hubs
+ */
+export const getMyJoinedHubs = async (pageNo = 0, pageSize = 50, sortBy = 'createdAt') => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub/my-hubs?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getMyJoinedHubs response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch my joined hubs error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get VTuber's owned fan hub
+ * @returns {Promise<Object|null>} Fan hub data or null
+ */
+export const getMyHubAsOwner = async () => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub/my-hub-as-owner`);
+
+    console.log("getMyHubAsOwner response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Fetch my hub as owner error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,

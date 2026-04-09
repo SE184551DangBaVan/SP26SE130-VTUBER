@@ -9,6 +9,8 @@ import {
   likeComment,
   unlikeComment,
 } from '@/services/CommentController';
+import { checkIsMember } from '@/services/FanHubController';
+import { joinFanHub } from '@/services/MemberController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag } from '@mui/icons-material';
@@ -17,7 +19,7 @@ const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
 const MAX_NEST_DEPTH = 5;
 
-export default function CommentSection({ postId, userAuth, router }) {
+export default function CommentSection({ postId, userAuth, router, commentCount, fanHubId }) {
   const localRouter = useRouter();
   const navRouter = router || localRouter;
   const [comments, setComments] = useState([]);
@@ -28,6 +30,53 @@ export default function CommentSection({ postId, userAuth, router }) {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [isHubMember, setIsHubMember] = useState(false);
+  const [checkingMembership, setCheckingMembership] = useState(false);
+  const [joiningHub, setJoiningHub] = useState(false);
+
+  // Check hub membership when fanHubId is provided
+  useEffect(() => {
+    const checkMembership = async () => {
+      if (!fanHubId || !userAuth) {
+        setIsHubMember(false);
+        return;
+      }
+
+      setCheckingMembership(true);
+      try {
+        const memberData = await checkIsMember(fanHubId);
+        setIsHubMember(memberData?.isMember || false);
+      } catch (error) {
+        console.error('Error checking hub membership:', error);
+        setIsHubMember(false);
+      } finally {
+        setCheckingMembership(false);
+      }
+    };
+
+    checkMembership();
+  }, [fanHubId, userAuth]);
+
+  // Handle joining the hub
+  const handleJoinHub = async () => {
+    if (!userAuth || !fanHubId) return;
+
+    setJoiningHub(true);
+    try {
+      const result = await joinFanHub(fanHubId);
+      if (result?.success) {
+        showSteamSuccess('Joined hub successfully! You can now comment.', 'Success');
+        setIsHubMember(true);
+      } else {
+        showSteamError(result?.message || 'Failed to join hub', 'Error');
+      }
+    } catch (error) {
+      console.error('Error joining hub:', error);
+      showSteamError('Failed to join hub. Please try again.', 'Error');
+    } finally {
+      setJoiningHub(false);
+    }
+  };
 
   // Get current user avatar from localStorage or a default
   useEffect(() => {
@@ -79,6 +128,12 @@ export default function CommentSection({ postId, userAuth, router }) {
       navRouter.push('/login');
       return;
     }
+
+    if (fanHubId && !isHubMember && !checkingMembership) {
+      showSteamError('Only hub members can comment on posts from this hub.', 'Access Denied');
+      return;
+    }
+
     const text = parentCommentId ? replyText : commentText;
     if (!text.trim()) return;
 
@@ -163,7 +218,7 @@ export default function CommentSection({ postId, userAuth, router }) {
   return (
     <div className='comment-section'>
       <div className='comment-section-header'>
-        {comments.length > 0 ? `${comments.length} Comment${comments.length > 1 ? 's' : ''}` : 'Comments'}
+        {commentCount > 0 ? `${commentCount} Comment${commentCount > 1 ? 's' : ''}` : 'Comments'}
       </div>
 
       <div className='comments-list'>
@@ -216,35 +271,50 @@ export default function CommentSection({ postId, userAuth, router }) {
             }}
           />
           <div className='comment-input-box'>
-            <textarea
-              className='comment-textarea'
-              placeholder='Write a comment...'
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendComment();
-                }
-              }}
-              rows={1}
-            />
-            {commentText.trim() && (
-              <div className='comment-input-actions'>
-                <button
-                  className='comment-cancel-btn'
-                  onClick={() => setCommentText('')}
+            {fanHubId && !isHubMember && !checkingMembership ? (
+              <div className='comment-membership-required'>
+                <p>You must be a member of this hub to comment.</p>
+                <button 
+                  className='join-hub-btn' 
+                  onClick={handleJoinHub}
+                  disabled={joiningHub}
                 >
-                  Cancel
-                </button>
-                <button
-                  className='comment-send-btn'
-                  onClick={() => handleSendComment()}
-                  disabled={!commentText.trim()}
-                >
-                  Post
+                  {joiningHub ? 'Joining...' : 'Join Hub'}
                 </button>
               </div>
+            ) : (
+              <>
+                <textarea
+                  className='comment-textarea'
+                  placeholder='Write a comment...'
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendComment();
+                    }
+                  }}
+                  rows={1}
+                />
+                {commentText.trim() && (
+                  <div className='comment-input-actions'>
+                    <button
+                      className='comment-cancel-btn'
+                      onClick={() => setCommentText('')}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className='comment-send-btn'
+                      onClick={() => handleSendComment()}
+                      disabled={!commentText.trim()}
+                    >
+                      Post
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

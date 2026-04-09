@@ -1,6 +1,6 @@
 'use client';
 
-import { AddRounded, ArticleOutlined, BallotOutlined, ChairAltOutlined, DvrOutlined, Groups2, Groups2Outlined, KeyboardArrowUp, RecentActorsOutlined, School, SubjectOutlined } from '@mui/icons-material'
+import { AddRounded, Groups, KeyboardArrowUp } from '@mui/icons-material'
 import HomeIco from '../../assets/UI-Elements/home.svg'
 import ExploreIco from '../../assets/UI-Elements/search.svg'
 import PostsIco from '../../assets/UI-Elements/post.svg'
@@ -11,13 +11,39 @@ import JoinedHubsContainer from './JoinedHubsContainer'
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from 'next/navigation'
 import { useSideBar } from '@/contexts/SideBarContext'
+import { useAuth } from '@/functions/Auth/useAuth'
+import { getMyHubAsOwner } from '@/services/FanHubController'
 
 export default function SideBar() {
   const { sideBarSelected, setSideBarSelected, sideBarRetractor, setSideBarRetractor } = useSideBar();
+  const { userAuth } = useAuth();
   const [retract, setRetract] = useState(1);
+  const [vtuberHub, setVtuberHub] = useState(null);
+  const [loadingVtuberHub, setLoadingVtuberHub] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
+
+  // Fetch VTuber's hub if user is a VTuber
+  useEffect(() => {
+    const fetchVtuberHub = async () => {
+      if (userAuth?.role === 'VTUBER') {
+        setLoadingVtuberHub(true);
+        try {
+          const hub = await getMyHubAsOwner();
+          setVtuberHub(hub);
+        } catch (error) {
+          console.error('Error fetching VTuber hub:', error);
+        } finally {
+          setLoadingVtuberHub(false);
+        }
+      } else {
+        setVtuberHub(null);
+      }
+    };
+
+    fetchVtuberHub();
+  }, [userAuth?.role]);
 
   // Sync sidebar selection with current route
   useEffect(() => {
@@ -60,6 +86,21 @@ export default function SideBar() {
           <hr/>
           <JoinedHubsContainer />
           <hr/>
+          {vtuberHub && (
+            <div 
+              className={`side-bar-button ${sideBarSelected === 'my-hub' ? 'myHub' : ''}`} 
+              onClick={() => handleNavigation("my-hub", `/hub/${vtuberHub.subdomain}`)}
+            >
+              <Groups className="fas"/>
+              <span>Go to your Hub</span>
+            </div>
+          )}
+          {loadingVtuberHub && (
+            <div className="side-bar-button" style={{ opacity: 0.5, cursor: 'default' }}>
+              <Groups className="fas"/>
+              <span>Loading...</span>
+            </div>
+          )}
           <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'gacha' ? 'gacha' : ''}`} onClick={() => handleNavigation("gacha", "/gacha")}><img src={GachaIco.src} alt='' className="fas"/><span>Gacha</span></div>
 
