@@ -8,7 +8,14 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { BASE_URL } from '@/config';
 import PostDetails from './PostDetails';
-import PostCard from './PostCard';
+import {
+    ShareRounded,
+    CommentRounded,
+    AutoAwesome,
+    Translate,
+    MoreHoriz,
+    Flag,
+} from '@mui/icons-material';
 import './PostsPage.css';
 
 const POSTS_PER_PAGE = 4;
@@ -128,11 +135,8 @@ export default function PostsPage() {
     // Navigate using the subdomain from the post's fan hub
     if (post.fanHubSubdomain) {
       router.push(`/hub/${post.fanHubSubdomain}`);
-    } else if (post.fanHubId) {
-      // Fallback: if subdomain is not available, we may need to fetch it
-      // For now, use fanHubId as is (this shouldn't happen in normal cases)
-      console.warn('Post does not have fanHubSubdomain, using fanHubId as fallback');
-      router.push(`/hub/${post.fanHubId}`);
+    } else {
+      console.warn('Post does not have fanHubSubdomain');
     }
   };
 
@@ -278,8 +282,8 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
 
     const handleHubClick = (e) => {
         e.stopPropagation();
-        if (onHubClick && post.fanHubId) {
-            onHubClick(post.fanHubId);
+        if (onHubClick && post) {
+            onHubClick(post);
         }
     };
 

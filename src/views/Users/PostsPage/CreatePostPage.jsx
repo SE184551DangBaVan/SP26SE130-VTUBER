@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import {useRouter} from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useSideBar } from '@/contexts/SideBarContext.tsx';
 import { getMyJoinedHubs } from '@/services/FanHubController';
@@ -12,6 +12,7 @@ import './CreatePostPage.css';
 
 export default function CreatePostPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { userAuth } = useAuth();
   const { sideBarRetractor } = useSideBar();
 
@@ -22,7 +23,7 @@ export default function CreatePostPage() {
   const [loadingHubs, setLoadingHubs] = useState(true);
   const [showHubDropdown, setShowHubDropdown] = useState(false);
 
-  const fanHubId = searchParams.get('fanHubId');
+  const fanHubId = searchParams?.get('fanHubId');
 
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');

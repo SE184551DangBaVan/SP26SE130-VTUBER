@@ -37,10 +37,8 @@ export default function ExplorePage() {
     // Navigate using subdomain
     if (hub.subdomain) {
       router.push(`/hub/${hub.subdomain}`);
-    } else if (hub.fanHubId) {
-      // Fallback if subdomain is not available
-      console.warn('Hub does not have subdomain, using fanHubId as fallback');
-      router.push(`/hub/${hub.fanHubId}`);
+    } else {
+      console.warn('Hub does not have subdomain');
     }
   };
 

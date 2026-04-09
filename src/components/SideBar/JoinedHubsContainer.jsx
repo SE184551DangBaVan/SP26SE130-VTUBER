@@ -83,7 +83,7 @@ export default function JoinedHubsContainer() {
               <div
                 key={hub.fanHubId}
                 className="joined-hub-item"
-                onClick={() => handleHubClick(hub.fanHubId)}
+                onClick={() => handleHubClick(hub.subdomain)}
               >
                 <img
                   src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
