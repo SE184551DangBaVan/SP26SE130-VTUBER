@@ -1,6 +1,7 @@
 import axiosInstance, {API_BASE_URL} from "@/utils/axiosInstance";
 import {getAuthToken} from "@/services/UserController.jsx";
 import axios from "axios";
+import { parsePostsSchedule } from "@/utils/parseSchedule";
 
 /**
  * Get posts feed (all posts across all hubs)
@@ -18,7 +19,7 @@ export const getPostsFeed = async (pageNo = 0, pageSize = 10, sortBy = "createdA
     console.log("getPostsFeed response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      return parsePostsSchedule(res.data.data);
     }
 
     return [];
@@ -53,7 +54,7 @@ export const getPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, sort
     console.log("getPostsByFanHub response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      return parsePostsSchedule(res.data.data);
     }
 
     return [];
@@ -79,7 +80,8 @@ export const getPostById = async (postId) => {
     console.log("getPostById response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      const posts = parsePostsSchedule([res.data.data]);
+      return posts[0] || null;
     }
 
     return null;
@@ -269,7 +271,7 @@ export const getUserPosts = async (userId, pageNo = 0, pageSize = 50, sortBy = "
     console.log("getUserPosts response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      return parsePostsSchedule(res.data.data);
     }
 
     return [];
@@ -300,8 +302,9 @@ export const getAnnouncementsAndEvents = async (fanHubId, pageNo = 0, pageSize =
     console.log("getAnnouncementsAndEvents response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      // Filter only APPROVED posts
-      return res.data.data.filter(post => post.status === "APPROVED");
+      // Filter only APPROVED posts and parse schedules
+      const approvedPosts = res.data.data.filter(post => post.status === "APPROVED");
+      return parsePostsSchedule(approvedPosts);
     }
 
     return [];
@@ -344,7 +347,7 @@ export const getAllPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, s
     console.log("getAllPostsByFanHub response:", res.data);
 
     if (res.data?.success && res.data?.data) {
-      return res.data.data;
+      return parsePostsSchedule(res.data.data);
     }
 
     return [];

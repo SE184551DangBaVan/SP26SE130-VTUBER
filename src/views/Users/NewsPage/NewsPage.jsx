@@ -5,7 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useSideBar } from '@/contexts/SideBarContext';
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
-import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, EventRounded } from '@mui/icons-material';
 import './NewsPage.css';
 
 import TagIco from '../../../assets/UI-Elements/tag-duotone.svg'
@@ -248,6 +248,17 @@ export default function NewsPage() {
             {selectedPost.content && (
               <div className='news-content'>
                 <p>{selectedPost.content}</p>
+              </div>
+            )}
+
+            {/* Schedule Display */}
+            {selectedPost.appendSchedule && (
+              <div className='news-schedule-display'>
+                <EventRounded className='schedule-icon' />
+                <div className='schedule-info'>
+                  <span className='schedule-label'>Scheduled</span>
+                  <span className='schedule-date'>{new Date(selectedPost.appendSchedule).toLocaleString()}</span>
+                </div>
               </div>
             )}
           </div>

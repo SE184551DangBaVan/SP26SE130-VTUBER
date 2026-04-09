@@ -532,7 +532,7 @@ export default function HubPage({ ownedHub }) {
         );
 
         if (!uploadRes?.success) {
-          updateToast(toastId, 'error', uploadRes?.message || 'Failed to upload images');
+          updateToast(toastId, 'error', uploadRes?.data || 'Failed to upload images');
           setUploading(false);
           return;
         }
