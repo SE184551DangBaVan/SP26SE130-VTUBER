@@ -9,7 +9,9 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore', '/posts/*'];
+const PUBLIC_ROUTES = ['/login', '/register', '/', '/user', '/home', '/explore', '/posts/*', '/hub/*'];
+
+const PRIVATE_PATTERNS = ['/hub/*/moderation'];
 
 export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
@@ -41,8 +43,23 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
+    // Helper to check if current path is private (overrides public routes)
+    const isPrivatePath = useMemo(() => {
+        return PRIVATE_PATTERNS.some(pattern => {
+            // Convert /hub/*/moderation to regex pattern
+            const regexPattern = pattern.replace(/\*/g, '[^/]+');
+            const regex = new RegExp(`^${regexPattern}$`);
+            return regex.test(pathname);
+        });
+    }, [pathname]);
+
     // Helper to check if current path is public
     const isPublic = useMemo(() => {
+        // If it's a private path, it's not public
+        if (isPrivatePath) {
+            return false;
+        }
+
         return PUBLIC_ROUTES.some(route => {
             if (route.endsWith('/*')) {
                 const base = route.slice(0, -2); // e.g. "/posts"
@@ -50,7 +67,7 @@ export const AuthProvider = ({ children }) => {
             }
             return pathname === route || pathname.startsWith(`${route}/`);
         });
-    }, [pathname]);
+    }, [pathname, isPrivatePath]);
 
 
 
@@ -88,7 +105,7 @@ export const AuthProvider = ({ children }) => {
             console.log("Unauthorized access attempt. Redirecting...");
             router.push("/login");
         }
-    }, [userAuth, loading, isPublic, router]);
+    }, [userAuth, loading, isPublic, isPrivatePath, router]);
 
 
   useEffect(() => {

@@ -465,6 +465,19 @@ body:has(.page-main-content) .nav-container .button-primary {
   color: #52ffff;
 }
 
+/* Create Post Button */
+.create-post-btn {
+  position: relative;
+}
+
+.create-post-btn:hover {
+  background-color: #e8f4f8;
+}
+
+.create-post-btn svg {
+  color: #2d8cf0;
+}
+
 /* User Avatar Button */
 .profile-btn {
   padding: 0;

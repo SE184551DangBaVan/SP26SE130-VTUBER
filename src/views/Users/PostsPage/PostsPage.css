@@ -215,6 +215,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .post-title {
@@ -401,37 +402,73 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   margin-top: 8px;
 }
 
-.poll-option {
+.poll-display {
+  margin-top: 12px;
+  width: calc(100% + 32px);
+  max-width: calc(100% + 32px);
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 16px;
+  background: #f0f7f9;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.poll-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.poll-option-item {
   position: relative;
-  height: 48px;
-  border-radius: 8px;
+  height: 56px;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #d7d7d7;
-  transition: border-color 0.2s;
+  border: 2px solid transparent;
+  background: #fff;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.poll-option:hover {
+.poll-option-item:hover:not(.voting) {
   border-color: #2d8cf0;
+  box-shadow: 0 2px 8px rgba(45, 140, 240, 0.15);
+  transform: translateY(-1px);
 }
 
-.poll-option.selected {
+.poll-option-item:active:not(.voting) {
+  transform: translateY(0);
+}
+
+.poll-option-item.selected {
   border-color: #2d8cf0;
+  background: #e8f4fd;
 }
 
-.poll-option-background {
+.poll-option-item.voting {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.poll-option-bar {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f5f5f5;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(45, 140, 240, 0.1) 0%, rgba(45, 140, 240, 0.2) 100%);
+  transition: width 0.4s ease;
+  z-index: 0;
 }
 
-.poll-option-fill {
-  height: 100%;
-  background: #e3f2fd;
-  transition: width 0.3s ease;
+.poll-option-item.selected .poll-option-bar {
+  background: linear-gradient(90deg, rgba(45, 140, 240, 0.2) 0%, rgba(45, 140, 240, 0.3) 100%);
 }
 
 .poll-option-content {
@@ -442,18 +479,105 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   height: 100%;
   padding: 0 16px;
   z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.poll-option-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 12px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+}
+
+.poll-option-clickable {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.poll-option-clickable:hover .poll-option-icon {
+  color: #2d8cf0;
+  transform: scale(1.1);
+}
+
+.poll-option-text-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 }
 
 .poll-option-text {
   font-size: 14px;
   font-weight: 500;
   color: #323232;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.poll-option-item.selected .poll-option-text {
+  font-weight: 600;
+  color: #1976d2;
 }
 
 .poll-option-percentage {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #323232;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.poll-option-icon {
+  font-size: 22px;
+  color: #b0b0b0;
+  transition: color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.poll-total-votes {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e8ea;
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.poll-unvote-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #d32f2f;
+  border-radius: 6px;
+  color: #d32f2f;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+  width: 100%;
+}
+
+.poll-unvote-btn:hover:not(:disabled) {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.poll-unvote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Post Footer */
@@ -537,6 +661,17 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   padding: 20px;
   color: #666;
   font-size: 14px;
+}
+
+/* No More Posts Message */
+.no-more-posts-message {
+  text-align: center;
+  padding: 32px 20px;
+  color: #999;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 16px;
+  border-top: 1px solid #e8e8e8;
 }
 
 /* Responsive */

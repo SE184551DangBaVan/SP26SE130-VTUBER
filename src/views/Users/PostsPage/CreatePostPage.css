@@ -1,7 +1,19 @@
 .create-post-page {
   min-height: 100vh;
-  background: #777777;
+  background: linear-gradient(to bottom right, #DDFCFF, #EEFEFF);
   padding: 24px;
+  margin-top: 80px;
+  color: #323232;
+  font-family: 'Inter', sans-serif;
+  transition: margin-left 0.3s ease;
+}
+
+.create-post-page.sidebar-expanded {
+  margin-left: 256px;
+}
+
+.create-post-page.sidebar-retracted {
+  margin-left: 80px;
 }
 
 .create-post-container {
@@ -10,7 +22,8 @@
   background: #ffffff;
   border-radius: 12px;
   padding: 32px;
-  border: 1px solid #2d3139;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .create-post-header {
@@ -19,13 +32,13 @@
   align-items: center;
   margin-bottom: 32px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #2d3139;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .create-post-header h1 {
   font-size: 28px;
   font-weight: 600;
-  color: #555555;
+  color: #323232;
   margin: 0;
 }
 
@@ -37,8 +50,8 @@
 
 .create-post-header .cancel-btn {
   background: transparent;
-  border: 1px solid #3a3f47;
-  color: #b0b3b8;
+  border: 1px solid #e0e0e0;
+  color: #666;
   padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
@@ -47,8 +60,8 @@
 }
 
 .create-post-header .cancel-btn:hover {
-  background: #2d3139;
-  color: #e4e6eb;
+  background: #f5f5f5;
+  color: #323232;
 }
 
 /* Toggle Buttons Group */
@@ -111,13 +124,13 @@
   gap: 8px;
   margin-bottom: 24px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #2d3139;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .type-btn {
-  background: #2d3139;
+  background: #f5f5f5;
   border: none;
-  color: #b0b3b8;
+  color: #666;
   padding: 12px 24px;
   border-radius: 20px;
   cursor: pointer;
@@ -127,13 +140,76 @@
 }
 
 .type-btn:hover {
-  background: #3a3f47;
-  color: #e4e6eb;
+  background: #e8f4f8;
+  color: #323232;
 }
 
 .type-btn.active {
-  background: #4f46e5;
+  background: #2d8cf0;
   color: #fff;
+}
+
+/* Loading & No Hubs States */
+.loading-hubs {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.no-hubs-message {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.no-hubs-message p {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.browse-hubs-btn {
+  background: #2d8cf0;
+  border: none;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.browse-hubs-btn:hover {
+  background: #1a73e8;
+}
+
+/* FanHub Selector */
+.form-select {
+  width: 100%;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #323232;
+  font-size: 16px;
+  transition: all 0.2s;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #2d8cf0;
+  background-color: #fff;
+}
+
+.form-select option {
+  padding: 8px;
 }
 
 /* Form Groups */
@@ -144,7 +220,7 @@
 
 .form-label {
   display: block;
-  color: #333;
+  color: #323232;
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
@@ -157,8 +233,8 @@
 .form-input,
 .form-textarea {
   width: 100%;
-  background: #ccc;
-  border: 1px solid #3a3f47;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 12px 16px;
   color: #555;
@@ -177,7 +253,7 @@
 
 .form-input::placeholder,
 .form-textarea::placeholder {
-  color: #6b7280;
+  color: #999;
 }
 
 .form-textarea {
@@ -285,13 +361,13 @@
   right: 12px;
   bottom: -20px;
   font-size: 12px;
-  color: #6b7280;
+  color: #888;
 }
 
 .field-hint {
   display: block;
   font-size: 12px;
-  color: #6b7280;
+  color: #888;
   margin-top: 6px;
 }
 
@@ -379,9 +455,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #2d3139;
-  border: 2px dashed #3a3f47;
-  color: #b0b3b8;
+  background: #f5f5f5;
+  border: 2px dashed #e0e0e0;
+  color: #666;
   padding: 24px 32px;
   border-radius: 8px;
   cursor: pointer;
@@ -392,9 +468,9 @@
 }
 
 .media-upload-btn:hover {
-  border-color: #4f46e5;
-  background: #3a3f47;
-  color: #e4e6eb;
+  border-color: #2d8cf0;
+  background: #e8f4f8;
+  color: #323232;
 }
 
 .media-upload-btn svg {
@@ -414,7 +490,7 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #3a3f47;
+  border: 1px solid #e0e0e0;
   aspect-ratio: 1;
 }
 
@@ -429,7 +505,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   border: none;
   color: #fff;
   width: 28px;
@@ -454,11 +530,11 @@
   gap: 12px;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid #2d3139;
+  border-top: 1px solid #e0e0e0;
 }
 
 .submit-btn {
-  background: #4f46e5;
+  background: #2d8cf0;
   border: none;
   color: #fff;
   padding: 12px 32px;
@@ -474,7 +550,7 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #4338ca;
+  background: #1a73e8;
 }
 
 .submit-btn:disabled {
@@ -524,4 +600,176 @@
   .media-preview-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
+}
+
+/* Custom Hub Dropdown */
+.custom-hub-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-hub-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 48px;
+}
+
+.custom-hub-selected:hover {
+  border-color: #a0a0a0;
+}
+
+.selected-hub-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.selected-hub-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #323232;
+}
+
+.select-hub-placeholder {
+  flex: 1;
+  font-size: 14px;
+  color: #878a8c;
+}
+
+.dropdown-arrow {
+  width: 20px;
+  height: 20px;
+  color: #878a8c;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.custom-hub-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.custom-hub-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-hub-option:last-child {
+  border-bottom: none;
+}
+
+.custom-hub-option:hover {
+  background: #f8f9fa;
+}
+
+.custom-hub-option.selected {
+  background: #e3f2fd;
+}
+
+.hub-option-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.hub-option-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #323232;
+}
+
+.hub-option-subdomain {
+  font-size: 12px;
+  color: #878a8c;
+}
+
+/* Poll Options */
+.poll-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.poll-option-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.poll-option-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323232;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.poll-option-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: #fff;
+  color: #323232;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.poll-option-input:focus {
+  border-color: #2d8cf0;
+  box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
+}
+
+.poll-option-input::placeholder {
+  color: #b0b0b0;
+}
+
+.remove-poll-option-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #878a8c;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.remove-poll-option-btn:hover {
+  background: #f0f0f0;
+  color: #d32f2f;
 }

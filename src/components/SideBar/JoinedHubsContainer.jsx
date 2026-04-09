@@ -2,66 +2,69 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUserById } from '@/services/UserController';
-import { getFanHubBySubdomain } from '@/services/FanHubController';
+import { getMyJoinedHubs } from '@/services/FanHubController';
+import { useAuth } from '@/functions/Auth/useAuth';
 import './JoinedHubsContainer.css';
 
 export default function JoinedHubsContainer() {
   const router = useRouter();
-  const [showAll, setShowAll] = useState(false);
+  const { userAuth } = useAuth();
+    const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchJoinedHubs = async () => {
-    try {
-      // Get userID from localStorage or sessionStorage
-      const userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
-
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      // Fetch user data including fanHubsJoined
-      const userData = await getUserById(userId);
-
-      if (userData && userData.fanHubsJoined) {
-        setJoinedHubs(userData.fanHubsJoined);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching joined hubs:', error);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchJoinedHubs();
-  }, []);
-
-  // Listen for hub updates (e.g., when user joins a new hub)
-  useEffect(() => {
-    const handleHubUpdate = () => {
-      fetchJoinedHubs();
+    const fetchJoinedHubs = async () => {
+        try {
+            if (!userAuth) {
+                setLoading(false);
+                setJoinedHubs([]);
+                return;
+            }
+            setLoading(true);
+            // Fetch 6 hubs to check if there are more than 5
+            const hubs = await getMyJoinedHubs(0, 6, 'createdAt');
+            // Store all fetched hubs
+            setJoinedHubs(hubs);
+        } catch (error) {
+            console.error('Error fetching joined hubs:', error);
+            setJoinedHubs([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    window.addEventListener('hubsUpdated', handleHubUpdate);
-    return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
-  }, []);
 
-  const handleHubClick = (fanHubId) => {
-    router.push(`/hub/${fanHubId}`);
+    useEffect(() => {
+        fetchJoinedHubs();
+    }, []);
+
+
+
+  const handleHubClick = (subdomain) => {
+    router.push(`/hub/${subdomain}`);
   };
+
+    useEffect(() => {
+        const handleHubUpdate = () => {
+            fetchJoinedHubs();
+        };
+
+        window.addEventListener('hubsUpdated', handleHubUpdate);
+        return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
+    }, []);
 
   const toggleShowAll = () => {
     setShowAll(!showAll);
   };
 
   // Determine which hubs to display
-  const displayHubs = showAll ? joinedHubs : joinedHubs.slice(0, 3);
-  const hasMoreHubs = joinedHubs.length > 3;
+  const hasMoreHubs = joinedHubs.length > 5;
+  const displayHubs = joinedHubs.slice(0, 5);
 
+  // Don't render if no hubs joined
+  if (joinedHubs.length === 0 && !loading) {
+    return null;
+  }
 
   return (
     <div className="joined-hubs-wrapper">
@@ -80,7 +83,7 @@ export default function JoinedHubsContainer() {
               <div
                 key={hub.fanHubId}
                 className="joined-hub-item"
-                onClick={() => handleHubClick(hub.fanHubId)}
+                onClick={() => handleHubClick(hub.subdomain)}
               >
                 <img
                   src={hub.avatarUrl || '/profile-pic-undefined.jpg'}

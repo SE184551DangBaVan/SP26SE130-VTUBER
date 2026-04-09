@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
-import { createPost } from '@/services/PostController';
+import { useSideBar } from '@/contexts/SideBarContext.tsx';
+import { getMyJoinedHubs } from '@/services/FanHubController';
+import { createPost, createPollPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { EventRounded } from '@mui/icons-material';
@@ -13,10 +15,16 @@ export default function CreatePostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userAuth } = useAuth();
+  const { sideBarRetractor } = useSideBar();
 
-  const fanHubId = searchParams.get('fanHubId');
-  const textareaRef = useRef();
-  const datePickerRef = useRef();
+  const [joinedHubs, setJoinedHubs] = useState([]);
+  const [selectedFanHubId, setSelectedFanHubId] = useState(null);
+  const [selectedFanHubSubdomain, setSelectedFanHubSubdomain] = useState(null);
+  const [selectedHubData, setSelectedHubData] = useState(null);
+  const [loadingHubs, setLoadingHubs] = useState(true);
+  const [showHubDropdown, setShowHubDropdown] = useState(false);
+
+  const fanHubId = searchParams?.get('fanHubId');
 
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
@@ -27,6 +35,55 @@ export default function CreatePostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [titleLength, setTitleLength] = useState(0);
 
+  // Poll options state
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowHubDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch joined hubs on mount
+  useEffect(() => {
+    const fetchJoinedHubs = async () => {
+      if (!userAuth) {
+        showError('You must be logged in to create a post');
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const hubs = await getMyJoinedHubs();
+        setJoinedHubs(hubs);
+
+        // Check if there's a pre-selected hub from navigation
+        const preSelectedHubId = sessionStorage.getItem('createPostPreSelectedHub');
+        if (preSelectedHubId) {
+          const hubExists = hubs.some(h => h.fanHubId === parseInt(preSelectedHubId));
+          if (hubExists) {
+            setSelectedFanHubId(parseInt(preSelectedHubId));
+          }
+          // Clear the session storage after using it
+          sessionStorage.removeItem('createPostPreSelectedHub');
+        }
+      } catch (error) {
+        console.error('Error fetching joined hubs:', error);
+        showError('Failed to load your joined hubs');
+      } finally {
+        setLoadingHubs(false);
+      }
+    };
+
+    fetchJoinedHubs();
+  }, [userAuth, router]);
+
   // VTUBER exclusive fields
   const [isAnnouncement, setIsAnnouncement] = useState(false);
   const [isSchedule, setIsSchedule] = useState(false);
@@ -36,11 +93,10 @@ export default function CreatePostPage() {
   const [scheduleDate, setScheduleDate] = useState('');
 
   useEffect(() => {
-    if (!fanHubId) {
-      showError('No FanHub selected');
-      router.back();
+    if (!loadingHubs && joinedHubs.length === 0) {
+      showError('You have not joined any hubs yet');
     }
-  }, [fanHubId, router]);
+  }, [loadingHubs, joinedHubs]);
 
   // Check if user is the hub owner and has VTUBER role
   useEffect(() => {
@@ -52,7 +108,10 @@ export default function CreatePostPage() {
 
       try {
         const memberData = await checkIsMember(parseInt(fanHubId));
+        console.log("role in hub:", memberData?.roleInHub);
+        console.log("role:", userAuth.role);
 
+        // User is hub owner if they have VTUBER role and are a member
         const isOwner = userAuth.role === 'VTUBER' &&
                         memberData?.roleInHub === 'VTUBER';
 
@@ -154,6 +213,12 @@ export default function CreatePostPage() {
   };
 
   const handleSubmit = async () => {
+    // Validation
+    if (!selectedFanHubId) {
+      showError('Please select a FanHub to post in');
+      return;
+    }
+
     if (!title.trim()) {
       showError('Title is required');
       return;
@@ -162,6 +227,26 @@ export default function CreatePostPage() {
     if (postType === 'VIDEO' && mediaFiles.length === 0) {
       showError('Please upload a video file');
       return;
+    }
+
+    if (postType === 'POLL') {
+      // Filter out empty options
+      const validOptions = pollOptions.filter(opt => opt.trim());
+      if (validOptions.length < 2) {
+        showError('Poll must have at least 2 options');
+        return;
+      }
+      if (validOptions.length > 4) {
+        showError('Poll can have at most 4 options');
+        return;
+      }
+      // Check for empty options in the middle
+      for (let i = 0; i < validOptions.length; i++) {
+        if (!validOptions[i].trim()) {
+          showError(`Option ${i + 1} cannot be empty`);
+          return;
+        }
+      }
     }
 
     setSubmitting(true);
@@ -173,23 +258,46 @@ export default function CreatePostPage() {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
-      const mediaKey = postType === 'VIDEO' ? 'video' : 'images';
-      const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
+      if (postType === 'POLL') {
+        // Create poll post
+        const validOptions = pollOptions.filter(opt => opt.trim());
+        const pollData = {
+          fanHubId: parseInt(selectedFanHubId),
+          title: title.trim(),
+          content: content.trim(),
+          options: validOptions,
+          hashtags: hashtagsArray
+        };
 
-      const postData = {
-        fanHubId: parseInt(fanHubId),
-        postType,
-        title: title.trim(),
-        content: content.trim(),
-        hashtags: hashtagsArray,
-        isAnnouncement: isHubOwner ? isAnnouncement : false,
-        isSchedule: isHubOwner ? isSchedule : false
-      };
+        await createPollPost(pollData);
+      } else {
+        // Create regular post with media
+        const mediaKey = postType === 'VIDEO' ? 'video' : 'images';
+        const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
 
-      await createPost(postData, mediaToUpload, mediaKey);
+        const postData = {
+          fanHubId: parseInt(selectedFanHubId),
+          postType,
+          title: title.trim(),
+          content: content.trim(),
+          hashtags: hashtagsArray,
+            isAnnouncement: isHubOwner ? isAnnouncement : false,
+            isSchedule: isHubOwner ? isSchedule : false
+        };
+
+        await createPost(postData, mediaToUpload, mediaKey);
+      }
 
       updateToast(toastId, 'success', 'Post created successfully!');
-      router.push(`/hub/${fanHubId}`);
+
+      // Navigate back to hub page using subdomain
+      const hubToNavigate = selectedHubData || joinedHubs.find(h => h.fanHubId === selectedFanHubId);
+      if (hubToNavigate?.subdomain) {
+        router.push(`/hub/${hubToNavigate.subdomain}`);
+      } else {
+        console.warn('Subdomain not available for this hub');
+        router.push('/posts');
+      }
     } catch (error) {
       console.error('Create post error:', error);
       updateToast(toastId, 'error', error.message || 'Failed to create post');
@@ -208,7 +316,7 @@ export default function CreatePostPage() {
   };
 
   return (
-    <div className='create-post-page'>
+    <div className={`create-post-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
       <div className='create-post-container'>
         <div className='create-post-header'>
           <h1>Create Post</h1>
@@ -248,39 +356,116 @@ export default function CreatePostPage() {
           </div>
         </div>
 
-        {/* Post Type Selector */}
-        <div className='post-type-selector'>
-          <button
-            className={`type-btn ${postType === 'TEXT' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('TEXT');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Text
-          </button>
-          <button
-            className={`type-btn ${postType === 'IMAGE' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('IMAGE');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Images
-          </button>
-          <button
-            className={`type-btn ${postType === 'VIDEO' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('VIDEO');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Video
-          </button>
-        </div>
+        {/* Loading State */}
+        {loadingHubs ? (
+          <div className='loading-hubs'>Loading your joined hubs...</div>
+        ) : joinedHubs.length === 0 ? (
+          <div className='no-hubs-message'>
+            <p>You have not joined any hubs yet.</p>
+            <button className='browse-hubs-btn' onClick={() => router.push('/explore')}>
+              Browse Hubs
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* FanHub Selector - Custom Dropdown with Avatars */}
+            <div className='form-group'>
+              <label className='form-label'>
+                Post to FanHub <span className='required'>*</span>
+              </label>
+              <div className='custom-hub-dropdown' ref={dropdownRef}>
+                <div
+                  className='custom-hub-selected'
+                  onClick={() => setShowHubDropdown(!showHubDropdown)}
+                >
+                  {selectedHubData ? (
+                    <>
+                      <img
+                        src={selectedHubData.avatarUrl || '/profile-pic-undefined.jpg'}
+                        alt={selectedHubData.hubName}
+                        className='selected-hub-avatar'
+                        onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+                      />
+                      <span className='selected-hub-name'>{selectedHubData.hubName}</span>
+                    </>
+                  ) : (
+                    <span className='select-hub-placeholder'>Select a FanHub...</span>
+                  )}
+                  <svg className='dropdown-arrow' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                    <polyline points='6 9 12 15 18 9' />
+                  </svg>
+                </div>
+                {showHubDropdown && (
+                  <div className='custom-hub-options'>
+                    {joinedHubs.map(hub => (
+                      <div
+                        key={hub.fanHubId}
+                        className={`custom-hub-option ${selectedFanHubId === hub.fanHubId ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedFanHubId(hub.fanHubId);
+                          setSelectedFanHubSubdomain(hub.subdomain);
+                          setSelectedHubData(hub);
+                          setShowHubDropdown(false);
+                        }}
+                      >
+                        <img
+                          src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
+                          alt={hub.hubName}
+                          className='hub-option-avatar'
+                          onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+                        />
+                        <span className='hub-option-name'>{hub.hubName}</span>
+                        <span className='hub-option-subdomain'>{hub.subdomain}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Post Type Selector */}
+            <div className='post-type-selector'>
+              <button
+                className={`type-btn ${postType === 'TEXT' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('TEXT');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Text
+              </button>
+              <button
+                className={`type-btn ${postType === 'IMAGE' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('IMAGE');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Images
+              </button>
+              <button
+                className={`type-btn ${postType === 'VIDEO' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('VIDEO');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Video
+              </button>
+              <button
+                className={`type-btn ${postType === 'POLL' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('POLL');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Poll
+              </button>
+            </div>
 
         {/* Title Input */}
         <div className='form-group'>
@@ -364,8 +549,55 @@ export default function CreatePostPage() {
           </div>
         </div>
 
-        {/* Media Upload */}
-        {postType !== 'TEXT' && (
+        {/* Poll Options */}
+        {postType === 'POLL' && (
+          <div className='form-group'>
+            <label className='form-label'>
+              Poll Options <span className='required'>*</span>
+            </label>
+            <span className='field-hint'>Start with 2 options. Type in an option to reveal the next one (max 4).</span>
+            <div className='poll-options-container'>
+              {pollOptions.map((option, index) => (
+                <div key={index} className='poll-option-input-wrapper'>
+                  <span className='poll-option-number'>{index + 1}.</span>
+                  <input
+                    type='text'
+                    className='poll-option-input'
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...pollOptions];
+                      newOptions[index] = e.target.value;
+
+                      // If typing in the last option and we haven't reached max 4, add a new empty option
+                      if (index === pollOptions.length - 1 && e.target.value.trim() !== '' && pollOptions.length < 4) {
+                        newOptions.push('');
+                      }
+
+                      setPollOptions(newOptions);
+                    }}
+                    maxLength={100}
+                  />
+                  {index >= 2 && (
+                    <button
+                      type='button'
+                      className='remove-poll-option-btn'
+                      onClick={() => {
+                        const newOptions = pollOptions.filter((_, i) => i !== index);
+                        setPollOptions(newOptions);
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Media Upload - Only for IMAGE and VIDEO types */}
+        {(postType === 'IMAGE' || postType === 'VIDEO') && (
           <div className='form-group'>
             <label className='form-label'>
               {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}{' '}
@@ -417,7 +649,7 @@ export default function CreatePostPage() {
           <button
             className='submit-btn'
             onClick={handleSubmit}
-            disabled={submitting || !title.trim()}
+            disabled={submitting || !selectedFanHubId || !title.trim()}
           >
             {submitting ? (
               <>
@@ -429,6 +661,8 @@ export default function CreatePostPage() {
             )}
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

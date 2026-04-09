@@ -2,7 +2,7 @@
 
 import './Navbar.css'
 import { useRouter } from "next/navigation";
-import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined } from '@mui/icons-material';
+import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd } from '@mui/icons-material';
 import { useState, useRef, useEffect } from 'react';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
 import { getCurrentUserProfile, updateUserProfile } from '@/services/UserController';
@@ -178,6 +178,17 @@ const Navbar = () => {
                 <div className="navbar-actions">
                     {loading ? null : userAuth ? (
                         <>
+                            {/* Create Post Button */}
+                            <div className="navbar-action-item">
+                                <button
+                                    className="navbar-action-btn create-post-btn"
+                                    onClick={() => router.push('/create-post')}
+                                    aria-label="Create Post"
+                                >
+                                    <PostAdd />
+                                </button>
+                            </div>
+
                             {/* Daily Mission Dropdown */}
                             <div className="navbar-action-item" ref={dailyMissionRef}>
                                 <button
