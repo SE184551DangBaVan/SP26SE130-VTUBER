@@ -9,39 +9,52 @@ import './JoinedHubsContainer.css';
 export default function JoinedHubsContainer() {
   const router = useRouter();
   const { userAuth } = useAuth();
+    const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Only fetch if user is logged in
-    if (!userAuth) {
-      setLoading(false);
-      setJoinedHubs([]);
-      return;
-    }
-
     const fetchJoinedHubs = async () => {
-      try {
-        setLoading(true);
-        // Fetch 6 hubs to check if there are more than 5
-        const hubs = await getMyJoinedHubs(0, 6, 'createdAt');
-        // Store all fetched hubs
-        setJoinedHubs(hubs);
-      } catch (error) {
-        console.error('Error fetching joined hubs:', error);
-        setJoinedHubs([]);
-      } finally {
-        setLoading(false);
-      }
+        try {
+            if (!userAuth) {
+                setLoading(false);
+                setJoinedHubs([]);
+                return;
+            }
+            setLoading(true);
+            // Fetch 6 hubs to check if there are more than 5
+            const hubs = await getMyJoinedHubs(0, 6, 'createdAt');
+            // Store all fetched hubs
+            setJoinedHubs(hubs);
+        } catch (error) {
+            console.error('Error fetching joined hubs:', error);
+            setJoinedHubs([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    fetchJoinedHubs();
-  }, [userAuth]);
+
+    useEffect(() => {
+        fetchJoinedHubs();
+    }, []);
 
 
 
   const handleHubClick = (subdomain) => {
     router.push(`/hub/${subdomain}`);
+  };
+
+    useEffect(() => {
+        const handleHubUpdate = () => {
+            fetchJoinedHubs();
+        };
+
+        window.addEventListener('hubsUpdated', handleHubUpdate);
+        return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
+    }, []);
+
+  const toggleShowAll = () => {
+    setShowAll(!showAll);
   };
 
   // Determine which hubs to display
@@ -70,10 +83,10 @@ export default function JoinedHubsContainer() {
               <div
                 key={hub.fanHubId}
                 className="joined-hub-item"
-                onClick={() => handleHubClick(hub.subdomain)}
+                onClick={() => handleHubClick(hub.fanHubId)}
               >
                 <img
-                  src={hub.avatarUrl || '/default-avatar.png'}
+                  src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
                   alt={hub.hubName}
                   className="joined-hub-avatar"
                 />
@@ -84,9 +97,9 @@ export default function JoinedHubsContainer() {
             {hasMoreHubs && (
               <div
                 className="view-all-hubs"
-                onClick={() => router.push('/my-hubs')}
+                onClick={toggleShowAll}
               >
-                See more...
+                {showAll ? 'Show less' : 'View all hubs...'}
               </div>
             )}
           </>

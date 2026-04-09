@@ -85,6 +85,110 @@
   object-fit: contain;
 }
 
+/* Post Details Carousel */
+.post-details-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.post-details-carousel .carousel-image-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-details-carousel .carousel-image-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.post-details-carousel .carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.post-details-carousel .carousel-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.post-details-carousel .carousel-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.post-details-carousel .carousel-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
+.post-details-carousel .carousel-prev {
+  left: 16px;
+}
+
+.post-details-carousel .carousel-next {
+  right: 16px;
+}
+
+.post-details-carousel .carousel-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.post-details-carousel .indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.post-details-carousel .indicator-dot:hover {
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
+.post-details-carousel .indicator-dot.active {
+  background-color: #fff;
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
 .post-details-text-only {
   background: rgba(255, 255, 255, 0.05);
   padding: 40px;

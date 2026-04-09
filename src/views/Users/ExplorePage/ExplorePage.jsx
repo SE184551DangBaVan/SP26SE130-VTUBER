@@ -364,8 +364,8 @@ export default function ExplorePage() {
               backgroundImage: topHub?.bannerUrl
                 ? `url(${topHub.bannerUrl})`
                 : "#999",
-                color: "#ccc",
-                border: `3px solid ${topHub?.themeColor || "#fff"} `
+              color: topHub?.themeColor || "#fff",
+              border: `3px solid ${topHub?.themeColor || "#fff"} `
             }}
           >
             <div className="explore-banner-left">

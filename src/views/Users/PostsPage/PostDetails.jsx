@@ -43,6 +43,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   const [likeCount, setLikeCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
   const [extraMenuOpen, setExtraMenuOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const menuRef = useRef();
 
   useEffect(() => {
@@ -196,13 +197,59 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
         return (
           <div className='post-details-media'>
             {post.mediaUrls && post.mediaUrls.length > 0 && (
-              <img
-                src={post.mediaUrls[0]}
-                alt={post.title || 'Post image'}
-                onError={(e) => {
-                  e.target.src = '/placeholder-image.png';
-                }}
-              />
+              post.mediaUrls.length === 1 ? (
+                <img
+                  src={post.mediaUrls[0]}
+                  alt={post.title || 'Post image'}
+                  onError={(e) => {
+                    e.target.src = '/placeholder-image.png';
+                  }}
+                />
+              ) : (
+                <div className='post-details-carousel'>
+                  <button 
+                    className='carousel-btn carousel-prev' 
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+                    )}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  
+                  <div className='carousel-image-container'>
+                    <img
+                      src={post.mediaUrls[currentImageIndex]}
+                      alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.png';
+                      }}
+                    />
+                  </div>
+
+                  <button 
+                    className='carousel-btn carousel-next' 
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+                    )}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+
+                  <div className='carousel-indicators'>
+                    {post.mediaUrls.map((_, index) => (
+                      <button
+                        key={index}
+                        className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                        onClick={() => setCurrentImageIndex(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
             )}
           </div>
         );

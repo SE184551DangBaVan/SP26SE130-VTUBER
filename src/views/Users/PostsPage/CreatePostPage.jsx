@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import {useRouter} from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useSideBar } from '@/contexts/SideBarContext.tsx';
 import { getMyJoinedHubs } from '@/services/FanHubController';
 import { createPost, createPollPost } from '@/services/PostController';
+import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './CreatePostPage.css';
 
@@ -20,6 +21,9 @@ export default function CreatePostPage() {
   const [selectedHubData, setSelectedHubData] = useState(null);
   const [loadingHubs, setLoadingHubs] = useState(true);
   const [showHubDropdown, setShowHubDropdown] = useState(false);
+
+  const fanHubId = searchParams.get('fanHubId');
+
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -78,11 +82,46 @@ export default function CreatePostPage() {
     fetchJoinedHubs();
   }, [userAuth, router]);
 
+  // VTUBER exclusive fields
+  const [isAnnouncement, setIsAnnouncement] = useState(false);
+  const [isSchedule, setIsSchedule] = useState(false);
+  const [isHubOwner, setIsHubOwner] = useState(false);
+  const [checkingOwnership, setCheckingOwnership] = useState(true);
+
   useEffect(() => {
     if (!loadingHubs && joinedHubs.length === 0) {
       showError('You have not joined any hubs yet');
     }
   }, [loadingHubs, joinedHubs]);
+
+  // Check if user is the hub owner and has VTUBER role
+  useEffect(() => {
+    const checkOwnership = async () => {
+      if (!fanHubId || !userAuth?.role) {
+        setCheckingOwnership(false);
+        return;
+      }
+
+      try {
+        const memberData = await checkIsMember(parseInt(fanHubId));
+        console.log("role in hub:", memberData?.roleInHub);
+        console.log("role:", userAuth.role);
+
+        // User is hub owner if they have VTUBER role and are a member
+        const isOwner = userAuth.role === 'VTUBER' &&
+                        memberData?.roleInHub === 'VTUBER';
+
+        setIsHubOwner(isOwner);
+      } catch (error) {
+        console.error('Error checking hub ownership:', error);
+        setIsHubOwner(false);
+      } finally {
+        setCheckingOwnership(false);
+      }
+    };
+
+    checkOwnership();
+  }, [fanHubId, userAuth]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -190,7 +229,9 @@ export default function CreatePostPage() {
           postType,
           title: title.trim(),
           content: content.trim(),
-          hashtags: hashtagsArray
+          hashtags: hashtagsArray,
+            isAnnouncement: isHubOwner ? isAnnouncement : false,
+            isSchedule: isHubOwner ? isSchedule : false
         };
 
         await createPost(postData, mediaToUpload, mediaKey);
@@ -252,15 +293,15 @@ export default function CreatePostPage() {
                 Post to FanHub <span className='required'>*</span>
               </label>
               <div className='custom-hub-dropdown' ref={dropdownRef}>
-                <div 
-                  className='custom-hub-selected' 
+                <div
+                  className='custom-hub-selected'
                   onClick={() => setShowHubDropdown(!showHubDropdown)}
                 >
                   {selectedHubData ? (
                     <>
-                      <img 
-                        src={selectedHubData.avatarUrl || '/profile-pic-undefined.jpg'} 
-                        alt={selectedHubData.hubName} 
+                      <img
+                        src={selectedHubData.avatarUrl || '/profile-pic-undefined.jpg'}
+                        alt={selectedHubData.hubName}
                         className='selected-hub-avatar'
                         onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
                       />
@@ -286,9 +327,9 @@ export default function CreatePostPage() {
                           setShowHubDropdown(false);
                         }}
                       >
-                        <img 
-                          src={hub.avatarUrl || '/profile-pic-undefined.jpg'} 
-                          alt={hub.hubName} 
+                        <img
+                          src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
+                          alt={hub.hubName}
                           className='hub-option-avatar'
                           onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
                         />
@@ -378,15 +419,50 @@ export default function CreatePostPage() {
           <span className='field-hint'>Separate multiple hashtags with commas</span>
         </div>
 
+        {/* VTUBER Exclusive: Announcement & Schedule Options */}
+        {!checkingOwnership && isHubOwner && (
+          <div className='form-group vtuber-exclusive-options'>
+            <label className='form-label'>Post Options</label>
+            <div className='checkbox-options'>
+              <label className='checkbox-option'>
+                <input
+                  type='checkbox'
+                  checked={isAnnouncement}
+                  onChange={(e) => setIsAnnouncement(e.target.checked)}
+                />
+                <div className='checkbox-content'>
+                  <span className='checkbox-title'>Announcement</span>
+                  <span className='checkbox-description'>
+                    Mark this post as an important announcement for all members
+                  </span>
+                </div>
+              </label>
+              <label className='checkbox-option'>
+                <input
+                  type='checkbox'
+                  checked={isSchedule}
+                  onChange={(e) => setIsSchedule(e.target.checked)}
+                />
+                <div className='checkbox-content'>
+                  <span className='checkbox-title'>Has Schedule</span>
+                  <span className='checkbox-description'>
+                    This post is to inform members about a Schedule
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+        )}
+
         {/* Content Editor */}
         <div className='form-group'>
           <label htmlFor='post-content' className='form-label'>
-            Body Text (optional)
+            Content Text (optional)
           </label>
           <textarea
             id='post-content'
             className='form-textarea'
-            placeholder="What's on your mind?"
+            placeholder="What content are you posting?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={8}

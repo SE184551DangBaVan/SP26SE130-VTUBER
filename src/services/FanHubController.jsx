@@ -155,7 +155,7 @@ export const getFanHubBySubdomain = async (subdomain) => {
       console.log("fetching fanhub by subdomain")
     const encodedSubdomain = encodeURIComponent(subdomain);
     const res = await axiosInstance.get(`/fan-hub/subdomain/${encodedSubdomain}`);
-    console.log("response of fetching fanhub by subdomain: " + res);
+
     if (res.data?.success && res.data?.data) {
       return res.data.data;
     }
@@ -223,5 +223,38 @@ export const getMyHubAsOwner = async () => {
       data: err.response?.data,
     });
     return null;
+  }
+};
+
+/**
+ * Update fan hub information
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {Object} hubData - Hub data to update
+ * @param {string} hubData.hubName - Hub name
+ * @param {string} hubData.subdomain - Subdomain
+ * @param {string} hubData.description - Description
+ * @param {string} hubData.themeColor - Theme color
+ * @param {string[]} hubData.category - Categories
+ * @param {boolean} hubData.isPrivate - Is private
+ * @param {boolean} hubData.requiresApproval - Requires approval
+ * @returns {Promise<Object>} Update result
+ */
+export const updateFanHub = async (fanHubId, hubData) => {
+  try {
+    const res = await axiosInstance.put(
+      `/fan-hub/update/${fanHubId}`,
+      hubData
+    );
+
+    console.log("updateFanHub response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Update fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
   }
 };
