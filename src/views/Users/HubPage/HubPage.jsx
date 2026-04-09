@@ -6,7 +6,7 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
-import { uploadImages, checkIsMember } from '@/services/FanHubController';
+import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
@@ -24,7 +24,7 @@ export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const fanHubIdFromParams = params?.fanHubId;
+  const subdomainFromParams = params?.subdomain;
 
   // Generate random loading image on mount
   const [randomLoadingImage, setRandomLoadingImage] = useState(null);
@@ -118,26 +118,24 @@ export default function HubPage({ ownedHub }) {
     if (!canCreatePost) {
       setShowCreatePostModal(true);
     } else {
-      // Navigate to create post page with fanHubId
-      router.push(`/create-post?fanHubId=${activeFanHubId}`);
+      // Store the fanHubId in session storage for auto-selection
+      sessionStorage.setItem('createPostPreSelectedHub', activeFanHubId);
+      // Navigate to create post page
+      router.push(`/create-post`);
     }
   };
 
   // Handle moderation hub click
   const handleModerationClick = () => {
-    router.push(`/hub/${activeFanHubId}/moderation`);
+    router.push(`/hub/${hubData.subdomain}/moderation`);
   };
 
-  // Fetch hub data if fanHubId is provided via params (not owned hub)
+  // Fetch hub data if subdomain is provided via params (not owned hub)
   useEffect(() => {
-    if (fanHubIdFromParams && !ownedHub) {
+    if (subdomainFromParams && !ownedHub) {
       const fetchHubData = async () => {
         try {
-          // We need to get all hubs and find the matching one
-          // Or use a dedicated getFanHubById endpoint if available
-          const { getFanHubs } = await import('@/services/FanHubController');
-          const hubs = await getFanHubs();
-          const foundHub = hubs.find(h => h.fanHubId === parseInt(fanHubIdFromParams));
+          const foundHub = await getFanHubBySubdomain(subdomainFromParams);
           if (foundHub) {
             setHubData(foundHub);
           }
@@ -147,10 +145,10 @@ export default function HubPage({ ownedHub }) {
       };
       fetchHubData();
     }
-  }, [fanHubIdFromParams, ownedHub]);
+  }, [subdomainFromParams, ownedHub]);
 
-  // Determine which fanHubId to use
-  const activeFanHubId = fanHubIdFromParams ? parseInt(fanHubIdFromParams) : ownedHub?.fanHubId;
+  // Determine which fanHubId to use (from fetched hubData or ownedHub)
+  const activeFanHubId = hubData?.fanHubId || ownedHub?.fanHubId;
 
   // Fetch posts for the hub
   useEffect(() => {

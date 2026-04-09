@@ -17,7 +17,7 @@ const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
 const MAX_NEST_DEPTH = 5;
 
-export default function CommentSection({ postId, userAuth, router }) {
+export default function CommentSection({ postId, userAuth, router, commentCount }) {
   const localRouter = useRouter();
   const navRouter = router || localRouter;
   const [comments, setComments] = useState([]);
@@ -163,7 +163,7 @@ export default function CommentSection({ postId, userAuth, router }) {
   return (
     <div className='comment-section'>
       <div className='comment-section-header'>
-        {comments.length > 0 ? `${comments.length} Comment${comments.length > 1 ? 's' : ''}` : 'Comments'}
+        {commentCount > 0 ? `${commentCount} Comment${commentCount > 1 ? 's' : ''}` : 'Comments'}
       </div>
 
       <div className='comments-list'>

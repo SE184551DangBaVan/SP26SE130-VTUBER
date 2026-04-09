@@ -33,8 +33,15 @@ export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
 
-  const handleVisitHub = (fanHubId) => {
-    router.push(`/hub/${fanHubId}`);
+  const handleVisitHub = (hub) => {
+    // Navigate using subdomain
+    if (hub.subdomain) {
+      router.push(`/hub/${hub.subdomain}`);
+    } else if (hub.fanHubId) {
+      // Fallback if subdomain is not available
+      console.warn('Hub does not have subdomain, using fanHubId as fallback');
+      router.push(`/hub/${hub.fanHubId}`);
+    }
   };
 
   // Handle showing more items for a category
@@ -170,7 +177,7 @@ export default function ExplorePage() {
                 <div
                   key={idx}
                   className="simplified-card"
-                  onClick={() => handleVisitHub(hub.fanHubId)}
+                  onClick={() => handleVisitHub(hub)}
                 >
                   <div className="simplified-card-header">
                     <img
@@ -257,7 +264,7 @@ export default function ExplorePage() {
 
               <button
                 className="explore-visit-btn"
-                onClick={() => handleVisitHub(hub.fanHubId)}
+                onClick={() => handleVisitHub(hub)}
                 style={{background: hub?.themeColor}}
               >
                 <div className="hub-info-member-count">
@@ -386,7 +393,7 @@ export default function ExplorePage() {
 
               <button 
                 className="explore-visit-btn"
-                onClick={() => handleVisitHub(topHub?.fanHubId)}
+                onClick={() => handleVisitHub(topHub)}
                 disabled={!topHub?.fanHubId}
                 style={{background: topHub?.themeColor}}
               >

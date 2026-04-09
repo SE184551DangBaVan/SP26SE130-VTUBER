@@ -2,37 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUserById } from '@/services/UserController';
-import { getFanHubBySubdomain } from '@/services/FanHubController';
+import {getMyJoinedHubs } from '@/services/FanHubController';
 import './JoinedHubsContainer.css';
 
 export default function JoinedHubsContainer() {
   const router = useRouter();
-  const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchJoinedHubs = async () => {
       try {
-        // Get userID from localStorage or sessionStorage
-        const userId = localStorage.getItem('userID') || sessionStorage.getItem('userID');
-
-        if (!userId) {
-          setLoading(false);
-          return;
-        }
-
-        // Fetch user data including fanHubsJoined
-        const userData = await getUserById(userId);
-
-        if (userData && userData.fanHubsJoined) {
-          setJoinedHubs(userData.fanHubsJoined);
-        }
-
-        setLoading(false);
+        setLoading(true);
+        // Fetch 6 hubs to check if there are more than 5
+        const hubs = await getMyJoinedHubs(0, 6, 'createdAt');
+        // Store all fetched hubs
+        setJoinedHubs(hubs);
       } catch (error) {
         console.error('Error fetching joined hubs:', error);
+        setJoinedHubs([]);
+      } finally {
         setLoading(false);
       }
     };
@@ -40,17 +29,15 @@ export default function JoinedHubsContainer() {
     fetchJoinedHubs();
   }, []);
 
+
+
   const handleHubClick = (subdomain) => {
     router.push(`/hub/${subdomain}`);
   };
 
-  const toggleShowAll = () => {
-    setShowAll(!showAll);
-  };
-
   // Determine which hubs to display
-  const displayHubs = showAll ? joinedHubs : joinedHubs.slice(0, 3);
-  const hasMoreHubs = joinedHubs.length > 3;
+  const hasMoreHubs = joinedHubs.length > 5;
+  const displayHubs = joinedHubs.slice(0, 5);
 
   // Don't render if no hubs joined
   if (joinedHubs.length === 0 && !loading) {
@@ -88,9 +75,9 @@ export default function JoinedHubsContainer() {
             {hasMoreHubs && (
               <div
                 className="view-all-hubs"
-                onClick={toggleShowAll}
+                onClick={() => router.push('/my-hubs')}
               >
-                {showAll ? 'Show less' : 'View all hubs...'}
+                See more...
               </div>
             )}
           </>

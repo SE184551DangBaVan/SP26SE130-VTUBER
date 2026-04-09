@@ -1,19 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
+import { useSideBar } from '@/contexts/SideBarContext.tsx';
+import { getMyJoinedHubs } from '@/services/FanHubController';
 import { createPost } from '@/services/PostController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './CreatePostPage.css';
 
 export default function CreatePostPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { userAuth } = useAuth();
-  
-  const fanHubId = searchParams.get('fanHubId');
-  
+  const { sideBarRetractor } = useSideBar();
+
+  const [joinedHubs, setJoinedHubs] = useState([]);
+  const [selectedFanHubId, setSelectedFanHubId] = useState(null);
+  const [selectedFanHubSubdomain, setSelectedFanHubSubdomain] = useState(null);
+  const [loadingHubs, setLoadingHubs] = useState(true);
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -23,12 +27,45 @@ export default function CreatePostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [titleLength, setTitleLength] = useState(0);
 
+  // Fetch joined hubs on mount
   useEffect(() => {
-    if (!fanHubId) {
-      showError('No FanHub selected');
-      router.back();
+    const fetchJoinedHubs = async () => {
+      if (!userAuth) {
+        showError('You must be logged in to create a post');
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const hubs = await getMyJoinedHubs();
+        setJoinedHubs(hubs);
+
+        // Check if there's a pre-selected hub from navigation
+        const preSelectedHubId = sessionStorage.getItem('createPostPreSelectedHub');
+        if (preSelectedHubId) {
+          const hubExists = hubs.some(h => h.fanHubId === parseInt(preSelectedHubId));
+          if (hubExists) {
+            setSelectedFanHubId(parseInt(preSelectedHubId));
+          }
+          // Clear the session storage after using it
+          sessionStorage.removeItem('createPostPreSelectedHub');
+        }
+      } catch (error) {
+        console.error('Error fetching joined hubs:', error);
+        showError('Failed to load your joined hubs');
+      } finally {
+        setLoadingHubs(false);
+      }
+    };
+
+    fetchJoinedHubs();
+  }, [userAuth, router]);
+
+  useEffect(() => {
+    if (!loadingHubs && joinedHubs.length === 0) {
+      showError('You have not joined any hubs yet');
     }
-  }, [fanHubId, router]);
+  }, [loadingHubs, joinedHubs]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -69,6 +106,11 @@ export default function CreatePostPage() {
 
   const handleSubmit = async () => {
     // Validation
+    if (!selectedFanHubId) {
+      showError('Please select a FanHub to post in');
+      return;
+    }
+
     if (!title.trim()) {
       showError('Title is required');
       return;
@@ -94,7 +136,7 @@ export default function CreatePostPage() {
       const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
 
       const postData = {
-        fanHubId: parseInt(fanHubId),
+        fanHubId: parseInt(selectedFanHubId),
         postType,
         title: title.trim(),
         content: content.trim(),
@@ -102,11 +144,17 @@ export default function CreatePostPage() {
       };
 
       await createPost(postData, mediaToUpload, mediaKey);
-      
+
       updateToast(toastId, 'success', 'Post created successfully!');
-      
-      // Navigate back to hub page
-      router.push(`/hub/${fanHubId}`);
+
+      // Navigate back to hub page using subdomain
+      if (selectedFanHubSubdomain) {
+        router.push(`/hub/${selectedFanHubSubdomain}`);
+      } else {
+        // Fallback if subdomain is not available
+        console.warn('Subdomain not available, using fanHubId as fallback');
+        router.push(`/hub/${selectedFanHubId}`);
+      }
     } catch (error) {
       console.error('Create post error:', error);
       updateToast(toastId, 'error', error.message || 'Failed to create post');
@@ -126,7 +174,7 @@ export default function CreatePostPage() {
   };
 
   return (
-    <div className='create-post-page'>
+    <div className={`create-post-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
       <div className='create-post-container'>
         <div className='create-post-header'>
           <h1>Create Post</h1>
@@ -135,8 +183,46 @@ export default function CreatePostPage() {
           </button>
         </div>
 
-        {/* Post Type Selector */}
-        <div className='post-type-selector'>
+        {/* Loading State */}
+        {loadingHubs ? (
+          <div className='loading-hubs'>Loading your joined hubs...</div>
+        ) : joinedHubs.length === 0 ? (
+          <div className='no-hubs-message'>
+            <p>You have not joined any hubs yet.</p>
+            <button className='browse-hubs-btn' onClick={() => router.push('/explore')}>
+              Browse Hubs
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* FanHub Selector */}
+            <div className='form-group'>
+              <label htmlFor='fanhub-select' className='form-label'>
+                Post to FanHub <span className='required'>*</span>
+              </label>
+              <select
+                id='fanhub-select'
+                className='form-select'
+                value={selectedFanHubId || ''}
+                onChange={(e) => {
+                  const hubId = parseInt(e.target.value);
+                  setSelectedFanHubId(hubId);
+                  // Find and store the subdomain for the selected hub
+                  const selectedHub = joinedHubs.find(h => h.fanHubId === hubId);
+                  setSelectedFanHubSubdomain(selectedHub?.subdomain || null);
+                }}
+              >
+                <option value=''>Select a FanHub...</option>
+                {joinedHubs.map(hub => (
+                  <option key={hub.fanHubId} value={hub.fanHubId}>
+                    {hub.hubName} ({hub.subdomain})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Post Type Selector */}
+            <div className='post-type-selector'>
           <button
             className={`type-btn ${postType === 'TEXT' ? 'active' : ''}`}
             onClick={() => {
@@ -270,7 +356,7 @@ export default function CreatePostPage() {
           <button
             className='submit-btn'
             onClick={handleSubmit}
-            disabled={submitting || !title.trim()}
+            disabled={submitting || !selectedFanHubId || !title.trim()}
           >
             {submitting ? (
               <>
@@ -282,6 +368,8 @@ export default function CreatePostPage() {
             )}
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -300,7 +300,12 @@ export default function PostDetails({ scrollPositionRef }) {
                 <div className='post-details-divider' />
 
                 {/* Comment Section */}
-                <CommentSection postId={post.postId} userAuth={userAuth} router={router} />
+                <CommentSection 
+                  postId={post.postId} 
+                  userAuth={userAuth} 
+                  router={router}
+                  commentCount={post.commentCount || 0}
+                />
               </>
             )}
           </div>
