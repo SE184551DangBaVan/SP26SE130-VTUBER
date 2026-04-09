@@ -46,7 +46,6 @@
   background: transparent;
   padding: 32px;
   min-height: 80vh;
-  border-right: 4px solid #6C6C6C;
 }
 
 /* Hub Header */
@@ -268,12 +267,51 @@
   color: #888;
 }
 
+/* Schedule Display */
+.news-schedule-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.schedule-icon {
+  font-size: 28px;
+  color: #4f46e5;
+}
+
+.schedule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.schedule-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f46e5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.schedule-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
 /* Sidebar */
 .news-sidebar {
   position: sticky;
   top: 100px;
   height: fit-content;
+  min-height: calc(100vh - 120px);
   max-height: calc(100vh - 120px);
+  border-left: 4px solid #6C6C6C;
   overflow-x: hidden;
   overflow-y: auto;
 }

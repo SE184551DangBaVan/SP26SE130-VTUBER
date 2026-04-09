@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { createPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
+import { EventRounded } from '@mui/icons-material';
 import './CreatePostPage.css';
 
 export default function CreatePostPage() {
@@ -14,6 +15,8 @@ export default function CreatePostPage() {
   const { userAuth } = useAuth();
 
   const fanHubId = searchParams.get('fanHubId');
+  const textareaRef = useRef();
+  const datePickerRef = useRef();
 
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
@@ -29,6 +32,8 @@ export default function CreatePostPage() {
   const [isSchedule, setIsSchedule] = useState(false);
   const [isHubOwner, setIsHubOwner] = useState(false);
   const [checkingOwnership, setCheckingOwnership] = useState(true);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
 
   useEffect(() => {
     if (!fanHubId) {
@@ -47,13 +52,10 @@ export default function CreatePostPage() {
 
       try {
         const memberData = await checkIsMember(parseInt(fanHubId));
-        console.log("role in hub:", memberData?.roleInHub);
-        console.log("role:", userAuth.role);
-        
-        // User is hub owner if they have VTUBER role and are a member
-        const isOwner = userAuth.role === 'VTUBER' && 
+
+        const isOwner = userAuth.role === 'VTUBER' &&
                         memberData?.roleInHub === 'VTUBER';
-        
+
         setIsHubOwner(isOwner);
       } catch (error) {
         console.error('Error checking hub ownership:', error);
@@ -77,11 +79,9 @@ export default function CreatePostPage() {
   const handleMediaChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      // Limit to max 4 images for IMAGE type, 1 video for VIDEO type
       const limitedFiles = postType === 'VIDEO' ? files.slice(0, 1) : files.slice(0, 4);
       setMediaFiles(limitedFiles);
-      
-      // Create preview URLs
+
       const previews = limitedFiles.map(file => ({
         name: file.name,
         url: URL.createObjectURL(file),
@@ -95,7 +95,6 @@ export default function CreatePostPage() {
     setMediaFiles(prev => prev.filter((_, i) => i !== index));
     setMediaPreview(prev => {
       const newPreviews = prev.filter((_, i) => i !== index);
-      // Revoke old URL to prevent memory leaks
       if (prev[index]?.url) {
         URL.revokeObjectURL(prev[index].url);
       }
@@ -103,8 +102,58 @@ export default function CreatePostPage() {
     });
   };
 
+  const handleScheduleToggle = () => {
+    const newIsSchedule = !isSchedule;
+    setIsSchedule(newIsSchedule);
+    if (!newIsSchedule) {
+      setShowDatePicker(false);
+      setScheduleDate('');
+    }
+  };
+
+  const handleDatePickerClick = (e) => {
+    e.stopPropagation();
+    setShowDatePicker(true);
+  };
+
+  const handleDateChange = (e) => {
+    const dateValue = e.target.value;
+    setScheduleDate(dateValue);
+  };
+
+  const handleApplySchedule = () => {
+    if (!scheduleDate) {
+      showError('Please select a date');
+      return;
+    }
+
+    // Format as ISO string
+    const isoDate = new Date(scheduleDate).toISOString();
+    const appendText = ` - Append Schedule: ${isoDate}`;
+
+    // Insert at current cursor position or append to end
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      const startPos = textarea.selectionStart;
+      const endPos = textarea.selectionEnd;
+      const beforeText = content.substring(0, startPos);
+      const afterText = content.substring(endPos);
+
+      const newContent = beforeText + appendText + afterText;
+      setContent(newContent);
+      setShowDatePicker(false);
+
+      // Reset date picker
+      setScheduleDate('');
+    }
+  };
+
+  const handleCancelSchedule = () => {
+    setShowDatePicker(false);
+    setScheduleDate('');
+  };
+
   const handleSubmit = async () => {
-    // Validation
     if (!title.trim()) {
       showError('Title is required');
       return;
@@ -119,13 +168,11 @@ export default function CreatePostPage() {
     const toastId = showLoading('Creating post...');
 
     try {
-      // Parse hashtags
       const hashtagsArray = hashtags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
-      // Determine media key based on post type
       const mediaKey = postType === 'VIDEO' ? 'video' : 'images';
       const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
 
@@ -140,10 +187,8 @@ export default function CreatePostPage() {
       };
 
       await createPost(postData, mediaToUpload, mediaKey);
-      
+
       updateToast(toastId, 'success', 'Post created successfully!');
-      
-      // Navigate back to hub page
       router.push(`/hub/${fanHubId}`);
     } catch (error) {
       console.error('Create post error:', error);
@@ -154,7 +199,6 @@ export default function CreatePostPage() {
   };
 
   const handleCancel = () => {
-    // Clean up preview URLs
     mediaPreview.forEach(preview => {
       if (preview.url) {
         URL.revokeObjectURL(preview.url);
@@ -168,9 +212,40 @@ export default function CreatePostPage() {
       <div className='create-post-container'>
         <div className='create-post-header'>
           <h1>Create Post</h1>
-          <button className='cancel-btn' onClick={handleCancel}>
-            Cancel
-          </button>
+          <div className='header-actions'>
+            {/* VTUBER Exclusive Toggle Buttons */}
+            {!checkingOwnership && isHubOwner && (
+              <div className='toggle-buttons-group'>
+                <label className='toggle-btn-wrapper'>
+                  <span className='toggle-label'>Announcement</span>
+                  <input
+                    type='checkbox'
+                    className='toggle-input'
+                    checked={isAnnouncement}
+                    onChange={(e) => setIsAnnouncement(e.target.checked)}
+                  />
+                  <span className={`toggle-slider ${isAnnouncement ? 'active' : ''}`}>
+                    <span className='toggle-handle' />
+                  </span>
+                </label>
+                <label className='toggle-btn-wrapper'>
+                  <span className='toggle-label'>Schedule</span>
+                  <input
+                    type='checkbox'
+                    className='toggle-input'
+                    checked={isSchedule}
+                    onChange={handleScheduleToggle}
+                  />
+                  <span className={`toggle-slider ${isSchedule ? 'active' : ''}`}>
+                    <span className='toggle-handle' />
+                  </span>
+                </label>
+              </div>
+            )}
+            <button className='cancel-btn' onClick={handleCancel}>
+              Cancel
+            </button>
+          </div>
         </div>
 
         {/* Post Type Selector */}
@@ -240,54 +315,53 @@ export default function CreatePostPage() {
           <span className='field-hint'>Separate multiple hashtags with commas</span>
         </div>
 
-        {/* VTUBER Exclusive: Announcement & Schedule Options */}
-        {!checkingOwnership && isHubOwner && (
-          <div className='form-group vtuber-exclusive-options'>
-            <label className='form-label'>Post Options</label>
-            <div className='checkbox-options'>
-              <label className='checkbox-option'>
-                <input
-                  type='checkbox'
-                  checked={isAnnouncement}
-                  onChange={(e) => setIsAnnouncement(e.target.checked)}
-                />
-                <div className='checkbox-content'>
-                  <span className='checkbox-title'>Announcement</span>
-                  <span className='checkbox-description'>
-                    Mark this post as an important announcement for all members
-                  </span>
-                </div>
-              </label>
-              <label className='checkbox-option'>
-                <input
-                  type='checkbox'
-                  checked={isSchedule}
-                  onChange={(e) => setIsSchedule(e.target.checked)}
-                />
-                <div className='checkbox-content'>
-                  <span className='checkbox-title'>Has Schedule</span>
-                  <span className='checkbox-description'>
-                    This post is to inform members about a Schedule
-                  </span>
-                </div>
-              </label>
-            </div>
-          </div>
-        )}
-
         {/* Content Editor */}
         <div className='form-group'>
           <label htmlFor='post-content' className='form-label'>
             Content Text (optional)
           </label>
-          <textarea
-            id='post-content'
-            className='form-textarea'
-            placeholder="What content are you posting?"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={8}
-          />
+          <div className='textarea-wrapper'>
+            <textarea
+              ref={textareaRef}
+              id='post-content'
+              className='form-textarea'
+              placeholder="What content are you posting?"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={8}
+            />
+            {/* Date Picker Button - shown inside textarea area */}
+            {!showDatePicker && (
+              <button
+                type='button'
+                className='date-picker-trigger-btn'
+                onClick={handleDatePickerClick}
+                title='Add Schedule'
+              >
+                <EventRounded fontSize='small' />
+              </button>
+            )}
+            {/* Date Picker Popup */}
+            {showDatePicker && (
+              <div className='date-picker-popup'>
+                <input
+                  ref={datePickerRef}
+                  type='datetime-local'
+                  value={scheduleDate}
+                  onChange={handleDateChange}
+                  className='date-picker-input'
+                />
+                <div className='date-picker-actions'>
+                  <button type='button' className='date-btn cancel' onClick={handleCancelSchedule}>
+                    Cancel
+                  </button>
+                  <button type='button' className='date-btn apply' onClick={handleApplySchedule}>
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Media Upload */}
