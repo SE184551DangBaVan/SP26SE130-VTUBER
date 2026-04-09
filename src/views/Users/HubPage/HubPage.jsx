@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
 import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
+import PostDetails from '../PostsPage/PostDetails';
+import PostCard from '../PostsPage/PostCard';
 import './HubPage.css';
 import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
 
@@ -24,6 +26,7 @@ export default function HubPage({ ownedHub }) {
   const { userAuth } = useAuth();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const subdomainFromParams = params?.subdomain;
 
   // Generate random loading image on mount
@@ -34,6 +37,8 @@ export default function HubPage({ ownedHub }) {
     setRandomLoadingImage(loadingImages[randomIndex]);
   }, []);
 
+  // i want the loading screen to appear only once, and never again
+  const [firstLoad, setFirstLoad] = useState(false);
   const [hubData, setHubData] = useState(ownedHub || null);
   const [posts, setPosts] = useState([]);
   const [members, setMembers] = useState([]);
@@ -64,6 +69,7 @@ export default function HubPage({ ownedHub }) {
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
   const lastScrollValue = useRef(0);
+  const scrollPositionRef = useRef(0);
 
   // Throttled scroll handler using requestAnimationFrame
   useEffect(() => {
@@ -150,32 +156,75 @@ export default function HubPage({ ownedHub }) {
   // Determine which fanHubId to use (from fetched hubData or ownedHub)
   const activeFanHubId = hubData?.fanHubId || ownedHub?.fanHubId;
 
-  // Fetch posts for the hub
-  useEffect(() => {
-    const fetchPosts = async () => {
-      if (!activeFanHubId) return;
+  // Infinite scroll state
+  const [hasMore, setHasMore] = useState(true);
+  const [serverPage, setServerPage] = useState(0);
+  const observer = useRef();
 
-      setPostsLoading(true);
-      try {
-        const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-        const hubPosts = await getPostsByFanHub(activeFanHubId, 0, 50, sortBy);
+  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
+    if (!activeFanHubId) return;
+    
+    setPostsLoading(true);
+    try {
+      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy);
 
-        const sortedPosts = [...hubPosts].sort((a, b) => {
-          const dateA = new Date(a.createdAt);
-          const dateB = new Date(b.createdAt);
-          return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
-        });
-
-        setPosts(sortedPosts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setPostsLoading(false);
+      if (hubPosts.length < 7) {
+        setHasMore(false);
       }
-    };
 
-    fetchPosts();
+      const sortedPosts = [...hubPosts].sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return sortBy === 'createdAt' ? dateB - dateA : dateA - dateB;
+      });
+
+      if (sortedPosts.length > 0) {
+        if (append && pageNum !== 0) {
+          setPosts(prev => [...prev, ...sortedPosts]);
+        } else {
+          setPosts(sortedPosts);
+        }
+        setServerPage(pageNum + 1);
+      } else if (hubPosts.length === 7) {
+        const nextPage = pageNum + 1;
+        setServerPage(nextPage);
+        await fetchPosts(nextPage, sortBy, append);
+        return;
+      } else {
+        if (pageNum === 0) setPosts([]);
+        setServerPage(pageNum + 1);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setPostsLoading(false);
+        setFirstLoad(true);
+    }
+  }, [activeFanHubId]);
+
+  useEffect(() => {
+    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    setServerPage(0);
+    setHasMore(true);
+    fetchPosts(0, sortBy);
   }, [activeFanHubId, sortOrder]);
+
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (postsLoading) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+          fetchPosts(serverPage, sortBy);
+        }
+      }, { rootMargin: '200px' });
+
+      if (node) observer.current.observe(node);
+    },
+    [postsLoading, hasMore, serverPage, sortOrder, fetchPosts]
+  );
 
   useEffect(() => {
     const fetchUserMembership = async () => {
@@ -184,7 +233,6 @@ export default function HubPage({ ownedHub }) {
         // Use checkIsMember to get the user's role in this hub
         const memberData = await checkIsMember(activeFanHubId);
 
-        console.log("MemberData:" + JSON.stringify(memberData));
 
         if (memberData && memberData.isMember) {
           setIsMember(true);
@@ -444,9 +492,10 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
-  // Handle post click - navigate to post detail page
+  // Handle post click - navigate to hub page with post id in URL
   const handlePostClick = (post) => {
-    router.push(`/post/${post.postId}`);
+    scrollPositionRef.current = window.scrollY;
+    router.push(`/hub/${hubData.subdomain}?id=${post.postId}`, { scroll: false });
   };
 
   // Show loading if no hub data
@@ -586,7 +635,7 @@ export default function HubPage({ ownedHub }) {
             </div>
           </div>
 
-          {postsLoading ? (
+          {(postsLoading && !firstLoad) ? (
             <div className='posts-loading'>
               LOADING POSTS
               {randomLoadingImage && (
@@ -613,9 +662,38 @@ export default function HubPage({ ownedHub }) {
               <p>No Posts Yet.</p>
             </div>
           ) : (
-            filteredPosts.map((post) => (
-              <PostCard key={post.postId} post={post} onClick={() => handlePostClick(post)} />
-            ))
+            <>
+              {filteredPosts.map((post, index) => {
+                if (filteredPosts.length === index + 1) {
+                  return (
+                    <div ref={lastPostElementRef} key={post.postId}>
+                      <PostCard
+                        post={post}
+                        onClick={() => handlePostClick(post)}
+                        onCommentsClick={() => handlePostClick(post)}
+                      />
+                    </div>
+                  );
+                } else {
+                  return (
+                    <PostCard
+                      key={post.postId}
+                      post={post}
+                      onClick={() => handlePostClick(post)}
+                      onCommentsClick={() => handlePostClick(post)}
+                    />
+                  );
+                }
+              })}
+              {postsLoading && (
+                <div className='infinite-scroll-loader'>Loading more posts...</div>
+              )}
+              {!postsLoading && !hasMore && filteredPosts.length > 0 && (
+                <div className='no-more-posts-message'>
+                  That's all for now, there'll be more soon! ✨
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -714,6 +792,13 @@ export default function HubPage({ ownedHub }) {
           )}
         </div>
       </div>
+
+      {/* Post Details Modal - triggered by URL params */}
+      {searchParams.get('id') && (
+        <PostDetails
+          scrollPositionRef={scrollPositionRef}
+        />
+      )}
 
       {/* Promote to Moderator Modal */}
       {showPromoteModal && selectedMember && (
@@ -921,111 +1006,6 @@ export default function HubPage({ ownedHub }) {
   );
 }
 
-// Post Card Component
-function PostCard({ post, onClick }) {
-  const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
-
-  const handleLike = (e) => {
-    e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
-  const handleCommentsClick = (e) => {
-    e.stopPropagation();
-    localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
-    onClick();
-  };
-
-  const renderMedia = () => {
-    if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
-
-    if (post.postType === 'VIDEO') {
-      return (
-        <div className='post-media video-media'>
-          <video controls>
-            <source src={post.mediaUrls[0]} type='video/mp4' />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      );
-    }
-
-    return (
-      <div className='post-media image-media'>
-        <img
-          src={post.mediaUrls[0]}
-          alt={post.title}
-          onError={(e) => {
-            e.target.src = '/placeholder-image.png';
-          }}
-        />
-      </div>
-    );
-  };
-
-  return (
-    <div className='post-card' onClick={onClick}>
-      <div className='post-content'>
-        <div className='post-header'>
-          <div className='post-author-info'>
-            <img
-              className='post-author-avatar'
-              src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-              alt={post.authorDisplayName}
-              onError={(e) => {
-                e.target.src = '/profile-pic-undefined.jpg';
-              }}
-            />
-            <div className='post-author-details'>
-              <span className='author-display-name'>{post.authorDisplayName}</span>
-              <span className='author-username'>@{post.authorUsername}</span>
-            </div>
-          </div>
-          <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
-        </div>
-
-        <h3 className='post-title'>{post.title}</h3>
-
-        {post.content && (
-          <p className='post-text'>{post.content}</p>
-        )}
-
-        {renderMedia()}
-
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className='post-hashtags'>
-            {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag'>#{tag}</span>
-            ))}
-          </div>
-        )}
-
-        <div className='post-actions'>
-          <div className='post-vote-section'>
-            <button className='vote-btn like-btn' onClick={handleLike}>
-              <svg className='like-ico' xmlns="http://www.w3.org/2000/svg" width="58" height="58" viewBox="0 0 58 58" fill="none">
-                <path d="M22.7111 39.1439L34.9947 35.8525C36.6662 35.4047 37.8883 34.475 37.4672 32.9031L37.0349 28.4449C36.798 27.6719 36.2643 27.0242 35.5509 26.6439C34.8374 26.2635 34.0023 26.1814 33.2284 26.4155L30.1984 27.2274C30.0095 27.2771 29.8123 27.2865 29.6196 27.255C29.4268 27.2235 29.2429 27.1518 29.0797 27.0445C28.9165 26.9373 28.7777 26.7968 28.6723 26.6324C28.5669 26.468 28.4974 26.2832 28.4681 26.0901L27.9624 22.0404C27.855 21.6473 27.5968 21.3124 27.2438 21.1086C26.8908 20.9048 26.4717 20.8486 26.0775 20.9522C25.8782 21.0026 25.6909 21.0922 25.5267 21.2157C25.3624 21.3393 25.2244 21.4944 25.1208 21.672C25.0172 21.8495 24.95 22.0459 24.9232 22.2497C24.8964 22.4535 24.9105 22.6606 24.9646 22.8589L25.1452 25.0975C25.4622 27.5893 24.2488 29.1494 22.3295 30.5785" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20.737 32.3162C21.1298 32.211 21.3629 31.8072 21.2576 31.4144C21.1524 31.0216 20.7486 30.7884 20.3558 30.8937C19.963 30.999 19.7299 31.4027 19.8351 31.7955C19.9404 32.1884 20.3441 32.4215 20.737 32.3162Z" fill="black"/>
-              </svg>
-            </button>
-            <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
-          </div>
-          <button className='action-btn' onClick={handleCommentsClick}>
-            <CommentRounded fontSize='small' />
-            <span>Comments</span>
-          </button>
-          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
-            <ShareRounded fontSize='small' />
-            <span>Share</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Helper function to format time ago
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
@@ -1036,6 +1016,6 @@ function formatTimeAgo(dateString) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  
+
   return date.toLocaleDateString();
 }

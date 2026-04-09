@@ -149,6 +149,96 @@ export const createPost = async (postData, mediaFiles = null, mediaKey = 'images
 };
 
 /**
+ * Create a poll post
+ * @param {Object} pollData - Poll post data
+ * @param {number} pollData.fanHubId - Fan Hub ID
+ * @param {string} pollData.title - Poll title
+ * @param {string} pollData.content - Poll content (optional)
+ * @param {string[]} pollData.options - Array of poll options (2-4 options)
+ * @param {string[]} pollData.hashtags - Array of hashtags (optional)
+ * @returns {Promise<Object>} Response data
+ */
+export const createPollPost = async (pollData) => {
+  try {
+    const res = await axiosInstance.post('/posts/poll', {
+      fanHubId: pollData.fanHubId,
+      title: pollData.title,
+      content: pollData.content || '',
+      options: pollData.options,
+      hashtags: pollData.hashtags || []
+    });
+
+    console.log("createPollPost response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to create poll post');
+  } catch (err) {
+    console.error("Create poll post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Vote on a poll option
+ * @param {number} postId - Post ID
+ * @param {number} optionId - Poll option ID
+ * @returns {Promise<Object>} Response data
+ */
+export const votePoll = async (postId, optionId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/vote?postId=${postId}&optionId=${optionId}`);
+
+    console.log("votePoll response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to vote');
+  } catch (err) {
+    console.error("Vote poll error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Remove vote from a poll
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} Response data
+ */
+export const unVotePoll = async (postId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/un-vote?postId=${postId}`);
+
+    console.log("unVotePoll response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to remove vote');
+  } catch (err) {
+    console.error("Unvote poll error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
  * Get posts by user ID (for viewing user's own posts)
  * @param {number} userId - User ID
  * @param {number} pageNo - Page number

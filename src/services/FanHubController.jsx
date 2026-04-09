@@ -200,3 +200,28 @@ export const getMyJoinedHubs = async (pageNo = 0, pageSize = 50, sortBy = 'creat
     return [];
   }
 };
+
+/**
+ * Get VTuber's owned fan hub
+ * @returns {Promise<Object|null>} Fan hub data or null
+ */
+export const getMyHubAsOwner = async () => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub/my-hub-as-owner`);
+
+    console.log("getMyHubAsOwner response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Fetch my hub as owner error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};

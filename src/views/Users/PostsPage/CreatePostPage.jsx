@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useSideBar } from '@/contexts/SideBarContext.tsx';
 import { getMyJoinedHubs } from '@/services/FanHubController';
-import { createPost } from '@/services/PostController';
+import { createPost, createPollPost } from '@/services/PostController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './CreatePostPage.css';
 
@@ -17,7 +17,9 @@ export default function CreatePostPage() {
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [selectedFanHubId, setSelectedFanHubId] = useState(null);
   const [selectedFanHubSubdomain, setSelectedFanHubSubdomain] = useState(null);
+  const [selectedHubData, setSelectedHubData] = useState(null);
   const [loadingHubs, setLoadingHubs] = useState(true);
+  const [showHubDropdown, setShowHubDropdown] = useState(false);
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -26,6 +28,21 @@ export default function CreatePostPage() {
   const [mediaPreview, setMediaPreview] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [titleLength, setTitleLength] = useState(0);
+
+  // Poll options state
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowHubDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch joined hubs on mount
   useEffect(() => {
@@ -121,6 +138,26 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (postType === 'POLL') {
+      // Filter out empty options
+      const validOptions = pollOptions.filter(opt => opt.trim());
+      if (validOptions.length < 2) {
+        showError('Poll must have at least 2 options');
+        return;
+      }
+      if (validOptions.length > 4) {
+        showError('Poll can have at most 4 options');
+        return;
+      }
+      // Check for empty options in the middle
+      for (let i = 0; i < validOptions.length; i++) {
+        if (!validOptions[i].trim()) {
+          showError(`Option ${i + 1} cannot be empty`);
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
     const toastId = showLoading('Creating post...');
 
@@ -131,29 +168,43 @@ export default function CreatePostPage() {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
-      // Determine media key based on post type
-      const mediaKey = postType === 'VIDEO' ? 'video' : 'images';
-      const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
+      if (postType === 'POLL') {
+        // Create poll post
+        const validOptions = pollOptions.filter(opt => opt.trim());
+        const pollData = {
+          fanHubId: parseInt(selectedFanHubId),
+          title: title.trim(),
+          content: content.trim(),
+          options: validOptions,
+          hashtags: hashtagsArray
+        };
 
-      const postData = {
-        fanHubId: parseInt(selectedFanHubId),
-        postType,
-        title: title.trim(),
-        content: content.trim(),
-        hashtags: hashtagsArray
-      };
+        await createPollPost(pollData);
+      } else {
+        // Create regular post with media
+        const mediaKey = postType === 'VIDEO' ? 'video' : 'images';
+        const mediaToUpload = mediaFiles.length > 0 ? mediaFiles : null;
 
-      await createPost(postData, mediaToUpload, mediaKey);
+        const postData = {
+          fanHubId: parseInt(selectedFanHubId),
+          postType,
+          title: title.trim(),
+          content: content.trim(),
+          hashtags: hashtagsArray
+        };
+
+        await createPost(postData, mediaToUpload, mediaKey);
+      }
 
       updateToast(toastId, 'success', 'Post created successfully!');
 
       // Navigate back to hub page using subdomain
-      if (selectedFanHubSubdomain) {
-        router.push(`/hub/${selectedFanHubSubdomain}`);
+      const hubToNavigate = selectedHubData || joinedHubs.find(h => h.fanHubId === selectedFanHubId);
+      if (hubToNavigate?.subdomain) {
+        router.push(`/hub/${hubToNavigate.subdomain}`);
       } else {
-        // Fallback if subdomain is not available
-        console.warn('Subdomain not available, using fanHubId as fallback');
-        router.push(`/hub/${selectedFanHubId}`);
+        console.warn('Subdomain not available for this hub');
+        router.push('/posts');
       }
     } catch (error) {
       console.error('Create post error:', error);
@@ -195,65 +246,104 @@ export default function CreatePostPage() {
           </div>
         ) : (
           <>
-            {/* FanHub Selector */}
+            {/* FanHub Selector - Custom Dropdown with Avatars */}
             <div className='form-group'>
-              <label htmlFor='fanhub-select' className='form-label'>
+              <label className='form-label'>
                 Post to FanHub <span className='required'>*</span>
               </label>
-              <select
-                id='fanhub-select'
-                className='form-select'
-                value={selectedFanHubId || ''}
-                onChange={(e) => {
-                  const hubId = parseInt(e.target.value);
-                  setSelectedFanHubId(hubId);
-                  // Find and store the subdomain for the selected hub
-                  const selectedHub = joinedHubs.find(h => h.fanHubId === hubId);
-                  setSelectedFanHubSubdomain(selectedHub?.subdomain || null);
-                }}
-              >
-                <option value=''>Select a FanHub...</option>
-                {joinedHubs.map(hub => (
-                  <option key={hub.fanHubId} value={hub.fanHubId}>
-                    {hub.hubName} ({hub.subdomain})
-                  </option>
-                ))}
-              </select>
+              <div className='custom-hub-dropdown' ref={dropdownRef}>
+                <div 
+                  className='custom-hub-selected' 
+                  onClick={() => setShowHubDropdown(!showHubDropdown)}
+                >
+                  {selectedHubData ? (
+                    <>
+                      <img 
+                        src={selectedHubData.avatarUrl || '/profile-pic-undefined.jpg'} 
+                        alt={selectedHubData.hubName} 
+                        className='selected-hub-avatar'
+                        onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+                      />
+                      <span className='selected-hub-name'>{selectedHubData.hubName}</span>
+                    </>
+                  ) : (
+                    <span className='select-hub-placeholder'>Select a FanHub...</span>
+                  )}
+                  <svg className='dropdown-arrow' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                    <polyline points='6 9 12 15 18 9' />
+                  </svg>
+                </div>
+                {showHubDropdown && (
+                  <div className='custom-hub-options'>
+                    {joinedHubs.map(hub => (
+                      <div
+                        key={hub.fanHubId}
+                        className={`custom-hub-option ${selectedFanHubId === hub.fanHubId ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedFanHubId(hub.fanHubId);
+                          setSelectedFanHubSubdomain(hub.subdomain);
+                          setSelectedHubData(hub);
+                          setShowHubDropdown(false);
+                        }}
+                      >
+                        <img 
+                          src={hub.avatarUrl || '/profile-pic-undefined.jpg'} 
+                          alt={hub.hubName} 
+                          className='hub-option-avatar'
+                          onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+                        />
+                        <span className='hub-option-name'>{hub.hubName}</span>
+                        <span className='hub-option-subdomain'>{hub.subdomain}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Post Type Selector */}
             <div className='post-type-selector'>
-          <button
-            className={`type-btn ${postType === 'TEXT' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('TEXT');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Text
-          </button>
-          <button
-            className={`type-btn ${postType === 'IMAGE' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('IMAGE');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Images
-          </button>
-          <button
-            className={`type-btn ${postType === 'VIDEO' ? 'active' : ''}`}
-            onClick={() => {
-              setPostType('VIDEO');
-              setMediaFiles([]);
-              setMediaPreview([]);
-            }}
-          >
-            Video
-          </button>
-        </div>
+              <button
+                className={`type-btn ${postType === 'TEXT' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('TEXT');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Text
+              </button>
+              <button
+                className={`type-btn ${postType === 'IMAGE' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('IMAGE');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Images
+              </button>
+              <button
+                className={`type-btn ${postType === 'VIDEO' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('VIDEO');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Video
+              </button>
+              <button
+                className={`type-btn ${postType === 'POLL' ? 'active' : ''}`}
+                onClick={() => {
+                  setPostType('POLL');
+                  setMediaFiles([]);
+                  setMediaPreview([]);
+                }}
+              >
+                Poll
+              </button>
+            </div>
 
         {/* Title Input */}
         <div className='form-group'>
@@ -303,8 +393,55 @@ export default function CreatePostPage() {
           />
         </div>
 
-        {/* Media Upload */}
-        {postType !== 'TEXT' && (
+        {/* Poll Options */}
+        {postType === 'POLL' && (
+          <div className='form-group'>
+            <label className='form-label'>
+              Poll Options <span className='required'>*</span>
+            </label>
+            <span className='field-hint'>Start with 2 options. Type in an option to reveal the next one (max 4).</span>
+            <div className='poll-options-container'>
+              {pollOptions.map((option, index) => (
+                <div key={index} className='poll-option-input-wrapper'>
+                  <span className='poll-option-number'>{index + 1}.</span>
+                  <input
+                    type='text'
+                    className='poll-option-input'
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...pollOptions];
+                      newOptions[index] = e.target.value;
+
+                      // If typing in the last option and we haven't reached max 4, add a new empty option
+                      if (index === pollOptions.length - 1 && e.target.value.trim() !== '' && pollOptions.length < 4) {
+                        newOptions.push('');
+                      }
+
+                      setPollOptions(newOptions);
+                    }}
+                    maxLength={100}
+                  />
+                  {index >= 2 && (
+                    <button
+                      type='button'
+                      className='remove-poll-option-btn'
+                      onClick={() => {
+                        const newOptions = pollOptions.filter((_, i) => i !== index);
+                        setPollOptions(newOptions);
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Media Upload - Only for IMAGE and VIDEO types */}
+        {(postType === 'IMAGE' || postType === 'VIDEO') && (
           <div className='form-group'>
             <label className='form-label'>
               {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}{' '}

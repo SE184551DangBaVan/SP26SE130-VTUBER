@@ -8,6 +8,7 @@ import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import CommentSection from './CommentSection';
+import { votePoll, unVotePoll } from '@/services/PostController';
 import './PostDetails.css';
 import {
   ShareRounded,
@@ -22,13 +23,19 @@ import {
 
 const MAX_NEST_DEPTH = 5;
 
-export default function PostDetails({ scrollPositionRef }) {
+export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userAuth } = useAuth();
   const { openReportModal } = useReportModal();
-  const postId = searchParams.get('id') || searchParams.get('shareId');
+  
+  // Determine if we're using prop-based or URL-based postId
+  const isPropBased = postIdProp !== undefined && postIdProp !== null;
+  // Use prop if provided, otherwise get from URL params
+  const postId = isPropBased ? postIdProp : (searchParams.get('id') || searchParams.get('shareId'));
   const isShared = !!searchParams.get('shareId');
+
+  console.log('PostDetails - isPropBased:', isPropBased, 'postIdProp:', postIdProp, 'postId:', postId);
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -75,12 +82,38 @@ export default function PostDetails({ scrollPositionRef }) {
     fetchPost();
   }, [postId]);
 
+  // Watch for postIdProp changes
+  useEffect(() => {
+    if (postIdProp === null) {
+      setPost(null);
+    }
+  }, [postIdProp]);
+
   const handleClose = useCallback(() => {
     if (scrollPositionRef) {
       scrollPositionRef.current = window.scrollY;
     }
-    router.push('/posts', { scroll: false });
-  }, [router, scrollPositionRef]);
+    // If opened via prop (hub page with prop), call onClose callback if provided
+    if (isPropBased) {
+      if (onClose) {
+        onClose();
+      }
+      // Clear the post data to show empty state
+      setPost(null);
+      return;
+    }
+    
+    // If opened via URL params, navigate back without the id/shareId param
+    // Check if we're on a hub page or posts page
+    if (window.location.pathname.startsWith('/hub/')) {
+      // On hub page, remove the id param but stay on the same hub
+      const currentPath = window.location.pathname;
+      router.push(currentPath, { scroll: false });
+    } else {
+      // On posts page or other pages, navigate to /posts
+      router.push('/posts', { scroll: false });
+    }
+  }, [router, scrollPositionRef, isPropBased, onClose]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -300,11 +333,12 @@ export default function PostDetails({ scrollPositionRef }) {
                 <div className='post-details-divider' />
 
                 {/* Comment Section */}
-                <CommentSection 
-                  postId={post.postId} 
-                  userAuth={userAuth} 
+                <CommentSection
+                  postId={post.postId}
+                  userAuth={userAuth}
                   router={router}
                   commentCount={post.commentCount || 0}
+                  fanHubId={post.fanHubId}
                 />
               </>
             )}
@@ -317,61 +351,110 @@ export default function PostDetails({ scrollPositionRef }) {
 
 function PollDisplay({ post }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
-  const totalVotes = post.totalVotes || 0;
+  const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
+  const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
+  const [voting, setVoting] = useState(false);
 
-  const handleOptionClick = (optionIndex) => {
-    setSelectedOption(optionIndex + 1);
-    console.log('Poll option clicked:', optionIndex);
+  const handleOptionClick = async (optionId) => {
+    if (selectedOption || voting) return;
+    setVoting(true);
+
+    try {
+      await votePoll(post.postId, optionId);
+      
+      setSelectedOption(optionId);
+      const newVoteCounts = { ...voteCounts };
+      newVoteCounts[optionId] = (newVoteCounts[optionId] || 0) + 1;
+      setVoteCounts(newVoteCounts);
+      setTotalVotes(prev => prev + 1);
+    } catch (error) {
+      console.error('Error voting:', error);
+    } finally {
+      setVoting(false);
+    }
   };
 
-  const getVotePercentage = (optionIndex) => {
+  const handleUnvote = async () => {
+    if (voting) return;
+    setVoting(true);
+
+    try {
+      await unVotePoll(post.postId);
+      
+      const oldOptionId = selectedOption;
+      setSelectedOption(null);
+      const newVoteCounts = { ...voteCounts };
+      newVoteCounts[oldOptionId] = Math.max(0, (newVoteCounts[oldOptionId] || 1) - 1);
+      setVoteCounts(newVoteCounts);
+      setTotalVotes(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error unvoting:', error);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const getVotePercentage = (optionId) => {
     if (totalVotes === 0) return 0;
-    const votes = post.voteCounts?.[optionIndex + 1] || 0;
+    const votes = voteCounts[optionId] || 0;
     return Math.round((votes / totalVotes) * 100);
   };
 
   return (
-    <div className='post-details-media post-details-poll'>
-      <div className='poll-display'>
-        {post.title && <h3 className='poll-title'>{post.title}</h3>}
-        {post.content && <p className='poll-content'>{post.content}</p>}
-        {post.voteOptions && (
-          <div className='poll-options'>
-            {post.voteOptions.map((option, index) => {
-              const percentage = getVotePercentage(index);
-              const isSelected = selectedOption === index + 1;
+    <div className='post-details-poll-wrapper'>
+      {post.title && <h3 className='poll-display-title'>{post.title}</h3>}
+      {post.content && <p className='poll-display-content'>{post.content}</p>}
+      <div className='poll-display poll-display-details'>
+        <div className='poll-options-list'>
+          {post.voteOptions?.map((option) => {
+            const isObject = typeof option === 'object' && option !== null;
+            const optionId = isObject ? option.id : option;
+            const optionText = isObject ? option.optionText : option;
+            
+            const percentage = getVotePercentage(optionId);
+            const isSelected = selectedOption === optionId;
+            const hasVoted = selectedOption !== null;
 
-              return (
-                <div
-                  key={index}
-                  className={`poll-option ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleOptionClick(index)}
-                >
-                  <div className='poll-option-background'>
-                    {selectedOption && (
-                      <div
-                        className='poll-option-fill'
-                        style={{ width: `${percentage}%` }}
-                      />
-                    )}
-                  </div>
-                  <div className='poll-option-content'>
-                    <span className='poll-option-text'>{option}</span>
-                    {selectedOption && (
+            return (
+              <div
+                key={optionId}
+                className={`poll-option-item ${isSelected ? 'selected' : ''} ${voting ? 'voting' : ''}`}
+                onClick={() => handleOptionClick(optionId)}
+              >
+                {hasVoted && (
+                  <div 
+                    className='poll-option-bar' 
+                    style={{ width: `${percentage}%` }}
+                  />
+                )}
+                <div className='poll-option-content'>
+                  <div className='poll-option-text-wrapper'>
+                    <span className='poll-option-text'>{optionText}</span>
+                    {hasVoted && (
                       <span className='poll-option-percentage'>{percentage}%</span>
+                    )}
+                    {!hasVoted && (
+                      <span className='poll-option-icon'>○</span>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className='post-hashtags'>
-            {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag'>#{tag}</span>
-            ))}
-          </div>
+              </div>
+            );
+          })}
+        </div>
+        {selectedOption && (
+          <>
+            <div className='poll-total-votes'>
+              <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+              <button 
+                className='poll-unvote-btn' 
+                onClick={handleUnvote}
+                disabled={voting}
+              >
+                {voting ? 'Removing...' : 'Unselect option'}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

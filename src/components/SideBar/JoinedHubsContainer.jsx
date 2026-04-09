@@ -2,15 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {getMyJoinedHubs } from '@/services/FanHubController';
+import { getMyJoinedHubs } from '@/services/FanHubController';
+import { useAuth } from '@/functions/Auth/useAuth';
 import './JoinedHubsContainer.css';
 
 export default function JoinedHubsContainer() {
   const router = useRouter();
+  const { userAuth } = useAuth();
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only fetch if user is logged in
+    if (!userAuth) {
+      setLoading(false);
+      setJoinedHubs([]);
+      return;
+    }
+
     const fetchJoinedHubs = async () => {
       try {
         setLoading(true);
@@ -27,7 +36,7 @@ export default function JoinedHubsContainer() {
     };
 
     fetchJoinedHubs();
-  }, []);
+  }, [userAuth]);
 
 
 

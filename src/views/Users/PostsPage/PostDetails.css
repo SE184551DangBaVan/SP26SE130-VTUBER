@@ -692,6 +692,127 @@
   display: none;
 }
 
+/* Poll in Post Details */
+.post-details-poll-wrapper {
+  width: 100%;
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.poll-display-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.poll-display-content {
+  font-size: 15px;
+  color: #f0f0f0;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.poll-display-details {
+  width: 100%;
+  background: #f0f7f9;
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.poll-display-details .poll-options-list {
+  width: 100%;
+}
+
+.poll-display-details .poll-option-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.poll-display-details .poll-total-votes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e8ea;
+}
+
+.poll-display-details .poll-total-votes span {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.poll-display-details .poll-unvote-btn {
+  margin-top: 0;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #d32f2f;
+  border-radius: 4px;
+  color: #d32f2f;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.poll-display-details .poll-unvote-btn:hover:not(:disabled) {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.poll-display-details .poll-unvote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Membership required message */
+.comment-membership-required {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.comment-membership-required p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.join-hub-btn {
+  padding: 8px 16px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+  align-self: center;
+}
+
+.join-hub-btn:hover:not(:disabled) {
+  background: #333;
+}
+
+.join-hub-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Loading spinner */
 .like-loading-spinner {
   display: inline-block;
