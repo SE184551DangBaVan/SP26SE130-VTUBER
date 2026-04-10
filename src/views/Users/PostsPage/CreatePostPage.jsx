@@ -38,6 +38,8 @@ export default function CreatePostPage() {
   // Poll options state
   const [pollOptions, setPollOptions] = useState(['', '']);
   const dropdownRef = useRef(null);
+  const textareaRef = useRef(null);
+  const datePickerRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
