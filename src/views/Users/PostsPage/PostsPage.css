@@ -245,6 +245,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   align-items: center;
   justify-content: center;
   padding: 0;
+  aspect-ratio: 16 / 9;
   min-height: 200px;
   max-height: 460px;
   background-color: #0000000d;
@@ -252,8 +253,8 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 
 .post-media img,
 .post-media video {
-  max-width: 100%;
-  max-height: 460px;
+  width: 100%;
+  min-height: 460px;
   height: auto;
   width: auto;
   display: block;
