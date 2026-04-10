@@ -4,20 +4,21 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
-import { getPostsByFanHub, likePost, unlikePost } from '@/services/PostController';
+import { getPostsByFanHub } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
 import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { updateFanHub } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import PostDetails from '../PostsPage/PostDetails';
+import PostCard from '../PostsPage/PostCard';
 import './HubPage.css';
-import { GroupRounded, CommentRounded, EditRounded, ShareRounded, Shield } from '@mui/icons-material';
+import { GroupRounded, EditRounded, Shield } from '@mui/icons-material';
 
-import LoadingImg1 from '../../../assets/Decor/loading-1.gif'
-import LoadingImg2 from '../../../assets/Decor/loading-2.gif'
+import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
+import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
 import LoadingImg3 from '../../../assets/Decor/loading-3.gif'
 import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
-import LoadingImg5 from '../../../assets/Decor/loading-5.gif'
+import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
@@ -754,6 +755,7 @@ export default function HubPage({ ownedHub }) {
                       <PostCard
                         post={post}
                         hubData={hubData}
+                        variant="hub"
                         onClick={() => handlePostClick(post)}
                         onCommentsClick={() => handlePostClick(post)}
                       />
@@ -765,6 +767,7 @@ export default function HubPage({ ownedHub }) {
                       key={post.postId}
                       post={post}
                       hubData={hubData}
+                      variant="hub"
                       onClick={() => handlePostClick(post)}
                       onCommentsClick={() => handlePostClick(post)}
                     />
@@ -1186,250 +1189,3 @@ export default function HubPage({ ownedHub }) {
   );
 }
 
-// Post Card Component
-function PostCard({ post, onClick, hubData }) {
-  const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
-  const [likeLoading, setLikeLoading] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [displayCount, setDisplayCount] = useState(post.likeCount);
-  const [animatingCount, setAnimatingCount] = useState(null);
-  const [animationDirection, setAnimationDirection] = useState(null);
-
-  const handleLike = async (e) => {
-    e.stopPropagation();
-    if (likeLoading) return;
-    setLikeLoading(true);
-
-    const prevCount = displayCount;
-    const newCount = isLiked ? prevCount - 1 : prevCount + 1;
-    const direction = isLiked ? 'up' : 'down';
-
-    // Start animation
-    setAnimationDirection(direction);
-    setAnimatingCount(newCount);
-
-    // Wait for animation to complete, then reset
-    setTimeout(() => {
-      setDisplayCount(newCount);
-      setAnimatingCount(null);
-      setAnimationDirection(null);
-    }, 500);
-
-    try {
-      let result;
-
-      if (isLiked) {
-        result = await unlikePost(post.postId);
-        if (result?.success) {
-          setIsLiked(false);
-          setLikeCount(prev => prev - 1);
-        }
-      } else {
-        result = await likePost(post.postId);
-        if (result?.success) {
-          setIsLiked(true);
-          setLikeCount(prev => prev + 1);
-        }
-      }
-    } catch (error) {
-      console.error('Like/Unlike error:', error);
-    } finally {
-      setLikeLoading(false);
-    }
-  };
-
-  const handleCommentsClick = (e) => {
-    e.stopPropagation();
-    localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
-    onClick();
-  };
-
-  const handlePrevImage = (e) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev =>
-      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextImage = (e) => {
-    e.stopPropagation();
-    setCurrentImageIndex(prev =>
-      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
-    );
-  };
-
-  const renderMedia = (hubData) => {
-    if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
-
-    if (post.postType === 'VIDEO') {
-      return (
-        <div className='post-media video-media'>
-          <video controls>
-            <source src={post.mediaUrls[0]} type='video/mp4' />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      );
-    }
-
-    // Single image
-    if (post.mediaUrls.length === 1) {
-      return (
-        <div className='post-media image-media'>
-          <img
-            src={post.mediaUrls[0]}
-            alt={post.title}
-            onError={(e) => {
-              e.target.src = '/placeholder-image.png';
-            }}
-          />
-        </div>
-      );
-    }
-
-    // Multiple images - Reddit-style carousel
-    return (
-      <div className='post-media image-gallery'>
-        <div className='image-carousel'>
-          <button
-            className='carousel-btn carousel-prev'
-            onClick={handlePrevImage}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-
-          <div className='carousel-image-container'>
-            <img
-              src={post.mediaUrls[currentImageIndex]}
-              alt={`${post.title} - Image ${currentImageIndex + 1}`}
-              onError={(e) => {
-                e.target.src = '/placeholder-image.png';
-              }}
-            />
-          </div>
-
-          <button
-            className='carousel-btn carousel-next'
-            onClick={handleNextImage}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-
-          {/* Dot indicators */}
-          {post.mediaUrls.length > 1 && (
-            <div className='carousel-indicators'>
-              {post.mediaUrls.map((_, index) => (
-                <button
-                  key={index}
-                  className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIndex(index);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className='post-card' onClick={onClick}>
-      <div className='post-content'>
-        <div className='post-header'>
-          <div className='post-author-info'>
-            <img
-              className='post-author-avatar'
-              src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-              alt={post.authorDisplayName}
-              onError={(e) => {
-                e.target.src = '/profile-pic-undefined.jpg';
-              }}
-            />
-            <div className='post-author-details'>
-              <span className='author-display-name'>{post.authorDisplayName}</span>
-              <span className='author-username'>@{post.authorUsername}</span>
-            </div>
-          </div>
-          <span className='post-time' style={{color: `${hubData.themeColor}`}}>{formatTimeAgo(post.createdAt)}</span>
-        </div>
-
-        <h3 className='post-title'>{post.title}</h3>
-
-        {post.content && (
-          <p className='post-text'>{post.content}</p>
-        )}
-
-        {renderMedia()}
-
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className='post-hashtags'>
-            {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag'>#{tag}</span>
-            ))}
-          </div>
-        )}
-
-        <div className='post-actions'>
-          <div className='post-footer-left'>
-            <div className='post-vote-section'>
-              <div className='like-button' onClick={(e) => e.stopPropagation()}>
-                <input 
-                  className='heart-checkbox' 
-                  id={`heart-${post.postId}`} 
-                  type='checkbox' 
-                  checked={isLiked} 
-                  onChange={handleLike}
-                  disabled={likeLoading}
-                />
-                <label className='like-label' htmlFor={`heart-${post.postId}`}>
-                  {likeLoading ? (
-                    <span className='like-loading-spinner' />
-                  ) : (
-                    <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
-                    </svg>
-                  )}
-                </label>
-                <div className='like-count-container'>
-                  <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
-                  {animatingCount !== null && (
-                    <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <button className='action-btn' onClick={handleCommentsClick}>
-              <CommentRounded fontSize='small' />
-              <span>Comments</span>
-            </button>
-          </div>
-          <button className='action-btn share-btn' onClick={(e) => e.stopPropagation()}>
-            <ShareRounded fontSize='small' />
-        </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Helper function to format time ago
-function formatTimeAgo(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-
-  return date.toLocaleDateString();
-}

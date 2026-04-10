@@ -17,17 +17,52 @@ import {
 import { votePoll, unVotePoll } from '@/services/PostController';
 import './PostsPage.css';
 
-export default function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, userAuth: externalUserAuth, router: externalRouter }) {
+/**
+ * Shared PostCard component used across PostsPage, HubPage, and other pages.
+ *
+ * Props:
+ *  - post:              The post object
+ *  - onClick:           Called when the card itself is clicked (opens post detail)
+ *  - onCommentsClick:   Called when the comments button is clicked
+ *  - onShareClick:      Called when the share button is clicked
+ *  - onHubClick:        Called when the hub name is clicked
+ *  - userAuth:          External user auth object (falls back to context)
+ *  - router:            External router (falls back to useRouter)
+ *  - hubData:           Optional hub data object (used for themeColor in hub pages)
+ *  - variant:           'feed' (default) | 'hub' — controls header layout & like style
+ */
+export default function PostCard({
+  post,
+  onClick,
+  onCommentsClick,
+  onShareClick,
+  onHubClick,
+  userAuth: externalUserAuth,
+  router: externalRouter,
+  hubData,
+  variant = 'feed',
+}) {
   const router = externalRouter || useRouter();
   const { userAuth: contextUserAuth } = useAuth();
   const userAuth = externalUserAuth || contextUserAuth;
   const { openReportModal } = useReportModal();
+
+  // Like state
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [displayCount, setDisplayCount] = useState(post.likeCount);
+  const [animatingCount, setAnimatingCount] = useState(null);
+  const [animationDirection, setAnimationDirection] = useState(null);
+
+  // Carousel state for multi-image posts
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Extra menu (report dropdown)
   const [extraMenuOpen, setExtraMenuOpen] = useState(false);
   const menuRef = useRef();
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -40,15 +75,33 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
     }
   }, [extraMenuOpen]);
 
+  // ---------- Like / Unlike ----------
   const handleLike = async (e) => {
     e.stopPropagation();
     if (likeLoading) return;
-    if (!userAuth) {
+
+    // HubPage variant skips auth check
+    if (variant === 'feed' && !userAuth) {
       router.push('/login');
       return;
     }
 
     setLikeLoading(true);
+
+    const prevCount = displayCount;
+    const newCount = isLiked ? prevCount - 1 : prevCount + 1;
+    const direction = isLiked ? 'up' : 'down';
+
+    // Start animation
+    setAnimationDirection(direction);
+    setAnimatingCount(newCount);
+
+    // Wait for animation to complete, then reset
+    setTimeout(() => {
+      setDisplayCount(newCount);
+      setAnimatingCount(null);
+      setAnimationDirection(null);
+    }, 500);
 
     try {
       let result;
@@ -79,6 +132,7 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
     }
   };
 
+  // ---------- Navigation helpers ----------
   const handleHubClick = (e) => {
     e.stopPropagation();
     if (onHubClick && post) {
@@ -111,7 +165,7 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
   const handleReportPost = (e) => {
     e.stopPropagation();
     setExtraMenuOpen(false);
-    if (!userAuth) {
+    if (variant === 'feed' && !userAuth) {
       router.push('/login');
       return;
     }
@@ -127,26 +181,73 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
     router.push(`/user/${post.authorUsername}`);
   };
 
+  // ---------- Carousel helpers ----------
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev =>
+      prev === 0 ? post.mediaUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev =>
+      prev === post.mediaUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const handleDotClick = (e, index) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  };
+
+  // ---------- Content renderer ----------
   const renderPostTypeContent = () => {
     switch (post.postType) {
       case 'IMAGE':
-        return <ImagePostContent post={post} onClick={onClick} />;
+        return <ImagePostContent post={post} currentImageIndex={currentImageIndex} onPrevImage={handlePrevImage} onNextImage={handleNextImage} onDotClick={handleDotClick} />;
       case 'VIDEO':
-        return <VideoPostContent post={post} onClick={onClick} />;
+        return <VideoPostContent post={post} />;
       case 'TEXT':
-        return <TextPostContent post={post} onClick={onClick} />;
+        return <TextPostContent post={post} />;
       case 'POLL':
-        return <PollPostContent post={post} onClick={onClick} />;
+        return <PollPostContent post={post} />;
       case 'ANNOUNCEMENT':
       case 'EVENT_SCHEDULE':
         return null;
       default:
-        return <TextPostContent post={post} onClick={onClick} />;
+        return <TextPostContent post={post} />;
     }
   };
 
-  return (
-    <div className='post-card' onClick={onClick}>
+  // ---------- Header renderer (variant-aware) ----------
+  const renderHeader = () => {
+    if (variant === 'hub') {
+      // HubPage layout: author display name + username, themed timestamp
+      return (
+        <div className='post-header'>
+          <div className='post-author-info'>
+            <img
+              className='post-author-avatar'
+              src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
+              alt={post.authorDisplayName}
+              onClick={handleAvatarClick}
+              onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+            />
+            <div className='post-author-details'>
+              <span className='author-display-name'>{post.authorDisplayName}</span>
+              <span className='author-username'>@{post.authorUsername}</span>
+            </div>
+          </div>
+          <span className='post-time' style={hubData?.themeColor ? { color: hubData.themeColor } : {}}>
+            {formatTimeAgo(post.createdAt)}
+          </span>
+        </div>
+      );
+    }
+
+    // Feed layout: hub name + timestamp
+    return (
       <div className='post-header'>
         <div className='post-author-info'>
           <img
@@ -155,9 +256,7 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
             alt={post.authorDisplayName}
             title="Go to author profile"
             onClick={handleAvatarClick}
-            onError={(e) => {
-              e.target.src = '/profile-pic-undefined.jpg';
-            }}
+            onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
           />
           <div className='post-author-details'>
             <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
@@ -186,21 +285,87 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
           </div>
         </div>
       </div>
+    );
+  };
 
-      {renderPostTypeContent()}
+  // ---------- Footer / like button renderer (variant-aware) ----------
+  const renderFooter = () => {
+    if (variant === 'hub') {
+      // HubPage uses heart-checkbox style for like button
+      return (
+        <div className='post-actions'>
+          <div className='post-footer-left'>
+            <div className='post-vote-section'>
+              <div className='like-button' onClick={(e) => e.stopPropagation()}>
+                <input
+                  className='heart-checkbox'
+                  id={`heart-${post.postId}`}
+                  type='checkbox'
+                  checked={isLiked}
+                  onChange={handleLike}
+                  disabled={likeLoading}
+                />
+                <label className='like-label' htmlFor={`heart-${post.postId}`}>
+                  {likeLoading ? (
+                    <span className='like-loading-spinner' />
+                  ) : (
+                    <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                    </svg>
+                  )}
+                </label>
+                <div className='like-count-container'>
+                  <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
+                  {animatingCount !== null && (
+                    <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button className='action-btn' onClick={handleCommentsClick}>
+              <CommentRounded fontSize='small' />
+              <span>Comments</span>
+            </button>
+          </div>
+          <button className='action-btn share-btn' onClick={(e) => {
+            e.stopPropagation();
+            onShareClick?.(post);
+          }}>
+            <ShareRounded fontSize='small' />
+          </button>
+        </div>
+      );
+    }
 
+    // Feed layout: heart SVG button with animated count
+    return (
       <div className='post-footer'>
         <div className='post-footer-left'>
-          <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
-            {likeLoading ? (
-              <span className='like-loading-spinner' />
-            ) : (
-              <svg className='like-icon' xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "white" : "none"}>
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isLiked ? "white" : "none"} stroke={isLiked ? "white" : "currentColor"} strokeWidth="2"/>
-              </svg>
-            )}
-            <span className='action-count'>{formatCount(likeCount)}</span>
-          </button>
+          <div className='like-button' onClick={(e) => e.stopPropagation()}>
+            <input
+              className='heart-checkbox'
+              id={`heart-${post.postId}`}
+              type='checkbox'
+              checked={isLiked}
+              onChange={handleLike}
+              disabled={likeLoading}
+            />
+            <label className='like-label' htmlFor={`heart-${post.postId}`}>
+              {likeLoading ? (
+                <span className='like-loading-spinner' />
+              ) : (
+                <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                </svg>
+              )}
+            </label>
+            <div className='like-count-container'>
+              <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
+              {animatingCount !== null && (
+                <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
+              )}
+            </div>
+          </div>
           <button className='action-btn' onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
             <span>Comment</span>
@@ -213,26 +378,87 @@ export default function PostCard({ post, onClick, onCommentsClick, onShareClick,
           <ShareRounded fontSize='small' />
         </button>
       </div>
+    );
+  };
+
+  return (
+    <div className='post-card' onClick={onClick}>
+      {renderHeader()}
+      {renderPostTypeContent()}
+      {renderFooter()}
     </div>
   );
 }
 
-function ImagePostContent({ post, onClick }) {
+// ============================================================
+//  Content Sub-Components
+// ============================================================
+
+function ImagePostContent({ post, currentImageIndex, onPrevImage, onNextImage, onDotClick }) {
+  // Single image — no carousel needed
+  if (!post.mediaUrls || post.mediaUrls.length === 1) {
+    return (
+      <div className='post-content'>
+        {post.title && <h3 className='post-title'>{post.title}</h3>}
+        {post.content && <p className='post-text'>{post.content}</p>}
+        {post.mediaUrls && post.mediaUrls.length > 0 && (
+          <div className='post-media image-media'>
+            <img
+              src={post.mediaUrls[0]}
+              alt={post.title || 'Post image'}
+              onError={(e) => { e.target.src = '/placeholder-image.png'; }}
+            />
+          </div>
+        )}
+        {post.hashtags && post.hashtags.length > 0 && (
+          <div className='post-hashtags'>
+            {post.hashtags.map((tag, idx) => (
+              <span key={idx} className='hashtag'>#{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Multiple images — carousel
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
       {post.content && <p className='post-text'>{post.content}</p>}
-      {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <div className='post-media image-media'>
-          <img
-            src={post.mediaUrls[0]}
-            alt={post.title || 'Post image'}
-            onError={(e) => {
-              e.target.src = '/placeholder-image.png';
-            }}
-          />
+      <div className='post-media image-gallery'>
+        <div className='image-carousel'>
+          <button className='carousel-btn carousel-prev' onClick={onPrevImage}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <div className='carousel-image-container'>
+            <img
+              src={post.mediaUrls[currentImageIndex]}
+              alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
+              onError={(e) => { e.target.src = '/placeholder-image.png'; }}
+            />
+          </div>
+
+          <button className='carousel-btn carousel-next' onClick={onNextImage}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          <div className='carousel-indicators'>
+            {post.mediaUrls.map((_, index) => (
+              <button
+                key={index}
+                className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                onClick={(e) => onDotClick(e, index)}
+              />
+            ))}
+          </div>
         </div>
-      )}
+      </div>
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
@@ -244,7 +470,7 @@ function ImagePostContent({ post, onClick }) {
   );
 }
 
-function VideoPostContent({ post, onClick }) {
+function VideoPostContent({ post }) {
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
@@ -268,7 +494,7 @@ function VideoPostContent({ post, onClick }) {
   );
 }
 
-function TextPostContent({ post, onClick }) {
+function TextPostContent({ post }) {
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
@@ -284,7 +510,7 @@ function TextPostContent({ post, onClick }) {
   );
 }
 
-function PollPostContent({ post, onClick }) {
+function PollPostContent({ post }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
   const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
   const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
@@ -296,7 +522,7 @@ function PollPostContent({ post, onClick }) {
 
     try {
       await votePoll(post.postId, optionId);
-      
+
       setSelectedOption(optionId);
       const newVoteCounts = { ...voteCounts };
       newVoteCounts[optionId] = (newVoteCounts[optionId] || 0) + 1;
@@ -315,7 +541,7 @@ function PollPostContent({ post, onClick }) {
 
     try {
       await unVotePoll(post.postId);
-      
+
       const oldOptionId = selectedOption;
       setSelectedOption(null);
       const newVoteCounts = { ...voteCounts };
@@ -335,8 +561,6 @@ function PollPostContent({ post, onClick }) {
     return Math.round((votes / totalVotes) * 100);
   };
 
-  const hasThumbnails = post.voteOptions?.some(opt => typeof opt === 'object' && opt.thumbnailUrl);
-
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
@@ -349,7 +573,7 @@ function PollPostContent({ post, onClick }) {
               const optionId = isObject ? option.id : option;
               const optionText = isObject ? option.optionText : option;
               const thumbnailUrl = isObject ? option.thumbnailUrl : null;
-              
+
               const percentage = getVotePercentage(optionId);
               const isSelected = selectedOption === optionId;
               const hasVoted = selectedOption !== null;
@@ -364,16 +588,13 @@ function PollPostContent({ post, onClick }) {
                   }}
                 >
                   {hasVoted && (
-                    <div 
-                      className='poll-option-bar' 
-                      style={{ width: `${percentage}%` }}
-                    />
+                    <div className='poll-option-bar' style={{ width: `${percentage}%` }} />
                   )}
                   <div className='poll-option-content'>
                     {thumbnailUrl && (
-                      <img 
-                        src={thumbnailUrl} 
-                        alt={optionText} 
+                      <img
+                        src={thumbnailUrl}
+                        alt={optionText}
                         className='poll-option-thumbnail'
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
@@ -397,8 +618,8 @@ function PollPostContent({ post, onClick }) {
               <div className='poll-total-votes'>
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
               </div>
-              <button 
-                className='poll-unvote-btn' 
+              <button
+                className='poll-unvote-btn'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleUnvote();
@@ -422,6 +643,10 @@ function PollPostContent({ post, onClick }) {
   );
 }
 
+// ============================================================
+//  Helpers
+// ============================================================
+
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -433,11 +658,4 @@ function formatTimeAgo(dateString) {
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
 
   return date.toLocaleDateString();
-}
-
-function formatCount(count) {
-  if (count === null || count === undefined) return '0';
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-  return count.toString();
 }
