@@ -155,25 +155,23 @@ export default function NewsPage() {
   return (
     <div className={`news-feed-page-container ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
       <div className='news-feed-layout'>
-        {/* Main Announcement Section */}
         {selectedPost && (
           <div className='news-main-content' style={{ backgroundColor: selectedPost.fanHubThemeColor + '08' }}>
-            {/* Hub Header */}
             <div className='news-hub-header'>
               <img 
-                src={selectedPost.fanHubAvatarUrl || '/profile-pic-undefined.jpg'} 
-                alt={selectedPost.fanHubName}
+                src={selectedPost.authorAvatarUrl || '/profile-pic-undefined.jpg'} 
+                alt={selectedPost.authorDisplayName}
                 className='news-hub-avatar'
               />
-              <h2 className='news-hub-name'>{selectedPost.fanHubName}</h2>
+              <h2 className='news-hub-name'>{selectedPost.authorDisplayName}</h2>
+            
             </div>
+            <span className='author-time'>{formatTimeAgo(selectedPost.createdAt)}</span>
 
-            {/* Announcement Title */}
             <h1 className='news-announcement-title' style={{ color: selectedPost.fanHubThemeColor }}>
               {selectedPost.title}
             </h1>
 
-            {/* Tags */}
             {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
               <div className='news-tags'>
                 <span className='tags-label'>Tags:</span>
@@ -187,8 +185,7 @@ export default function NewsPage() {
                 ))}
               </div>
             )}
-
-            {/* Image Carousel */}
+            
             {selectedPost.mediaUrls && selectedPost.mediaUrls.length > 0 && (
               <div className='news-image-carousel'>
                 {selectedPost.mediaUrls.length > 1 && (
@@ -217,7 +214,6 @@ export default function NewsPage() {
                   </button>
                 )}
 
-                {/* Dot indicators */}
                 {selectedPost.mediaUrls.length > 1 && (
                   <div className='carousel-dots'>
                     {selectedPost.mediaUrls.map((_, idx) => (
@@ -232,26 +228,12 @@ export default function NewsPage() {
               </div>
             )}
 
-            {/* Author Info */}
-            <div className='news-author-info'>
-              <img 
-                src={selectedPost.authorAvatarUrl || '/profile-pic-undefined.jpg'} 
-                alt={selectedPost.authorDisplayName}
-                className='news-author-avatar'
-              />
-              <div className='news-author-details'>
-                <span className='author-name'>{selectedPost.authorDisplayName}</span>
-                <span className='author-time'>{formatTimeAgo(selectedPost.createdAt)}</span>
-              </div>
-            </div>
-            
             {selectedPost.content && (
               <div className='news-content'>
                 <p>{selectedPost.content}</p>
               </div>
             )}
 
-            {/* Schedule Display */}
             {selectedPost.appendSchedule && (
               <div className='news-schedule-display'>
                 <EventRounded className='schedule-icon' />
@@ -264,7 +246,6 @@ export default function NewsPage() {
           </div>
         )}
 
-        {/* Other News Sidebar */}
         <div className='news-sidebar'>
           <h3 className='sidebar-title'>Other News</h3>
           <div className='other-news-list'>

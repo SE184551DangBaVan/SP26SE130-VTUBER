@@ -1,7 +1,7 @@
 .logout__btn-container {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    top: 5px;
+    right: 150px;
     width: 200px;
     height: 100px;
     z-index: 1000;

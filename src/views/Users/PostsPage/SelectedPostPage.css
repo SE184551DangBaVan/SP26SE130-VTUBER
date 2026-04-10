@@ -69,58 +69,169 @@ body:has(#side-bar.rebound-animation) .selected-post-page-container {
   flex-direction: row;
   align-items: center;
   gap: 5px;
-  width: 80px;
-  height: 32px;
-  border-radius: 24px;
-  border: 1.6px solid #d7d7d7;
 }
 
-.vote-btn {
+/* Like Button Design */
+.like-button {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  height: 40px;
+  border-radius: 24px;
+  border: 2px solid #969696;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.heart-checkbox {
+  display: none;
+}
+
+.like-label {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 30px;
-  background: transparent;
+  width: 48px;
+  height: 100%;
   cursor: pointer;
-  border-radius: 24px 0 0 24px;
-  border: none;
-  margin-right: 5px;
-  border-right: 1.6px solid #d7d7d7;
-  transition: all 0.2s;
+  color: #000;
+  background: transparent;
+  transition: all 0.2s ease;
+  border-right: 2px solid #969696;
 }
 
-.vote-btn.like-btn .like-ico {
-  transform: rotate(10deg);
-  transition: all 0.6s ease;
+.like-label:hover {
+  background: rgba(204, 204, 204, 0.3);
 }
 
-.vote-btn:hover {
-  background: #d7d7d7;
+.like-icon {
+  fill: #000;
+  height: 20px;
+  width: 20px;
+  transition: all 0.2s ease;
 }
 
-.vote-btn:hover .vote-btn.like-btn .like-ico path {
-  stroke: #fff;
-}
-
-.vote-count {
+.like-count {
+  width: 40px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #000;
   font-size: 14px;
-  font-weight: 700;
-  color: #323232;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: transparent;
 }
 
-.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn .like-ico {
-  transform: rotate(0);
-}
-.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn {
-  background-color: #4160bd;
-}
-.post-vote-section:has(.vote-count.liked) .vote-btn.like-btn .like-ico path {
-  stroke: #fff;
+.like-count-container {
+  width: 40px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
 }
 
-.vote-count.liked {
+.like-count-display {
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.like-count-animating {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Slide animations */
+.slide-down-out {
+  animation: slideDownOut 0.3s ease forwards;
+}
+
+.slide-down-in {
+  animation: slideDownIn 0.3s ease forwards;
+}
+
+.slide-up-out {
+  animation: slideUpOut 0.3s ease forwards;
+}
+
+.slide-up-in {
+  animation: slideUpIn 0.3s ease forwards;
+}
+
+@keyframes slideDownOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideDownIn {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideUpIn {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.heart-checkbox:checked ~ .like-label {
+  background: #4160bd;
+  color: #fff;
+  border-right: 2px solid #969696;
+}
+
+.heart-checkbox:checked ~ .like-label .like-icon {
+  fill: #fff;
+}
+
+.heart-checkbox:checked ~ .like-count {
   color: #4160bd;
+}
+
+.heart-checkbox:checked ~ .like-label:hover {
+  background: #4f6fc9;
 }
 
 /* Loading spinner for like button */
@@ -128,16 +239,16 @@ body:has(#side-bar.rebound-animation) .selected-post-page-container {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #d7d7d7;
-  border-top-color: #323232;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #000;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.heart-checkbox:checked ~ .like-label .like-loading-spinner {
+  border-top-color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
 }
 
 /* Post Content */
@@ -250,7 +361,7 @@ body:has(#side-bar.rebound-animation) .selected-post-page-container {
   width: 100%;
   aspect-ratio: 16 / 9;
   max-height: 600px;
-  background-color: #000;
+  background-color: transparent;
 }
 
 .carousel-image-container {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getUserById } from '@/services/UserController';
-import { getPostsByFanHub } from '@/services/PostController';
+import { getPostsByFanHub, likePost, unlikePost } from '@/services/PostController';
 import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
 import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { updateFanHub } from '@/services/FanHubController';
@@ -753,6 +753,7 @@ export default function HubPage({ ownedHub }) {
                     <div ref={lastPostElementRef} key={post.postId}>
                       <PostCard
                         post={post}
+                        hubData={hubData}
                         onClick={() => handlePostClick(post)}
                         onCommentsClick={() => handlePostClick(post)}
                       />
@@ -763,6 +764,7 @@ export default function HubPage({ ownedHub }) {
                     <PostCard
                       key={post.postId}
                       post={post}
+                      hubData={hubData}
                       onClick={() => handlePostClick(post)}
                       onCommentsClick={() => handlePostClick(post)}
                     />
@@ -1185,15 +1187,56 @@ export default function HubPage({ ownedHub }) {
 }
 
 // Post Card Component
-function PostCard({ post, onClick }) {
+function PostCard({ post, onClick, hubData }) {
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [likeLoading, setLikeLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [displayCount, setDisplayCount] = useState(post.likeCount);
+  const [animatingCount, setAnimatingCount] = useState(null);
+  const [animationDirection, setAnimationDirection] = useState(null);
 
-  const handleLike = (e) => {
+  const handleLike = async (e) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    if (likeLoading) return;
+    setLikeLoading(true);
+
+    const prevCount = displayCount;
+    const newCount = isLiked ? prevCount - 1 : prevCount + 1;
+    const direction = isLiked ? 'up' : 'down';
+
+    // Start animation
+    setAnimationDirection(direction);
+    setAnimatingCount(newCount);
+
+    // Wait for animation to complete, then reset
+    setTimeout(() => {
+      setDisplayCount(newCount);
+      setAnimatingCount(null);
+      setAnimationDirection(null);
+    }, 500);
+
+    try {
+      let result;
+
+      if (isLiked) {
+        result = await unlikePost(post.postId);
+        if (result?.success) {
+          setIsLiked(false);
+          setLikeCount(prev => prev - 1);
+        }
+      } else {
+        result = await likePost(post.postId);
+        if (result?.success) {
+          setIsLiked(true);
+          setLikeCount(prev => prev + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Like/Unlike error:', error);
+    } finally {
+      setLikeLoading(false);
+    }
   };
 
   const handleCommentsClick = (e) => {
@@ -1216,7 +1259,7 @@ function PostCard({ post, onClick }) {
     );
   };
 
-  const renderMedia = () => {
+  const renderMedia = (hubData) => {
     if (!post.mediaUrls || post.mediaUrls.length === 0) return null;
 
     if (post.postType === 'VIDEO') {
@@ -1315,7 +1358,7 @@ function PostCard({ post, onClick }) {
               <span className='author-username'>@{post.authorUsername}</span>
             </div>
           </div>
-          <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
+          <span className='post-time' style={{color: `${hubData.themeColor}`}}>{formatTimeAgo(post.createdAt)}</span>
         </div>
 
         <h3 className='post-title'>{post.title}</h3>
@@ -1335,23 +1378,42 @@ function PostCard({ post, onClick }) {
         )}
 
         <div className='post-actions'>
-          <div className='post-vote-section'>
-            <button className='vote-btn like-btn' onClick={handleLike}>
-              <svg className='like-ico' xmlns="http://www.w3.org/2000/svg" width="58" height="58" viewBox="0 0 58 58" fill="none">
-                <path d="M22.7111 39.1439L34.9947 35.8525C36.6662 35.4047 37.8883 34.475 37.4672 32.9031L37.0349 28.4449C36.798 27.6719 36.2643 27.0242 35.5509 26.6439C34.8374 26.2635 34.0023 26.1814 33.2284 26.4155L30.1984 27.2274C30.0095 27.2771 29.8123 27.2865 29.6196 27.255C29.4268 27.2235 29.2429 27.1518 29.0797 27.0445C28.9165 26.9373 28.7777 26.7968 28.6723 26.6324C28.5669 26.468 28.4974 26.2832 28.4681 26.0901L27.9624 22.0404C27.855 21.6473 27.5968 21.3124 27.2438 21.1086C26.8908 20.9048 26.4717 20.8486 26.0775 20.9522C25.8782 21.0026 25.6909 21.0922 25.5267 21.2157C25.3624 21.3393 25.2244 21.4944 25.1208 21.672C25.0172 21.8495 24.95 22.0459 24.9232 22.2497C24.8964 22.4535 24.9105 22.6606 24.9646 22.8589L25.1452 25.0975C25.4622 27.5893 24.2488 29.1494 22.3295 30.5785" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20.737 32.3162C21.1298 32.211 21.3629 31.8072 21.2576 31.4144C21.1524 31.0216 20.7486 30.7884 20.3558 30.8937C19.963 30.999 19.7299 31.4027 19.8351 31.7955C19.9404 32.1884 20.3441 32.4215 20.737 32.3162Z" fill="black"/>
-              </svg>
+          <div className='post-footer-left'>
+            <div className='post-vote-section'>
+              <div className='like-button' onClick={(e) => e.stopPropagation()}>
+                <input 
+                  className='heart-checkbox' 
+                  id={`heart-${post.postId}`} 
+                  type='checkbox' 
+                  checked={isLiked} 
+                  onChange={handleLike}
+                  disabled={likeLoading}
+                />
+                <label className='like-label' htmlFor={`heart-${post.postId}`}>
+                  {likeLoading ? (
+                    <span className='like-loading-spinner' />
+                  ) : (
+                    <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                    </svg>
+                  )}
+                </label>
+                <div className='like-count-container'>
+                  <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
+                  {animatingCount !== null && (
+                    <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button className='action-btn' onClick={handleCommentsClick}>
+              <CommentRounded fontSize='small' />
+              <span>Comments</span>
             </button>
-            <span className={`vote-count ${isLiked ? 'liked' : ''}`}>{likeCount}</span>
           </div>
-          <button className='action-btn' onClick={handleCommentsClick}>
-            <CommentRounded fontSize='small' />
-            <span>Comments</span>
-          </button>
-          <button className='action-btn' onClick={(e) => e.stopPropagation()}>
+          <button className='action-btn share-btn' onClick={(e) => e.stopPropagation()}>
             <ShareRounded fontSize='small' />
-            <span>Share</span>
-          </button>
+        </button>
         </div>
       </div>
     </div>

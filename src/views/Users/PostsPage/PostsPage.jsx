@@ -227,6 +227,9 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
     const [likeCount, setLikeCount] = useState(post.likeCount);
     const [likeLoading, setLikeLoading] = useState(false);
     const [extraMenuOpen, setExtraMenuOpen] = useState(false);
+    const [displayCount, setDisplayCount] = useState(post.likeCount);
+    const [animatingCount, setAnimatingCount] = useState(null);
+    const [animationDirection, setAnimationDirection] = useState(null);
     const menuRef = useRef();
 
     useEffect(() => {
@@ -251,6 +254,21 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
 
         setLikeLoading(true);
 
+        const prevCount = displayCount;
+        const newCount = isLiked ? prevCount - 1 : prevCount + 1;
+        const direction = isLiked ? 'up' : 'down';
+
+        // Start animation
+        setAnimationDirection(direction);
+        setAnimatingCount(newCount);
+
+        // Wait for animation to complete, then reset
+        setTimeout(() => {
+            setDisplayCount(newCount);
+            setAnimatingCount(null);
+            setAnimationDirection(null);
+        }, 500);
+
         try {
             let result;
 
@@ -259,14 +277,12 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
                 if (result?.success) {
                     setIsLiked(false);
                     setLikeCount(prev => prev - 1);
-                    showSteamSuccess(result.data || 'Post unliked successfully.', result.message || 'Unliked');
                 }
             } else {
                 result = await likePost(post.postId);
                 if (result?.success) {
                     setIsLiked(true);
                     setLikeCount(prev => prev + 1);
-                    showSteamSuccess(result.data || 'Post liked successfully!', result.message || 'Liked');
                 }
             }
         } catch (error) {
@@ -392,16 +408,31 @@ function PostCard({ post, onClick, onCommentsClick, onShareClick, onHubClick, us
 
             <div className='post-footer'>
                 <div className='post-footer-left'>
-                    <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
-                        {likeLoading ? (
-                            <span className='like-loading-spinner' />
-                        ) : (
-                            <svg className='like-icon' xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "white" : "none"}>
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isLiked ? "white" : "none"} stroke={isLiked ? "white" : "currentColor"} strokeWidth="2"/>
-                            </svg>
-                        )}
-                        <span className='action-count'>{formatCount(likeCount)}</span>
-                    </button>
+                    <div className='like-button' onClick={(e) => e.stopPropagation()}>
+                        <input 
+                            className='heart-checkbox' 
+                            id={`heart-${post.postId}`} 
+                            type='checkbox' 
+                            checked={isLiked} 
+                            onChange={handleLike}
+                            disabled={likeLoading}
+                        />
+                        <label className='like-label' htmlFor={`heart-${post.postId}`}>
+                            {likeLoading ? (
+                                <span className='like-loading-spinner' />
+                            ) : (
+                                <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                                </svg>
+                            )}
+                        </label>
+                        <div className='like-count-container'>
+                            <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
+                            {animatingCount !== null && (
+                                <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
+                            )}
+                        </div>
+                    </div>
                     <button className='action-btn' onClick={handleCommentsClick}>
                         <CommentRounded fontSize='small' />
                         <span>Comment</span>
@@ -567,6 +598,13 @@ function PollPostContent({ post, onClick }) {
     return Math.round((votes / totalVotes) * 100);
   };
 
+  // Handle both string arrays and object arrays {id, optionText}
+  const getOptionText = (option) => {
+    if (typeof option === 'string') return option;
+    if (typeof option === 'object' && option !== null) return option.optionText || '';
+    return String(option);
+  };
+
   return (
     <div className='post-content'>
       {post.title && <h3 className='post-title'>{post.title}</h3>}
@@ -576,6 +614,7 @@ function PollPostContent({ post, onClick }) {
           {post.voteOptions.map((option, index) => {
             const percentage = getVotePercentage(index);
             const isSelected = selectedOption === index + 1;
+            const optionText = getOptionText(option);
 
             return (
               <div
@@ -592,7 +631,7 @@ function PollPostContent({ post, onClick }) {
                   )}
                 </div>
                 <div className='poll-option-content'>
-                  <span className='poll-option-text'>{option}</span>
+                  <span className='poll-option-text'>{optionText}</span>
                   {selectedOption && (
                     <span className='poll-option-percentage'>{percentage}%</span>
                   )}
