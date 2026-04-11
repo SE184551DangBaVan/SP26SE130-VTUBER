@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMyJoinedHubs } from '@/services/FanHubController';
 import { useAuth } from '@/functions/Auth/useAuth';
@@ -12,6 +12,7 @@ export default function JoinedHubsContainer() {
   const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const wrapperRef = useRef(null);
 
     const fetchJoinedHubs = async () => {
         try {
@@ -53,6 +54,32 @@ export default function JoinedHubsContainer() {
         return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
     }, []);
 
+  // ResizeObserver to report height to parent sidebar
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const updateHeight = (height) => {
+      const sidebar = document.getElementById('side-bar-content');
+      if (sidebar) {
+        sidebar.style.setProperty('--joined-hubs-height', `${height}px`);
+      }
+    };
+
+    // Initial measurement
+    updateHeight(wrapper.offsetHeight);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const height = entry.borderBoxSize[0].blockSize;
+        updateHeight(height);
+      }
+    });
+
+    resizeObserver.observe(wrapper);
+    return () => resizeObserver.disconnect();
+  }, [showAll, joinedHubs, loading]);
+
   const toggleShowAll = () => {
     setShowAll(!showAll);
   };
@@ -67,7 +94,7 @@ export default function JoinedHubsContainer() {
   }
 
   return (
-    <div className="joined-hubs-wrapper">
+    <div className="joined-hubs-wrapper" ref={wrapperRef}>
       <div className="joined-hubs-header">
         <span className="joined-hubs-label">Joined hubs</span>
       </div>

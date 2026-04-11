@@ -119,6 +119,7 @@
 
 #side-bar-header {
   position: relative;
+  pointer-events: none;
   width: var(--sidebar-width);
   left: 16px;
   width: calc(var(--sidebar-width) - 16px);
@@ -181,10 +182,10 @@ label[for=side-bar-toggle] {
 }
 
 #side-bar-content {
-  margin: -40px 0 0 0;
-  padding: 0 0 40px 0;
+  margin: 0;
+  max-height: 85vh;
+  padding-bottom: 100px;
   position: relative;
-  height: 85vh;
   width: var(--sidebar-width);
   background: transparent;
   direction: rtl;
@@ -231,7 +232,7 @@ label[for=side-bar-toggle] {
   border: 5px double #333333;
   background-attachment: fixed;
   border-radius: 16px;
-  transform: translateX(-5px);
+  transform: translate(-5px, -15px);
   transition: top 0.2s, background-color 0.4s ease, border-radius 0.3s ease;
 }
 
@@ -305,16 +306,12 @@ label[for=side-bar-toggle] {
 
 .side-bar-button.gacha {pointer-events: none; opacity: 0.2;}
 .side-bar-button.gacha ~ #side-bar-content-highlight {
-  /* top: 178px; */
-  top: unset;
-  bottom: 10px;
+  top: calc(290px + var(--joined-hubs-height, 0px));
 }
 
 .side-bar-button.shop {pointer-events: none; opacity: 0.2;}
 .side-bar-button.shop ~ #side-bar-content-highlight {
-  /* top: 178px; */
-  top: unset;
-  bottom: -40px;
+  top: calc(344px + var(--joined-hubs-height, 0px));
 }
 
 #side-bar .fas {
