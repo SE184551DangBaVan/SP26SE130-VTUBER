@@ -12,13 +12,23 @@
   user-select: none;
 }
 
-.joined-hubs-label {
+#side-bar.retract-animation .joined-hubs-label {
   font-family: "Monda", sans-serif;
   font-weight: 600;
   font-size: 0.85rem;
   color: rgba(0, 25, 58, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+#side-bar.rebound-animation .joined-hubs-label {
+  font-family: "Monda", sans-serif;
+  font-weight: 600;
+  font-size: 0.65rem;
+  color: rgba(0, 25, 58, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 
 .joined-hubs-list {
@@ -55,6 +65,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+}
+
+#side-bar.rebound-animation .joined-hub-item .joined-hub-avatar {
+  margin-left: 6px;
+}
+#side-bar.rebound-animation .joined-hub-item .joined-hub-name {
+  display: none;
+}
+
+#side-bar.retract-animation .view-all-hubs {
+  display: flex;
+}
+#side-bar.rebound-animation .view-all-hubs {
+  display: none;
+}
+
+#side-bar.retract-animation .view-all-hubs-rebound-animation {
+  display: none;
+}
+#side-bar.rebound-animation .view-all-hubs-rebound-animation {
+  display: flex;
+  padding: 8px 0 8px 18px;
+  font-family: "Monda", sans-serif;
+  font-weight: 500;
+  font-size: 0.65rem;
+  color: rgba(0, 25, 58, 0.5);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-align: left;
 }
 
 .view-all-hubs {

@@ -283,8 +283,8 @@ export default function CreatePostPage() {
           title: title.trim(),
           content: content.trim(),
           hashtags: hashtagsArray,
-            isAnnouncement: isHubOwner ? isAnnouncement : false,
-            isSchedule: isHubOwner ? isSchedule : false
+          isAnnouncement: isHubOwner ? isAnnouncement : false,
+          isSchedule: isHubOwner ? isSchedule : false
         };
 
         await createPost(postData, mediaToUpload, mediaKey);
@@ -309,11 +309,13 @@ export default function CreatePostPage() {
   };
 
   const handleCancel = () => {
-    mediaPreview.forEach(preview => {
-      if (preview.url) {
-        URL.revokeObjectURL(preview.url);
-      }
-    });
+    if (mediaPreview.length > 0) {
+      mediaPreview.forEach(preview => {
+        if (preview.url) {
+          URL.revokeObjectURL(preview.url);
+        }
+      });
+    }
     router.back();
   };
 
@@ -323,7 +325,7 @@ export default function CreatePostPage() {
         <div className='create-post-header'>
           <h1>Create Post</h1>
           <div className='header-actions'>
-            {/* VTUBER Exclusive Toggle Buttons */}
+            {/* VTUBER Exclusive Toggle Buttons - Only shown for Hub Owners */}
             {!checkingOwnership && isHubOwner && (
               <div className='toggle-buttons-group'>
                 <label className='toggle-btn-wrapper'>
@@ -352,9 +354,6 @@ export default function CreatePostPage() {
                 </label>
               </div>
             )}
-            <button className='cancel-btn' onClick={handleCancel}>
-              Cancel
-            </button>
           </div>
         </div>
 
@@ -648,6 +647,12 @@ export default function CreatePostPage() {
 
         {/* Action Buttons */}
         <div className='form-actions'>
+          <button
+            className='cancel-btn'
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
           <button
             className='submit-btn'
             onClick={handleSubmit}

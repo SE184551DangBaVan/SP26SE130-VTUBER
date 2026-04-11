@@ -20,6 +20,7 @@ import {
   FavoriteBorder,
   Flag,
 } from '@mui/icons-material';
+import RetroWindow from '@/components/RetroWindow/RetroWindow';
 
 const MAX_NEST_DEPTH = 5;
 
@@ -270,17 +271,24 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
       default:
         return (
           <div className='post-details-media post-details-text-only'>
-            <div className='text-only-content'>
-              {post.title && <h2>{post.title}</h2>}
-              {post.content && <p>{post.content}</p>}
-              {post.hashtags && post.hashtags.length > 0 && (
-                <div className='post-hashtags'>
-                  {post.hashtags.map((tag, idx) => (
-                    <span key={idx} className='hashtag'>#{tag}</span>
-                  ))}
+            <RetroWindow
+              windowWidth="100%"
+              windowHeight="100%"
+              windowColor="blue" //there is only red, blue, yellow
+              windowTitle={`${post.content ? post.title : 'Post Title'}`}
+              windowContent={(
+                <div className='text-only-content'>
+                  {post.content && <p>{post.content}</p>}
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <div className='post-hashtags'>
+                      {post.hashtags.map((tag, idx) => (
+                        <span key={idx} className='hashtag'>#{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            />
           </div>
         );
     }
@@ -359,7 +367,8 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                 {/* Like/Comment/Share */}
                 <div className='post-details-footer'>
                   <div className='post-details-footer-left'>
-                    <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}>
+                    <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}
+                      title={`${isLiked ? 'unlike' : 'like'}`}>
                       {likeLoading ? (
                         <span className='like-loading-spinner' />
                       ) : isLiked ? (

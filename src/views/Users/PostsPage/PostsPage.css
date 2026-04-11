@@ -89,7 +89,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   margin-bottom: 16px;
   transition: all 0.2s ease;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1024px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -236,7 +236,6 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   line-height: 1.6;
 }
 
-/* Post Media */
 .post-media {
   margin-top: 8px;
   border-radius: 12px;
@@ -259,16 +258,17 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   width: auto;
   display: block;
   object-fit: contain;
-  border-radius: 8px;
   cursor: pointer;
 }
 
-/* Image Gallery Carousel (Reddit-style) */
+.image-media img {
+  height: 100% !important;
+}
+
 .post-media.image-gallery {
   margin-top: 8px;
   border-radius: 8px;
   overflow: hidden;
-  background-color: #000;
 }
 
 .image-carousel {
@@ -399,6 +399,8 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 }
 
 /* Poll Options */
+.poll-content {}
+
 .poll-options {
   display: flex;
   flex-direction: column;
@@ -408,14 +410,31 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 
 .poll-display {
   margin-top: 12px;
-  width: calc(100% + 32px);
-  max-width: calc(100% + 32px);
-  margin-left: -16px;
-  margin-right: -16px;
-  padding: 16px;
+  width: 100%;
+  max-width: 100%;
+  padding: 16px 40px;
   background: #f0f7f9;
   border-radius: 12px;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+.poll-display .poll-option-item::before {
+  content: "";
+  position: absolute;
+  opacity: 0.4;
+  width: 64px;
+  height: 64px;
+  left: -60px;
+  bottom: 0;
+  z-index: 10;
+  background-image: url(../../../assets/Decor/Enty_Thumbsy.png);
+  background-size: contain;
+  transition: left 0.3s ease;
+}
+
+.poll-display .poll-option-item.selected::before {
+  left: 0;
 }
 
 .poll-options-list {
@@ -434,6 +453,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   cursor: pointer;
   border: 2px solid transparent;
   background: #fff;
+  border: 1px solid #55555546;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -452,6 +472,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 }
 
 .poll-option-item.selected {
+  position: relative;
   border-color: #2d8cf0;
   background: #e8f4fd;
 }
@@ -525,11 +546,13 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: padding 0.3s ease;
 }
 
 .poll-option-item.selected .poll-option-text {
   font-weight: 600;
   color: #1976d2;
+  padding-left: 40px;
 }
 
 .poll-option-percentage {
@@ -642,7 +665,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
+  width: 52px;
   height: 100%;
   cursor: pointer;
   color: #000;
@@ -676,7 +699,8 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 }
 
 .like-count-container {
-  width: 40px;
+  width: 32px;
+  padding-right: 6px;
   height: 100%;
   display: flex;
   justify-content: center;
@@ -804,7 +828,7 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   font-weight: 600;
 }
 
-.share-btn {
+.action-btn.share-btn {
   padding: 8px;
   border: none;
 }

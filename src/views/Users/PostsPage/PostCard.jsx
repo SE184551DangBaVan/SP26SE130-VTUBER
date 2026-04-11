@@ -296,7 +296,8 @@ export default function PostCard({
         <div className='post-actions'>
           <div className='post-footer-left'>
             <div className='post-vote-section'>
-              <div className='like-button' onClick={(e) => e.stopPropagation()}>
+              <div className='like-button' title={`${isLiked ? 'unlike' : 'like'}`} 
+                onClick={(e) => e.stopPropagation()}>
                 <input
                   className='heart-checkbox'
                   id={`heart-${post.postId}`}
@@ -341,7 +342,8 @@ export default function PostCard({
     return (
       <div className='post-footer'>
         <div className='post-footer-left'>
-          <div className='like-button' onClick={(e) => e.stopPropagation()}>
+          <div className='like-button' title={`${isLiked ? 'unlike' : 'like'}`}
+            onClick={(e) => e.stopPropagation()}>
             <input
               className='heart-checkbox'
               id={`heart-${post.postId}`}

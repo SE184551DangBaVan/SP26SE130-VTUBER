@@ -479,7 +479,10 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   background-color: #0000000d;
 }
 
-/* Image Gallery Carousel (Reddit-style) */
+.image-media img {
+  height: 100% !important;
+}
+
 .post-media.image-gallery {
   margin-top: 8px;
   border-radius: 8px;
@@ -791,7 +794,7 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   border-radius: 4px;
 }
 
-.post-card {
+body:has(.hub-page-container) .post-card {
   background: #e8f4f8;
   border-radius: 12px;
   border: 2px solid #000;
@@ -815,7 +818,7 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   width: 100%;
 }
 
-.share-btn {
+.action-btn.share-btn {
   padding: 8px;
   border: none;
 }
@@ -1608,7 +1611,7 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
+  width: 52px;
   height: 100%;
   cursor: pointer;
   color: #000;
@@ -1629,7 +1632,8 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 }
 
 .like-count-container {
-  width: 40px;
+  width: 32px;
+  padding-right: 6px;
   height: 100%;
   display: flex;
   justify-content: center;
@@ -1778,10 +1782,10 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 24px;
   font-size: 13px;
   font-weight: 600;
-  color: #878a8c;
+  color: #000;
   border: 2px solid #000;
   transition: background 0.2s, color 0.3s ease;
 }
