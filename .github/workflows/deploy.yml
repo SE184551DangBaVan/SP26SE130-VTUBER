@@ -42,7 +42,7 @@ jobs:
           script: |
             cd /home/Home/Frontend/SP26SE130-VTUBER/
 
-            udo $(which pm2) delete Fanhub_Vtuber || true
+            sudo $(which pm2) delete Fanhub_Vtuber || true
             sudo $(which pm2) start npm --name "Fanhub_Vtuber" -- start -- -p 80
 
             sudo $(which pm2) save
