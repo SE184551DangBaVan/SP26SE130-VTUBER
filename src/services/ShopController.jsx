@@ -2,13 +2,16 @@ import { axiosInstance } from "@/utils/axiosInstance";
 
 /**
  * Get all shop items
- * @param {string} query - Search query to filter items by name
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
  * @returns {Promise<Array>} Array of shop items
  */
-export const getShopItems = async (query = "") => {
+export const getShopItems = async (pageNo = 0, pageSize = 50, sortBy = "id") => {
   try {
-    const params = query ? `?query=${encodeURIComponent(query)}` : "";
-    const res = await axiosInstance.get(`/shop-items${params}`);
+    const res = await axiosInstance.get(
+      `/shop-items/all?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
 
     console.log("getShopItems response:", res.data);
 
