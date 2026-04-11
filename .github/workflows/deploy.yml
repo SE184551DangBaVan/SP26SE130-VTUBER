@@ -1,0 +1,48 @@
+name: Deploy FanHub Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies and Build
+        run: |
+          npm install
+          npm run build
+
+      - name: Upload Build to VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/home/Home/Frontend/SP26SE130-VTUBER/"
+          strip_components: 0
+
+      - name: Restart Application via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/Home/Frontend/SP26SE130-VTUBER/
+
+            udo $(which pm2) delete Fanhub_Vtuber || true
+            sudo $(which pm2) start npm --name "Fanhub_Vtuber" -- start -- -p 80
+
+            sudo $(which pm2) save

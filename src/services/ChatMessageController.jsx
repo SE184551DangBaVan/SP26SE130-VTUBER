@@ -9,9 +9,11 @@ const getAuthToken = () => {
 
 /**
  * Get chat messages for the current user
- * @returns {Promise<Object>} Result containing messages array
+ * @param {number} page - Page number (default: 0)
+ * @param {number} size - Number of messages per page (default: 10)
+ * @returns {Promise<Object>} Result containing messages array and pagination info
  */
-export const getChatMessages = async () => {
+export const getChatMessages = async (page = 0, size = 10) => {
   try {
     const token = getAuthToken();
 
@@ -21,7 +23,7 @@ export const getChatMessages = async () => {
     }
 
     const res = await axios.get(
-      `${API_BASE_URL}/message`,
+      `${API_BASE_URL}/message?page=${page}&size=${size}`,
       {
         headers: {
           "Authorization": `Bearer ${token}`

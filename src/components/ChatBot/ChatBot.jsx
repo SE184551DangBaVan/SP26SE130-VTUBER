@@ -1,13 +1,11 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "./ChatBot.css";
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
-import { getChatMessages } from "@/services/ChatMessageController";
-import {
-  connectWebSocket,
-  subscribeToMessages,
-  sendWebSocketMessage,
-} from "@/services/WebSocketConfig";
+import { getChatMessages, sendChatMessage } from "@/services/ChatMessageController";
+
+const INITIAL_PAGE_SIZE = 7;
+const LOAD_MORE_PAGE_SIZE = 10;
 
 export default function ChatBot() {
   const { loading, userAuth } = useAuth();
@@ -16,9 +14,12 @@ export default function ChatBot() {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasLoadedMessages, setHasLoadedMessages] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const messagesEndRef = useRef(null);
-  const subscriptionRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const previousScrollHeightRef = useRef(0);
 
   if (loading) return null;
   if (!userAuth) return null;
@@ -27,75 +28,74 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Initial load - scroll to bottom
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (hasLoadedMessages && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [hasLoadedMessages]);
 
-  // Connect to WebSocket when chatbot is first opened
+  // Load initial messages when chatbot is first opened
   useEffect(() => {
-    const initWebSocket = async () => {
-      if (isOpen && !isConnected) {
-        try {
-          const client = await connectWebSocket();
-          setIsConnected(true);
-
-          // Small delay to ensure STOMP broker is fully ready
-          await new Promise(resolve => setTimeout(resolve, 50));
-
-          // Subscribe to messages
-          subscriptionRef.current = subscribeToMessages((response) => {
-            // Handle both APIResponse wrapper and raw MessageResponse
-            const newMessage = response.data || response;
-            if (newMessage.id && newMessage.content) {
-              setMessages((prev) => [...prev, {
-                id: newMessage.id,
-                type: newMessage.senderRole === "USER" ? "user" : "bot",
-                text: newMessage.content,
-                createdAt: newMessage.createdAt,
-                thought: newMessage.thought,
-              }]);
-              setIsTyping(false);
-            }
-          });
-        } catch (error) {
-          console.error("Failed to connect WebSocket:", error);
-          setIsConnected(false);
-        }
-      }
-    };
-
-    initWebSocket();
-
-    // Cleanup on unmount OR when chatbot is closed
-    return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
-      }
-    };
-  }, [isOpen]);
-
-  // Load messages when chatbot is first opened
-  useEffect(() => {
-    const loadMessages = async () => {
+    const loadInitialMessages = async () => {
       if (isOpen && !hasLoadedMessages) {
-        const result = await getChatMessages();
-        if (result?.success && result?.data) {
-          const formattedMessages = result.data.map((msg) => ({
+        const result = await getChatMessages(0, INITIAL_PAGE_SIZE);
+        if (result?.success && result?.data?.data) {
+          const formattedMessages = result.data.data.map((msg) => ({
             id: msg.id,
             type: msg.senderRole === "USER" ? "user" : "bot",
             text: msg.content,
             createdAt: msg.createdAt,
             thought: msg.thought,
-          }));
+          })).reverse(); // Reverse to show oldest first
+          
           setMessages(formattedMessages);
+          setCurrentPage(0);
+          setHasMoreMessages(result.data.hasNext);
           setHasLoadedMessages(true);
         }
       }
     };
 
-    loadMessages();
+    loadInitialMessages();
   }, [isOpen, hasLoadedMessages]);
+
+  // Handle scroll for infinite loading
+  const handleScroll = useCallback(async () => {
+    const container = messagesContainerRef.current;
+    if (!container || !hasMoreMessages || isLoadingMore) return;
+
+    // Check if user scrolled to top
+    if (container.scrollTop === 0) {
+      setIsLoadingMore(true);
+      previousScrollHeightRef.current = container.scrollHeight;
+
+      const nextPage = currentPage + 1;
+      const result = await getChatMessages(nextPage, LOAD_MORE_PAGE_SIZE);
+      
+      if (result?.success && result?.data?.data) {
+        const newMessages = result.data.data.map((msg) => ({
+          id: msg.id,
+          type: msg.senderRole === "USER" ? "user" : "bot",
+          text: msg.content,
+          createdAt: msg.createdAt,
+          thought: msg.thought,
+        })).reverse();
+
+        setMessages((prev) => [...newMessages, ...prev]);
+        setCurrentPage(nextPage);
+        setHasMoreMessages(result.data.hasNext);
+
+        // Maintain scroll position after adding messages
+        requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - previousScrollHeightRef.current;
+        });
+      }
+
+      setIsLoadingMore(false);
+    }
+  }, [currentPage, hasMoreMessages, isLoadingMore]);
 
 
   const toggleChat = () => {
@@ -116,19 +116,34 @@ export default function ChatBot() {
     setInputValue("");
     setIsTyping(true);
 
-    // Send message via WebSocket
     try {
-      await sendWebSocketMessage({
-        content: inputValue,
-        thought: null
-      });
-      // Response will be handled by WebSocket subscription callback
+      const result = await sendChatMessage(inputValue);
+      
+      if (result?.success && result?.data) {
+        const botMessage = {
+          id: result.data.id,
+          type: "bot",
+          text: result.data.content,
+          createdAt: result.data.createdAt,
+          thought: result.data.thought,
+        };
+        
+        // Remove temporary user message and add both with proper IDs
+        setMessages((prev) => {
+          const filtered = prev.filter(m => m.id !== userMessage.id);
+          return [...filtered, userMessage, botMessage];
+        });
+      } else {
+        // Remove user message if send failed
+        setMessages((prev) => prev.filter(m => m.id !== userMessage.id));
+        alert(result?.message || "Failed to send message. Please try again.");
+      }
     } catch (error) {
-      console.error("Failed to send message via WebSocket:", error);
-      setIsTyping(false);
-      // Fallback to HTTP if WebSocket fails
+      console.error("Failed to send message:", error);
       setMessages((prev) => prev.filter(m => m.id !== userMessage.id));
       alert("Failed to send message. Please try again.");
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -196,7 +211,16 @@ export default function ChatBot() {
             </div>
           </div>
 
-          <div className="chatbot-messages">
+          <div className="chatbot-messages" ref={messagesContainerRef} onScroll={handleScroll}>
+            {isLoadingMore && (
+              <div className="message bot-message">
+                <div className="message-bubble loading-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            )}
             {messages.map((message) => (
               <div
                 key={message.id}
