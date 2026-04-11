@@ -2,13 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import {
-  getPostReports,
-  getMemberReports,
-  getPendingPostReports,
-  getPendingMemberReports,
-  resolvePostReport,
-  resolveMemberReport,
+  getPostsWithReports,
+  bulkResolveReports,
+  getMembersWithReports,
+  bulkResolveMemberReports,
 } from "@/services/ReportController";
 import "./ReportsManagementContent.css";
 
@@ -44,25 +43,25 @@ export default function ReportsManagementContent({ fanHubId }) {
 /* ───────── Post Reports Table ───────── */
 function PostReportsTable({ fanHubId }) {
   const router = useRouter();
-  const [reports, setReports] = useState([]);
+  const { userAuth } = useAuth();
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy] = useState("createdAt");
-  const [statusFilter, setStatusFilter] = useState("PENDING");
   const [refreshing, setRefreshing] = useState(false);
 
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [resolveMessage, setResolveMessage] = useState("");
   const [resolving, setResolving] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
-  const fetchReports = useCallback(async (reset = false) => {
+  const fetchPosts = useCallback(async (reset = false) => {
     if (reset) {
       setLoading(true);
-      setReports([]);
+      setPosts([]);
       setCurrentPage(0);
       setHasMore(true);
     } else {
@@ -71,110 +70,156 @@ function PostReportsTable({ fanHubId }) {
 
     try {
       const pageNo = reset ? 0 : currentPage;
-      // Use pending API when filter is PENDING, otherwise use all reports API
-      const fetcher = statusFilter === "PENDING" ? getPendingPostReports : getPostReports;
-      const data = await fetcher(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      const result = await getPostsWithReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
 
-      let items = Array.isArray(data) ? data : [];
-
-      // For SOLVED filter, we need to filter client-side from all reports
-      if (statusFilter === "SOLVED") {
-        const allData = await getPostReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
-        items = Array.isArray(allData) ? allData.filter(r => r.reportStatus === "RESOLVED") : [];
+      let items = [];
+      if (result?.success && result?.data) {
+        items = Array.isArray(result.data) ? result.data : [];
       }
 
       if (reset) {
-        setReports(items);
+        setPosts(items);
       } else {
-        setReports(prev => [...prev, ...items]);
+        setPosts((prev) => [...prev, ...items]);
       }
 
       setHasMore(items.length === PAGE_SIZE);
-      setCurrentPage(prev => reset ? 1 : prev + 1);
+      setCurrentPage((prev) => (reset ? 1 : prev + 1));
     } catch (err) {
       console.error("Failed to fetch post reports:", err);
-      if (reset) setReports([]);
+      if (reset) setPosts([]);
       setHasMore(false);
     } finally {
       setLoading(false);
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [fanHubId, currentPage, sortBy, statusFilter]);
+  }, [fanHubId, currentPage, sortBy]);
 
-  const handleLoadMore = () => fetchReports(false);
+  const handleLoadMore = () => fetchPosts(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchReports(true);
+    await fetchPosts(true);
   };
 
   useEffect(() => {
     if (!fanHubId) return;
-    fetchReports(true);
-  }, [fanHubId, sortBy, statusFilter]);
+    fetchPosts(true);
+  }, [fanHubId, sortBy]);
 
   const showToast = (message, type) => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  const openResolveModal = (report) => {
-    setSelectedReport(report);
+  const openDetailsModal = (post) => {
+    setSelectedPost(post);
     setResolveMessage("");
-    setIsResolveModalOpen(true);
+    setIsDetailsModalOpen(true);
   };
 
-  const closeResolveModal = () => {
-    setIsResolveModalOpen(false);
-    setSelectedReport(null);
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedPost(null);
     setResolveMessage("");
   };
 
-  const handleResolve = async () => {
+  const handleResolveAll = async () => {
     if (!resolveMessage.trim()) {
       showToast("Please provide a resolution message", "error");
       return;
     }
+
+    const currentUsername = userAuth?.email;
+    const postAuthor = selectedPost.authorUsername;
+
+    // Check if the moderator is the author of the reported post
+    if (postAuthor && currentUsername && postAuthor === currentUsername) {
+      showToast("You cannot resolve reports against your own posts", "error");
+      return;
+    }
+
+    // Check if any report was filed by the current moderator against themselves
+    const isReportedBySelf = selectedPost.reports.some(
+      (r) => r.reportedByUsername === currentUsername
+    );
+    if (isReportedBySelf) {
+      showToast("You cannot resolve reports against yourself", "error");
+      return;
+    }
+
+    const pendingReports = selectedPost.reports.filter((r) => r.reportStatus === "PENDING");
+    if (pendingReports.length === 0) {
+      showToast("No pending reports to resolve", "error");
+      return;
+    }
+
+    const reportIds = pendingReports.map((r) => r.reportId);
+
     setResolving(true);
     try {
-      const result = await resolvePostReport(selectedReport.reportId, resolveMessage.trim());
+      const result = await bulkResolveReports(reportIds, resolveMessage.trim());
       if (result?.success) {
-        showToast("Report resolved successfully!", "success");
-        await fetchReports(true);
-        closeResolveModal();
+        showToast(result.message || "Reports resolved successfully!", "success");
+        await fetchPosts(true);
+        closeDetailsModal();
       } else {
-        throw new Error(result?.message || "Failed to resolve report");
+        throw new Error(result?.message || "Failed to resolve reports");
       }
     } catch (err) {
-      console.error("Resolve report error:", err);
-      showToast(err.message || "Failed to resolve report", "error");
+      console.error("Resolve reports error:", err);
+      showToast(err.message || "Failed to resolve reports", "error");
     } finally {
       setResolving(false);
     }
   };
 
   const handleViewPost = (postId) => {
-    window.open(`/posts?id=${postId}`, '_blank');
+    window.open(`/posts?id=${postId}`, "_blank");
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleString("en-US", {
-      month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit"
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const getStatusClass = (status) => {
+  const getPostStatusClass = (status) => {
     switch (status?.toUpperCase()) {
-      case "PENDING": return "report-pending";
-      case "RESOLVED": return "report-resolved";
-      default: return "report-unknown";
+      case "APPROVED":
+        return "status-approved";
+      case "PENDING":
+        return "status-pending";
+      case "REJECTED":
+        return "status-rejected";
+      default:
+        return "status-unknown";
+    }
+  };
+
+  const getReportStatusClass = (status) => {
+    switch (status?.toUpperCase()) {
+      case "PENDING":
+        return "report-pending";
+      case "RESOLVED":
+        return "report-resolved";
+      default:
+        return "report-unknown";
     }
   };
 
@@ -183,19 +228,7 @@ function PostReportsTable({ fanHubId }) {
   return (
     <div className="reports-table-wrapper">
       <div className="reports-toolbar">
-        <div className="reports-filter-group">
-          <label htmlFor="post-report-status">Status:</label>
-          <select
-            id="post-report-status"
-            className="reports-filter-dropdown"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="ALL">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="SOLVED">Solved</option>
-          </select>
-        </div>
+        <div />
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
           {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
         </button>
@@ -203,126 +236,285 @@ function PostReportsTable({ fanHubId }) {
 
       {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
 
-      {reports.length === 0 ? (
-        <div className="empty-message">No post reports found</div>
+      {posts.length === 0 ? (
+        <div className="empty-message">No pending post reports found</div>
       ) : (
         <div className="moderation-table-container">
           <table className="moderation-table">
             <thead>
               <tr>
-                <th>Report ID</th>
                 <th>Post ID</th>
                 <th>Post Title</th>
-                <th>Post Author</th>
-                <th>Reported By</th>
-                <th>Reason</th>
+                <th>Author</th>
+                <th>Fan Hub</th>
                 <th>Status</th>
+                <th>Reports</th>
+                <th>Pending</th>
                 <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {reports.map((report) => (
-                <tr key={report.reportId}>
-                  <td className="report-id">#{report.reportId}</td>
-                  <td className="post-id">#{report.postId}</td>
-                  <td className="post-title">{report.title || "-"}</td>
-                  <td className="post-author">{report.authorUsername || "-"}</td>
-                  <td className="reported-by">{report.reportedByUsername || "-"}</td>
-                  <td className="reason-cell">
-                    <span className="reason-preview" title={report.reason}>{report.reason}</span>
-                  </td>
-                  <td className="status-cell">
-                    <span className={`report-status-badge ${getStatusClass(report.reportStatus)}`}>{report.reportStatus}</span>
-                  </td>
-                  <td className="date-cell">{formatDateTime(report.reportCreatedAt)}</td>
-                  <td className="action-cell">
-                    {report.reportStatus === "PENDING" ? (
-                      <button className="resolve-btn" onClick={() => openResolveModal(report)}>Resolve</button>
-                    ) : (
-                      <span className="resolved-label">Done</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {posts.map((post) => {
+                const pendingCount = post.reports?.filter(
+                  (r) => r.reportStatus === "PENDING"
+                ).length;
+                const totalReports = post.reports?.length || 0;
+
+                return (
+                  <tr key={post.postId}>
+                    <td className="post-id">#{post.postId}</td>
+                    <td className="post-title">{post.title || "-"}</td>
+                    <td className="post-author">{post.authorUsername || "-"}</td>
+                    <td className="fan-hub-cell">{post.fanHubName || "-"}</td>
+                    <td className="status-cell">
+                      <span className={`post-status-badge ${getPostStatusClass(post.status)}`}>
+                        {post.status}
+                      </span>
+                    </td>
+                    <td className="reports-count">{totalReports}</td>
+                    <td className="pending-count">
+                      {pendingCount > 0 ? (
+                        <span className="pending-badge">{pendingCount}</span>
+                      ) : (
+                        "0"
+                      )}
+                    </td>
+                    <td className="date-cell">{formatDateTime(post.postCreatedAt)}</td>
+                    <td className="action-cell">
+                      <button
+                        className="view-details-btn"
+                        onClick={() => openDetailsModal(post)}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
           {hasMore && (
             <div className="load-more-container">
-              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+              <button
+                className="load-more-btn"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
                 {loadingMore ? (
-                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                  <span className="load-more-loading">
+                    <span className="loading-spinner">⟳</span> Loading...
+                  </span>
                 ) : (
                   "Load more"
                 )}
               </button>
             </div>
           )}
-          {!hasMore && reports.length > 0 && (
+          {!hasMore && posts.length > 0 && (
             <div className="no-more-data">No more post reports to load</div>
           )}
         </div>
       )}
 
-      {/* Resolve Modal */}
-      {isResolveModalOpen && selectedReport && (
-        <div className="report-resolve-overlay" onClick={closeResolveModal}>
-          <div className="report-resolve-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="report-resolve-header">
-              <h2>Resolve Post Report</h2>
-              <button className="report-resolve-close" onClick={closeResolveModal}>×</button>
+      {/* Post Details Modal */}
+      {isDetailsModalOpen && selectedPost && (
+        <div className="report-resolve-overlay" onClick={closeDetailsModal}>
+          <div className="post-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="post-details-header">
+              <button className="post-details-close" onClick={closeDetailsModal}>
+                ×
+              </button>
+              <h2>Post Report Details</h2>
             </div>
-            <div className="report-resolve-body">
-              <div className="report-info-grid">
-                <div className="report-info-item"><span className="report-info-label">Report ID:</span><span className="report-info-value">#{selectedReport.reportId}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Post ID:</span><span className="report-info-value">#{selectedReport.postId}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Post Title:</span><span className="report-info-value">{selectedReport.title}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Post Author:</span><span className="report-info-value">{selectedReport.authorUsername || "-"}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername || "-"}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Report Status:</span><span className={`report-status-badge ${getStatusClass(selectedReport.reportStatus)}`}>{selectedReport.reportStatus}</span></div>
-                {selectedReport.resolvedByUsername && (
-                  <div className="report-info-item"><span className="report-info-label">Resolved By:</span><span className="report-info-value">{selectedReport.resolvedByUsername}</span></div>
+            <div className="post-details-body">
+              {/* Post Info */}
+              <div className="post-info-section">
+                <h3>Post Information</h3>
+                <div className="report-info-grid">
+                  <div className="report-info-item">
+                    <span className="report-info-label">Post ID:</span>
+                    <span className="report-info-value">#{selectedPost.postId}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Title:</span>
+                    <span className="report-info-value">{selectedPost.title}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Author:</span>
+                    <span className="report-info-value">
+                      {selectedPost.authorDisplayName || selectedPost.authorUsername}
+                    </span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Fan Hub:</span>
+                    <span className="report-info-value">{selectedPost.fanHubName}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Post Type:</span>
+                    <span className="report-info-value">{selectedPost.postType}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Status:</span>
+                    <span
+                      className={`post-status-badge ${getPostStatusClass(selectedPost.status)}`}
+                    >
+                      {selectedPost.status}
+                    </span>
+                  </div>
+                  {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
+                    <div className="report-info-item full-width">
+                      <span className="report-info-label">Hashtags:</span>
+                      <span className="report-info-value">
+                        {selectedPost.hashtags.map((tag) => `#${tag}`).join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  <div className="report-info-item full-width">
+                    <span className="report-info-label">Content:</span>
+                    <span className="report-info-value report-reason-text">
+                      {selectedPost.content}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Post Media */}
+                {selectedPost.mediaUrls && selectedPost.mediaUrls.length > 0 && (
+                  <div className="report-media-section">
+                    <span className="report-info-label">Post Media:</span>
+                    <div className="report-media-grid">
+                      {selectedPost.mediaUrls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="report-media-thumb"
+                        >
+                          <img
+                            src={url}
+                            alt={`Media ${idx + 1}`}
+                            onError={(e) => {
+                              e.target.src = "/placeholder-image.png";
+                            }}
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                {selectedReport.resolveMessage && (
-                  <div className="report-info-item full-width"><span className="report-info-label">Resolve Message:</span><span className="report-info-value report-reason-text">{selectedReport.resolveMessage}</span></div>
-                )}
-                <div className="report-info-item full-width"><span className="report-info-label">Reason:</span><span className="report-info-value report-reason-text">{selectedReport.reason}</span></div>
               </div>
 
-              {/* Post Media */}
-              {selectedReport.mediaUrls && selectedReport.mediaUrls.length > 0 && (
-                <div className="report-media-section">
-                  <span className="report-info-label">Post Media:</span>
-                  <div className="report-media-grid">
-                    {selectedReport.mediaUrls.map((url, idx) => (
-                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="report-media-thumb">
-                        <img src={url} alt={`Media ${idx + 1}`} onError={(e) => { e.target.src = "/placeholder-image.png"; }} />
-                      </a>
-                    ))}
+              {/* Reports List */}
+              <div className="reports-list-section">
+                <h3>
+                  Reports ({selectedPost.reports?.length || 0})
+                  {selectedPost.reports?.filter((r) => r.reportStatus === "PENDING").length > 0 && (
+                    <span className="pending-reports-indicator">
+                      {
+                        selectedPost.reports.filter((r) => r.reportStatus === "PENDING").length
+                      }{" "}
+                      pending
+                    </span>
+                  )}
+                </h3>
+                <div className="reports-list">
+                  {selectedPost.reports?.map((report) => (
+                    <div key={report.reportId} className="report-card">
+                      <div className="report-card-header">
+                        <span className="report-card-id">Report #{report.reportId}</span>
+                        <span
+                          className={`report-status-badge ${getReportStatusClass(
+                            report.reportStatus
+                          )}`}
+                        >
+                          {report.reportStatus}
+                        </span>
+                      </div>
+                      <div className="report-card-body">
+                        <div className="report-row">
+                          <span className="report-label">Reported By:</span>
+                          <span className="report-value">
+                            {report.reportedByDisplayName || report.reportedByUsername}
+                          </span>
+                        </div>
+                        <div className="report-row">
+                          <span className="report-label">Reason:</span>
+                          <span className="report-value">{report.reason}</span>
+                        </div>
+                        <div className="report-row">
+                          <span className="report-label">Date:</span>
+                          <span className="report-value">
+                            {formatDateTime(report.reportCreatedAt)}
+                          </span>
+                        </div>
+                        {report.reportStatus === "RESOLVED" && (
+                          <>
+                            <div className="report-row">
+                              <span className="report-label">Resolved By:</span>
+                              <span className="report-value">
+                                {report.resolvedByDisplayName || report.resolvedByUsername || "-"}
+                              </span>
+                            </div>
+                            {report.resolveMessage && (
+                              <div className="report-row full-width">
+                                <span className="report-label">Resolution:</span>
+                                <span className="report-value">{report.resolveMessage}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resolve Form */}
+              {selectedPost.reports?.some((r) => r.reportStatus === "PENDING") && (
+                <div className="resolve-form-section">
+                  <h3>Resolve All Pending Reports</h3>
+                  <div className="resolve-form-group">
+                    <label htmlFor="resolve-message">
+                      Resolution Message <span className="required">*</span>
+                    </label>
+                    <textarea
+                      id="resolve-message"
+                      className="resolve-textarea"
+                      placeholder="Provide your resolution reason..."
+                      value={resolveMessage}
+                      onChange={(e) => setResolveMessage(e.target.value)}
+                      rows={4}
+                      disabled={resolving}
+                    />
                   </div>
                 </div>
               )}
-
-              <div className="resolve-form-group">
-                <label htmlFor="resolve-message">Resolution Message <span className="required">*</span></label>
-                <textarea
-                  id="resolve-message"
-                  className="resolve-textarea"
-                  placeholder="Provide your resolution reason..."
-                  value={resolveMessage}
-                  onChange={(e) => setResolveMessage(e.target.value)}
-                  rows={4}
-                  disabled={resolving}
-                />
-              </div>
             </div>
-            <div className="report-resolve-actions">
-              <button className="resolve-cancel-btn" onClick={closeResolveModal} disabled={resolving}>Cancel</button>
-              <button className="resolve-view-btn" onClick={() => handleViewPost(selectedReport.postId)}>View Post</button>
-              <button className="resolve-confirm-btn" onClick={handleResolve} disabled={resolving || !resolveMessage.trim()}>
-                {resolving ? "Resolving..." : "Confirm Resolve"}
+            <div className="post-details-actions">
+              <button
+                className="resolve-cancel-btn"
+                onClick={closeDetailsModal}
+                disabled={resolving}
+              >
+                Cancel
               </button>
+              <button
+                className="resolve-view-btn"
+                onClick={() => handleViewPost(selectedPost.postId)}
+              >
+                View Post
+              </button>
+              {selectedPost.reports?.some((r) => r.reportStatus === "PENDING") && (
+                <button
+                  className="resolve-confirm-btn"
+                  onClick={handleResolveAll}
+                  disabled={resolving || !resolveMessage.trim()}
+                >
+                  {resolving ? "Resolving..." : `Resolve ${selectedPost.reports.filter((r) => r.reportStatus === "PENDING").length} Pending Report(s)`}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -333,25 +525,25 @@ function PostReportsTable({ fanHubId }) {
 
 /* ───────── Member Reports Table ───────── */
 function MemberReportsTable({ fanHubId }) {
-  const [reports, setReports] = useState([]);
+  const { userAuth } = useAuth();
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy] = useState("createdAt");
-  const [statusFilter, setStatusFilter] = useState("PENDING");
   const [refreshing, setRefreshing] = useState(false);
 
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [resolveMessage, setResolveMessage] = useState("");
   const [resolving, setResolving] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
-  const fetchReports = useCallback(async (reset = false) => {
+  const fetchMembers = useCallback(async (reset = false) => {
     if (reset) {
       setLoading(true);
-      setReports([]);
+      setMembers([]);
       setCurrentPage(0);
       setHasMore(true);
     } else {
@@ -360,84 +552,106 @@ function MemberReportsTable({ fanHubId }) {
 
     try {
       const pageNo = reset ? 0 : currentPage;
-      // Use pending API when filter is PENDING, otherwise use all reports API
-      const fetcher = statusFilter === "PENDING" ? getPendingMemberReports : getMemberReports;
-      const data = await fetcher(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      const result = await getMembersWithReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
 
-      let items = Array.isArray(data) ? data : [];
-
-      // For SOLVED filter, we need to filter client-side from all reports
-      if (statusFilter === "SOLVED") {
-        const allData = await getMemberReports(fanHubId, pageNo, PAGE_SIZE, sortBy);
-        items = Array.isArray(allData) ? allData.filter(r => r.status === "RESOLVED") : [];
+      let items = [];
+      if (result?.success && result?.data) {
+        items = Array.isArray(result.data) ? result.data : [];
       }
 
       if (reset) {
-        setReports(items);
+        setMembers(items);
       } else {
-        setReports(prev => [...prev, ...items]);
+        setMembers((prev) => [...prev, ...items]);
       }
 
       setHasMore(items.length === PAGE_SIZE);
-      setCurrentPage(prev => reset ? 1 : prev + 1);
+      setCurrentPage((prev) => (reset ? 1 : prev + 1));
     } catch (err) {
       console.error("Failed to fetch member reports:", err);
-      if (reset) setReports([]);
+      if (reset) setMembers([]);
       setHasMore(false);
     } finally {
       setLoading(false);
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [fanHubId, currentPage, sortBy, statusFilter]);
+  }, [fanHubId, currentPage, sortBy]);
 
-  const handleLoadMore = () => fetchReports(false);
+  const handleLoadMore = () => fetchMembers(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchReports(true);
+    await fetchMembers(true);
   };
 
   useEffect(() => {
     if (!fanHubId) return;
-    fetchReports(true);
-  }, [fanHubId, sortBy, statusFilter]);
+    fetchMembers(true);
+  }, [fanHubId, sortBy]);
 
   const showToast = (message, type) => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  const openResolveModal = (report) => {
-    setSelectedReport(report);
+  const openDetailsModal = (member) => {
+    setSelectedMember(member);
     setResolveMessage("");
-    setIsResolveModalOpen(true);
+    setIsDetailsModalOpen(true);
   };
 
-  const closeResolveModal = () => {
-    setIsResolveModalOpen(false);
-    setSelectedReport(null);
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedMember(null);
     setResolveMessage("");
   };
 
-  const handleResolve = async () => {
+  const handleResolveAll = async () => {
     if (!resolveMessage.trim()) {
       showToast("Please provide a resolution message", "error");
       return;
     }
+
+    const currentUsername = userAuth?.email;
+    const memberUsername = selectedMember.username;
+
+    // Check if the moderator is the reported member
+    if (memberUsername && currentUsername && memberUsername === currentUsername) {
+      showToast("You cannot resolve reports against yourself", "error");
+      return;
+    }
+
+    // Check if any report was filed by the current moderator
+    const isReportedBySelf = selectedMember.reports.some(
+      (r) => r.reportedByUsername === currentUsername
+    );
+    if (isReportedBySelf) {
+      showToast("You cannot resolve reports filed by yourself", "error");
+      return;
+    }
+
+    const pendingReports = selectedMember.reports.filter((r) => r.reportStatus === "PENDING");
+    if (pendingReports.length === 0) {
+      showToast("No pending reports to resolve", "error");
+      return;
+    }
+
+    const reportIds = pendingReports.map((r) => r.reportId);
+
     setResolving(true);
     try {
-      const result = await resolveMemberReport(selectedReport.reportId, resolveMessage.trim());
+      const result = await bulkResolveMemberReports(reportIds, resolveMessage.trim());
       if (result?.success) {
-        showToast("Report resolved successfully!", "success");
-        await fetchReports(true);
-        closeResolveModal();
+        showToast(result.message || "Member reports resolved successfully!", "success");
+        await fetchMembers(true);
+        closeDetailsModal();
       } else {
-        throw new Error(result?.message || "Failed to resolve report");
+        throw new Error(result?.message || "Failed to resolve member reports");
       }
     } catch (err) {
-      console.error("Resolve report error:", err);
-      showToast(err.message || "Failed to resolve report", "error");
+      console.error("Resolve member reports error:", err);
+      showToast(err.message || "Failed to resolve member reports", "error");
     } finally {
       setResolving(false);
     }
@@ -445,14 +659,45 @@ function MemberReportsTable({ fanHubId }) {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
-  const getStatusClass = (status) => {
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getMemberRoleClass = (role) => {
+    switch (role?.toUpperCase()) {
+      case "ADMIN":
+        return "role-admin";
+      case "MODERATOR":
+        return "role-moderator";
+      case "MEMBER":
+        return "role-member";
+      default:
+        return "role-unknown";
+    }
+  };
+
+  const getReportStatusClass = (status) => {
     switch (status?.toUpperCase()) {
-      case "PENDING": return "report-pending";
-      case "RESOLVED": return "report-resolved";
-      default: return "report-unknown";
+      case "PENDING":
+        return "report-pending";
+      case "RESOLVED":
+        return "report-resolved";
+      default:
+        return "report-unknown";
     }
   };
 
@@ -461,19 +706,7 @@ function MemberReportsTable({ fanHubId }) {
   return (
     <div className="reports-table-wrapper">
       <div className="reports-toolbar">
-        <div className="reports-filter-group">
-          <label htmlFor="member-report-status">Status:</label>
-          <select
-            id="member-report-status"
-            className="reports-filter-dropdown"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="ALL">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="SOLVED">Solved</option>
-          </select>
-        </div>
+        <div />
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
           {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
         </button>
@@ -481,107 +714,277 @@ function MemberReportsTable({ fanHubId }) {
 
       {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
 
-      {reports.length === 0 ? (
-        <div className="empty-message">No member reports found</div>
+      {members.length === 0 ? (
+        <div className="empty-message">No pending member reports found</div>
       ) : (
         <div className="moderation-table-container">
           <table className="moderation-table">
             <thead>
               <tr>
-                <th>Report ID</th>
-                <th>Reported By</th>
-                <th>Reported User</th>
+                <th>Member</th>
+                <th>Username</th>
                 <th>Fan Hub</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th>Role</th>
+                <th>Reports</th>
+                <th>Pending</th>
+                <th>Joined</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {reports.map((report) => (
-                <tr key={report.reportId}>
-                  <td className="report-id">#{report.reportId}</td>
-                  <td className="reported-by">{report.reportedByUsername || "-"}</td>
-                  <td className="reported-user">{report.reportedUsername || "-"}</td>
-                  <td className="fan-hub-cell">{report.fanHubName || "-"}</td>
-                  <td className="reason-cell">
-                    <span className="reason-preview" title={report.reason}>{report.reason}</span>
-                  </td>
-                  <td className="status-cell">
-                    <span className={`report-status-badge ${getStatusClass(report.status)}`}>{report.status}</span>
-                  </td>
-                  <td className="date-cell">{formatDate(report.createdAt)}</td>
-                  <td className="action-cell">
-                    {report.status === "PENDING" ? (
-                      <button className="resolve-btn" onClick={() => openResolveModal(report)}>Resolve</button>
-                    ) : (
-                      <span className="resolved-label">Done</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {members.map((member) => {
+                const pendingCount = member.reports?.filter(
+                  (r) => r.reportStatus === "PENDING"
+                ).length;
+                const totalReports = member.reports?.length || 0;
+
+                return (
+                  <tr key={member.memberId}>
+                    <td className="member-cell">
+                      {member.avatarUrl && (
+                        <img
+                          src={member.avatarUrl}
+                          alt={member.displayName || member.username}
+                          className="member-avatar"
+                        />
+                      )}
+                      <span className="member-name">
+                        {member.displayName || member.username}
+                      </span>
+                    </td>
+                    <td className="username-cell">{member.username}</td>
+                    <td className="fan-hub-cell">{member.fanHubName || "-"}</td>
+                    <td className="status-cell">
+                      <span className={`member-role-badge ${getMemberRoleClass(member.roleInHub)}`}>
+                        {member.roleInHub}
+                      </span>
+                    </td>
+                    <td className="reports-count">{totalReports}</td>
+                    <td className="pending-count">
+                      {pendingCount > 0 ? (
+                        <span className="pending-badge">{pendingCount}</span>
+                      ) : (
+                        "0"
+                      )}
+                    </td>
+                    <td className="date-cell">{formatDate(member.joinedAt)}</td>
+                    <td className="action-cell">
+                      <button
+                        className="view-details-btn"
+                        onClick={() => openDetailsModal(member)}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
           {hasMore && (
             <div className="load-more-container">
-              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+              <button
+                className="load-more-btn"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
                 {loadingMore ? (
-                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                  <span className="load-more-loading">
+                    <span className="loading-spinner">⟳</span> Loading...
+                  </span>
                 ) : (
                   "Load more"
                 )}
               </button>
             </div>
           )}
-          {!hasMore && reports.length > 0 && (
+          {!hasMore && members.length > 0 && (
             <div className="no-more-data">No more member reports to load</div>
           )}
         </div>
       )}
 
-      {/* Resolve Modal */}
-      {isResolveModalOpen && selectedReport && (
-        <div className="report-resolve-overlay" onClick={closeResolveModal}>
-          <div className="report-resolve-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="report-resolve-header">
-              <h2>Resolve Member Report</h2>
-              <button className="report-resolve-close" onClick={closeResolveModal}>×</button>
-            </div>
-            <div className="report-resolve-body">
-              <div className="report-info-grid">
-                <div className="report-info-item"><span className="report-info-label">Report ID:</span><span className="report-info-value">#{selectedReport.reportId}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Reported User:</span><span className="report-info-value">{selectedReport.reportedDisplayName || selectedReport.reportedUsername}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedReport.fanHubName}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Reported By:</span><span className="report-info-value">{selectedReport.reportedByUsername || "-"}</span></div>
-                <div className="report-info-item"><span className="report-info-label">Report Status:</span><span className={`report-status-badge ${getStatusClass(selectedReport.status)}`}>{selectedReport.status}</span></div>
-                {selectedReport.resolvedByUsername && (
-                  <div className="report-info-item"><span className="report-info-label">Resolved By:</span><span className="report-info-value">{selectedReport.resolvedByUsername}</span></div>
-                )}
-                {selectedReport.resolveMessage && (
-                  <div className="report-info-item full-width"><span className="report-info-label">Resolve Message:</span><span className="report-info-value report-reason-text">{selectedReport.resolveMessage}</span></div>
-                )}
-                <div className="report-info-item full-width"><span className="report-info-label">Reason:</span><span className="report-info-value report-reason-text">{selectedReport.reason}</span></div>
-              </div>
-              <div className="resolve-form-group">
-                <label htmlFor="resolve-message">Resolution Message <span className="required">*</span></label>
-                <textarea
-                  id="resolve-message"
-                  className="resolve-textarea"
-                  placeholder="Provide your resolution reason..."
-                  value={resolveMessage}
-                  onChange={(e) => setResolveMessage(e.target.value)}
-                  rows={4}
-                  disabled={resolving}
-                />
-              </div>
-            </div>
-            <div className="report-resolve-actions">
-              <button className="resolve-cancel-btn" onClick={closeResolveModal} disabled={resolving}>Cancel</button>
-              <button className="resolve-confirm-btn" onClick={handleResolve} disabled={resolving || !resolveMessage.trim()}>
-                {resolving ? "Resolving..." : "Confirm Resolve"}
+      {/* Member Details Modal */}
+      {isDetailsModalOpen && selectedMember && (
+        <div className="report-resolve-overlay" onClick={closeDetailsModal}>
+          <div className="post-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="post-details-header">
+              <button className="post-details-close" onClick={closeDetailsModal}>
+                ×
               </button>
+              <h2>Member Report Details</h2>
+            </div>
+            <div className="post-details-body">
+              {/* Member Info */}
+              <div className="post-info-section">
+                <h3>Member Information</h3>
+                <div className="report-info-grid">
+                  <div className="report-info-item">
+                    <span className="report-info-label">Member ID:</span>
+                    <span className="report-info-value">#{selectedMember.memberId}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Username:</span>
+                    <span className="report-info-value">{selectedMember.username}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Display Name:</span>
+                    <span className="report-info-value">
+                      {selectedMember.displayName || "-"}
+                    </span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Fan Hub:</span>
+                    <span className="report-info-value">{selectedMember.fanHubName}</span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Role:</span>
+                    <span
+                      className={`member-role-badge ${getMemberRoleClass(
+                        selectedMember.roleInHub
+                      )}`}
+                    >
+                      {selectedMember.roleInHub}
+                    </span>
+                  </div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Status:</span>
+                    <span className="report-info-value">{selectedMember.memberStatus}</span>
+                  </div>
+                  {selectedMember.avatarUrl && (
+                    <div className="report-info-item">
+                      <span className="report-info-label">Avatar:</span>
+                      <a
+                        href={selectedMember.avatarUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="report-info-value"
+                        style={{ color: "#3b82f6" }}
+                      >
+                        View Avatar
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Reports List */}
+              <div className="reports-list-section">
+                <h3>
+                  Reports ({selectedMember.reports?.length || 0})
+                  {selectedMember.reports?.filter((r) => r.reportStatus === "PENDING").length >
+                    0 && (
+                    <span className="pending-reports-indicator">
+                      {selectedMember.reports.filter((r) => r.reportStatus === "PENDING").length}{" "}
+                      pending
+                    </span>
+                  )}
+                </h3>
+                <div className="reports-list">
+                  {selectedMember.reports?.map((report) => (
+                    <div key={report.reportId} className="report-card">
+                      <div className="report-card-header">
+                        <span className="report-card-id">Report #{report.reportId}</span>
+                        <span
+                          className={`report-status-badge ${getReportStatusClass(
+                            report.reportStatus
+                          )}`}
+                        >
+                          {report.reportStatus}
+                        </span>
+                      </div>
+                      <div className="report-card-body">
+                        <div className="report-row">
+                          <span className="report-label">Reported By:</span>
+                          <span className="report-value">
+                            {report.reportedByDisplayName || report.reportedByUsername}
+                          </span>
+                        </div>
+                        <div className="report-row">
+                          <span className="report-label">Reason:</span>
+                          <span className="report-value">{report.reason}</span>
+                        </div>
+                        <div className="report-row">
+                          <span className="report-label">Date:</span>
+                          <span className="report-value">
+                            {formatDateTime(report.reportCreatedAt)}
+                          </span>
+                        </div>
+                        {report.relatedComment && (
+                          <div className="report-row full-width">
+                            <span className="report-label">Related Comment:</span>
+                            <span className="report-value">
+                              {typeof report.relatedComment === "string"
+                                ? report.relatedComment
+                                : report.relatedComment.content || `Comment #${report.relatedComment.commentId}`}
+                            </span>
+                          </div>
+                        )}
+                        {report.reportStatus === "RESOLVED" && (
+                          <>
+                            <div className="report-row">
+                              <span className="report-label">Resolved By:</span>
+                              <span className="report-value">
+                                {report.resolvedByDisplayName ||
+                                  report.resolvedByUsername ||
+                                  "-"}
+                              </span>
+                            </div>
+                            {report.resolveMessage && (
+                              <div className="report-row full-width">
+                                <span className="report-label">Resolution:</span>
+                                <span className="report-value">{report.resolveMessage}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resolve Form */}
+              {selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
+                <div className="resolve-form-section">
+                  <h3>Resolve All Pending Reports</h3>
+                  <div className="resolve-form-group">
+                    <label htmlFor="resolve-message">
+                      Resolution Message <span className="required">*</span>
+                    </label>
+                    <textarea
+                      id="resolve-message"
+                      className="resolve-textarea"
+                      placeholder="Provide your resolution reason..."
+                      value={resolveMessage}
+                      onChange={(e) => setResolveMessage(e.target.value)}
+                      rows={4}
+                      disabled={resolving}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="post-details-actions">
+              <button
+                className="resolve-cancel-btn"
+                onClick={closeDetailsModal}
+                disabled={resolving}
+              >
+                Cancel
+              </button>
+              {selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
+                <button
+                  className="resolve-confirm-btn"
+                  onClick={handleResolveAll}
+                  disabled={resolving || !resolveMessage.trim()}
+                >
+                  {resolving
+                    ? "Resolving..."
+                    : `Resolve ${selectedMember.reports.filter((r) => r.reportStatus === "PENDING").length} Pending Report(s)`}
+                </button>
+              )}
             </div>
           </div>
         </div>

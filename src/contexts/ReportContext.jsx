@@ -19,11 +19,13 @@ export const ReportModalProvider = ({ children }) => {
   const [type, setType] = useState(null);       // "POST" | "MEMBER"
   const [targetId, setTargetId] = useState(null); // postId or memberId
   const [targetName, setTargetName] = useState("");
+  const [relatedCommentId, setRelatedCommentId] = useState(null);
 
-  const openReportModal = useCallback(({ type, targetId, targetName = "" }) => {
+  const openReportModal = useCallback(({ type, targetId, targetName = "", relatedCommentId }) => {
     setType(type);
     setTargetId(targetId);
     setTargetName(targetName);
+    setRelatedCommentId(relatedCommentId || null);
     setIsOpen(true);
   }, []);
 
@@ -32,6 +34,7 @@ export const ReportModalProvider = ({ children }) => {
     setType(null);
     setTargetId(null);
     setTargetName("");
+    setRelatedCommentId(null);
   }, []);
 
   return (
@@ -43,6 +46,7 @@ export const ReportModalProvider = ({ children }) => {
         type={type}
         targetId={targetId}
         targetName={targetName}
+        relatedCommentId={relatedCommentId}
       />
     </ReportModalContext.Provider>
   );

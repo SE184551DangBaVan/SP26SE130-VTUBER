@@ -21,7 +21,7 @@ const OTHER_REASON = "Other";
  *   targetId   - numeric postId or memberId
  *   targetName - optional display label for context
  */
-export default function ReportModal({ isOpen, onClose, type, targetId, targetName }) {
+export default function ReportModal({ isOpen, onClose, type, targetId, targetName, relatedCommentId }) {
   const [selectedReason, setSelectedReason] = useState(null);
   const [otherReason, setOtherReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,7 +85,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
         if (type === REPORT_TYPE.POST) {
           response = await reportPost(targetId, finalReason.trim());
         } else if (type === REPORT_TYPE.MEMBER) {
-          response = await reportMember(targetId, finalReason.trim());
+          response = await reportMember(targetId, finalReason.trim(), relatedCommentId);
         } else {
           throw new Error("Unknown report type");
         }

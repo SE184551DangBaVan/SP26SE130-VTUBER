@@ -51,8 +51,9 @@ const isRememberMe = () => {
 // Refresh token API call
 const refreshAuthToken = async (refreshToken) => {
   try {
-    const response = await axios.get(
+    const response = await axios.post(
       `${API_BASE_URL}/auth/refresh-token`,
+      null,
       {
         params: {
           "refresh-token": refreshToken
@@ -114,8 +115,8 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401/403 and we haven't tried to refresh yet
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+    // If error is 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
