@@ -9,7 +9,7 @@ import './JoinedHubsContainer.css';
 export default function JoinedHubsContainer() {
   const router = useRouter();
   const { userAuth } = useAuth();
-    const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,8 +58,8 @@ export default function JoinedHubsContainer() {
   };
 
   // Determine which hubs to display
-  const hasMoreHubs = joinedHubs.length > 5;
-  const displayHubs = joinedHubs.slice(0, 5);
+  const hasMoreHubs = joinedHubs.length > 4;
+  const displayHubs = showAll ? joinedHubs : joinedHubs.slice(0, 4);
 
   // Don't render if no hubs joined
   if (joinedHubs.length === 0 && !loading) {
@@ -100,6 +100,15 @@ export default function JoinedHubsContainer() {
                 onClick={toggleShowAll}
               >
                 {showAll ? 'Show less' : 'View all hubs...'}
+              </div>
+            )}
+
+            {hasMoreHubs && (
+              <div
+                className="view-all-hubs-rebound-animation"
+                onClick={toggleShowAll}
+              >
+                {showAll ? 'Show less' : 'View all'}
               </div>
             )}
           </>

@@ -1,7 +1,7 @@
 .news-feed-page-container {
   max-width: 90%;
   margin-top: 80px;
-  padding: 1.5rem;
+  padding: 0 1.5rem;
   min-height: calc(100vh - 80px);
   color: #000;
   font-family: 'Inter', sans-serif;
@@ -43,7 +43,6 @@
 
 /* Main Content */
 .news-main-content {
-  background: transparent;
   padding: 32px;
   min-height: 80vh;
 }
@@ -51,9 +50,9 @@
 /* Hub Header */
 .news-hub-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 20px;
+  justify-content: flex-start;
 }
 
 .news-hub-avatar {
@@ -65,7 +64,7 @@
 }
 
 .news-hub-name {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
@@ -238,7 +237,8 @@
   font-size: 12px;
   color: #888;
   position: relative;
-  left: 100%;
+  padding: 2px 0;
+  margin-left: 560px;
 }
 
 .news-schedule-display {

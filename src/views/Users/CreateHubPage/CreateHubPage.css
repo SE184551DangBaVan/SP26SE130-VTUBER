@@ -89,7 +89,7 @@ body:has(#side-bar.rebound-animation) .create-hub-page-container {
 .vtuber-application-wrapper {
   width: 100%;
   max-width: 450px;
-  margin-top: 80px;
+  margin-top: 20px;
 }
 
 .application-card {

@@ -262,6 +262,7 @@ export default function CommentSection({ postId, userAuth, router, commentCount,
 
       <div className='comment-input-container'>
         <div className='comment-input-wrapper'>
+          {(fanHubId && isHubMember && !checkingMembership) && 
           <img
             className='comment-input-avatar'
             src={currentUser?.avatarUrl || '/profile-pic-undefined.jpg'}
@@ -269,7 +270,7 @@ export default function CommentSection({ postId, userAuth, router, commentCount,
             onError={(e) => {
               e.target.src = '/profile-pic-undefined.jpg';
             }}
-          />
+          />}
           <div className='comment-input-box'>
             {fanHubId && !isHubMember && !checkingMembership ? (
               <div className='comment-membership-required'>
@@ -446,6 +447,7 @@ function CommentItem({
               <button
                 className={`comment-action-btn ${comment.isLikedByCurrentUser ? 'liked' : ''}`}
                 onClick={() => onLike(comment.commentId, comment.isLikedByCurrentUser)}
+                title={`${comment.isLikedByCurrentUser ? 'unlike' : 'like'}`}
               >
                 {comment.isLikedByCurrentUser ? (
                   <Favorite fontSize='small' />

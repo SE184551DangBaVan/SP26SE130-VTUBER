@@ -281,7 +281,8 @@ export default function SelectedPostPage() {
 
             <div className='post-actions'>
               <div className='post-vote-section'>
-                <div className='like-button' onClick={(e) => e.stopPropagation()}>
+                <div className='like-button' onClick={(e) => e.stopPropagation()}
+                  title={`${isLiked ? 'unlike' : 'like'}`}>
                   <input 
                     className='heart-checkbox' 
                     id={`heart-${post.postId}`} 

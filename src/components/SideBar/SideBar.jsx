@@ -6,6 +6,8 @@ import ExploreIco from '../../assets/UI-Elements/search.svg'
 import PostsIco from '../../assets/UI-Elements/post.svg'
 import GachaIco from '../../assets/UI-Elements/gacha.svg'
 import NewsIco from '../../assets/UI-Elements/news.svg'
+import HubIco from '../../assets/UI-Elements/my-hub-center.svg'
+import ShopIco from '../../assets/UI-Elements/shop.svg'
 import './SideBar.css'
 import JoinedHubsContainer from './JoinedHubsContainer'
 import { useEffect, useState } from "react"
@@ -56,13 +58,17 @@ export default function SideBar() {
       '/news-feed': 'news',
       '/create-hub': 'create-hub',
       '/gacha': 'gacha',
+      '/shop': 'shop',
     };
 
-    const currentRoute = routeToKeyMap[pathname] || pathname.replace('/', '') || 'home';
+    // Check if current route matches VTuber hub
+    const isVtuberHubRoute = vtuberHub && pathname === `/hub/${vtuberHub.subdomain}`;
+    const currentRoute = isVtuberHubRoute ? 'my-hub' : (routeToKeyMap[pathname] || pathname.replace('/', '') || 'home');
+    
     if (sideBarSelected !== currentRoute) {
       setSideBarSelected(currentRoute);
     }
-  }, [pathname]);
+  }, [pathname, vtuberHub]);
 
   const handleNavigation = (page, route) => {
     setSideBarSelected(page);
@@ -83,26 +89,28 @@ export default function SideBar() {
           <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => handleNavigation("explore", "/explore")}><img src={ExploreIco.src} alt='' className="fas"/><span>Explore</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => handleNavigation("posts", "/posts")}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'news' ? 'news' : ''}`} onClick={() => handleNavigation("news", "/news-feed")}><img src={NewsIco.src} alt='' className="fas news-ico"/><span>News</span></div>
-          <hr/>
-          <JoinedHubsContainer />
-          <hr/>
-          {vtuberHub && (
+          {vtuberHub && !loadingVtuberHub &&  (
             <div 
               className={`side-bar-button ${sideBarSelected === 'my-hub' ? 'myHub' : ''}`} 
               onClick={() => handleNavigation("my-hub", `/hub/${vtuberHub.subdomain}`)}
             >
-              <Groups className="fas"/>
+              <img src={HubIco.src} alt='' className="fas"/>
               <span>Go to your Hub</span>
             </div>
           )}
           {loadingVtuberHub && (
             <div className="side-bar-button" style={{ opacity: 0.5, cursor: 'default' }}>
-              <Groups className="fas"/>
               <span>Loading...</span>
             </div>
           )}
-          <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
+          {!vtuberHub && !loadingVtuberHub &&  (
+            <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
+          )}
+          <hr/>
+          <JoinedHubsContainer />
+          <hr/>
           <div className={`side-bar-button ${sideBarSelected === 'gacha' ? 'gacha' : ''}`} onClick={() => handleNavigation("gacha", "/gacha")}><img src={GachaIco.src} alt='' className="fas"/><span>Gacha</span></div>
+          <div className={`side-bar-button ${sideBarSelected === 'shop' ? 'shop' : ''}`} onClick={() => handleNavigation("shop", "/shop")}><img src={ShopIco.src} alt='' className="fas"/><span>Shop</span></div>
 
           <div id="side-bar-content-highlight"></div>
         </div>

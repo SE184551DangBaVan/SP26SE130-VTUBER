@@ -164,10 +164,9 @@ export default function NewsPage() {
                 className='news-hub-avatar'
               />
               <h2 className='news-hub-name'>{selectedPost.authorDisplayName}</h2>
-            
+              <span className='author-time'>{formatTimeAgo(selectedPost.createdAt)}</span>
             </div>
-            <span className='author-time'>{formatTimeAgo(selectedPost.createdAt)}</span>
-
+            
             <h1 className='news-announcement-title' style={{ color: selectedPost.fanHubThemeColor }}>
               {selectedPost.title}
             </h1>
