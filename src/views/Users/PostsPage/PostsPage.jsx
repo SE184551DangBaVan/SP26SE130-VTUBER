@@ -43,7 +43,12 @@ export default function PostsPage() {
 
       if (filteredPosts.length > 0) {
         if (append && pageNum !== 0) {
-          setPosts(prev => [...prev, ...filteredPosts]);
+          setPosts(prev => {
+            // Deduplicate posts by postId
+            const existingIds = new Set(prev.map(p => p.postId));
+            const uniqueNewPosts = filteredPosts.filter(p => !existingIds.has(p.postId));
+            return [...prev, ...uniqueNewPosts];
+          });
         } else {
           setPosts(filteredPosts);
         }

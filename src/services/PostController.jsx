@@ -440,3 +440,111 @@ export const retryAiValidation = async (postId) => {
     return err.response?.data || { success: false, message: err.message, error: "500" };
   }
 };
+
+/**
+ * Get translation of a post
+ * @param {number} postId - The ID of the post to translate
+ * @returns {Promise<Object>} Response data { translatedContent, translatedTitle, translate_language_set, extraComment }
+ */
+export const getTranslatePost = async (postId) => {
+  try {
+    const res = await axiosInstance.get(`/posts/translate`, {
+      params: { postId },
+    });
+
+    console.log("getTranslatePost response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data;
+    }
+
+    return res.data || { success: false, message: "No translation data returned" };
+  } catch (err) {
+    console.error("Translate post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get AI summary of a post
+ * @param {number} postId - The ID of the post to summarize
+ * @returns {Promise<Object>} Response data { summarizeResult }
+ */
+export const getPostSummary = async (postId) => {
+  try {
+    const res = await axiosInstance.get(`/posts/summarize`, {
+      params: { postId },
+    });
+
+    console.log("getPostSummary response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data;
+    }
+
+    return res.data || { success: false, message: "No summary data returned" };
+  } catch (err) {
+    console.error("Summarize post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Pin a post
+ * @param {number} postId - The ID of the post to pin
+ * @returns {Promise<Object>} Response data
+ */
+export const pinPost = async (postId) => {
+  try {
+    const res = await axiosInstance.put(`/posts/${postId}/pin`);
+
+    console.log("pinPost response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to pin post');
+  } catch (err) {
+    console.error("Pin post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Unpin a post
+ * @param {number} postId - The ID of the post to unpin
+ * @returns {Promise<Object>} Response data
+ */
+export const unpinPost = async (postId) => {
+  try {
+    const res = await axiosInstance.put(`/posts/${postId}/unpin`);
+
+    console.log("unpinPost response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || 'Failed to unpin post');
+  } catch (err) {
+    console.error("Unpin post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};

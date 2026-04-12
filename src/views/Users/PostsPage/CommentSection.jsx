@@ -374,6 +374,7 @@ function CommentItem({
       // TODO: Replace userId with memberId once backend adds memberId to comment response
       targetId: comment.memberId || comment.userId,
       targetName: comment.displayName || comment.username,
+      relatedCommentId: comment.commentId,
     });
   };
 

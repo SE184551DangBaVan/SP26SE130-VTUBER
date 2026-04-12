@@ -321,6 +321,12 @@ body:has(#side-bar.rebound-animation) .selected-post-page-container {
   color: #323232;
   margin: 0;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .post-text-full {
@@ -329,6 +335,32 @@ body:has(#side-bar.rebound-animation) .selected-post-page-container {
   margin: 0;
   line-height: 1.8;
   white-space: pre-wrap;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.post-text-full.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.see-more-btn-full {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.see-more-btn-full:hover {
+  color: #333;
+  text-decoration: underline;
 }
 
 /* Post Media */

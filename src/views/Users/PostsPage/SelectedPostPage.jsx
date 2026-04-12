@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { CommentRounded, ShareRounded } from '@mui/icons-material';
 import { likePost, unlikePost } from '@/services/PostController';
@@ -21,6 +21,36 @@ export default function SelectedPostPage() {
   const [displayCount, setDisplayCount] = useState(0);
   const [animatingCount, setAnimatingCount] = useState(null);
   const [animationDirection, setAnimationDirection] = useState(null);
+  
+  // Content expand state
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [needsSeeMore, setNeedsSeeMore] = useState(false);
+  const contentRef = useRef(null);
+  
+  // Check if content needs "See more" button
+  useEffect(() => {
+    if (contentRef.current && post?.content) {
+      const element = contentRef.current;
+      const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
+      const maxHeight = lineHeight * 6; // 6 lines for selected post page
+      
+      // Check after a small delay to ensure rendering is complete
+      const timer = setTimeout(() => {
+        if (element.scrollHeight > maxHeight) {
+          setNeedsSeeMore(true);
+        } else {
+          setNeedsSeeMore(false);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [post?.content]);
+  
+  const handleToggleContent = (e) => {
+    e?.stopPropagation();
+    setIsContentExpanded(!isContentExpanded);
+  };
 
   useEffect(() => {
     // Post data should be passed from the previous page
@@ -266,7 +296,22 @@ export default function SelectedPostPage() {
             <h1 className='post-title-full'>{post.title}</h1>
 
             {post.content && (
-              <p className='post-text-full'>{post.content}</p>
+              <>
+                <p 
+                  ref={contentRef}
+                  className={`post-text-full ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                >
+                  {post.content}
+                </p>
+                {needsSeeMore && (
+                  <button 
+                    className='see-more-btn-full' 
+                    onClick={handleToggleContent}
+                  >
+                    {isContentExpanded ? 'Show less' : 'See more...'}
+                  </button>
+                )}
+              </>
             )}
 
             {renderMedia()}
