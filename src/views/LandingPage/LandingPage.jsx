@@ -9,11 +9,14 @@ import BackwardButtonIco from '../../assets/UI-Elements/Backward.svg'
 import PlayButtonIco from '../../assets/UI-Elements/Play.svg'
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation'
 
 export default function LandingPage() {
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
   const lastScrollValue = useRef(0);
+
+  const router = useRouter();
 
   // Throttled scroll handler using requestAnimationFrame
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function LandingPage() {
                             <br/>Favorite Vtuber?
                         </div>
 
-                        <button className='retro-window-button'>Get Started!</button>
+                        <button className='retro-window-button' onClick={() => {router.push('/home')}}>Get Started!</button>
                     </div>
                 )}
             />
