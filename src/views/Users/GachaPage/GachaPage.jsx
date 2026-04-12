@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSideBar } from "@/contexts/SideBarContext";
 import { getCurrentUserProfile } from "@/services/UserController";
+import PointsIco from '../../../assets/UI-Elements/Coin.png'
 import "./GachaPage.css";
 
 // Mock banner data
@@ -112,7 +113,7 @@ export default function GachaPage() {
       <div className="gacha-banner-area">
         {/* Points Display */}
         <div className="gacha-points-display">
-          <div className="points-icon">💎</div>
+          <img className="points-icon" src={PointsIco.src}/>
           <span className="points-value">{userPoints}</span>
         </div>
 

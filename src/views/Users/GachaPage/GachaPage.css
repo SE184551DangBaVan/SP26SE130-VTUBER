@@ -108,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 20px;
+  padding: 4px 20px;
   background: #d4eff5;
   border: 2px solid #5a8a9a;
   border-radius: 24px;
@@ -116,7 +116,7 @@
 }
 
 .points-icon {
-  font-size: 20px;
+  width: 24px;
 }
 
 .points-value {
