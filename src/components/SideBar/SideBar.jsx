@@ -26,7 +26,6 @@ export default function SideBar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Fetch VTuber's hub if user is a VTuber
   useEffect(() => {
     const fetchVtuberHub = async () => {
       if (userAuth?.role === 'VTUBER') {
@@ -47,9 +46,7 @@ export default function SideBar() {
     fetchVtuberHub();
   }, [userAuth?.role]);
 
-  // Sync sidebar selection with current route
   useEffect(() => {
-    // Map routes to sidebar selection keys
     const routeToKeyMap = {
       '/': 'home',
       '/home': 'home',
