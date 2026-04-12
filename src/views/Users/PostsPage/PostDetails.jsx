@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getPostById } from '@/services/PostController';
-import { likePost, unlikePost } from '@/services/PostController';
+import { getPostById, likePost, unlikePost, votePoll, unVotePoll, getTranslatePost, getPostSummary } from '@/services/PostController';
+import { checkIsMember } from '@/services/FanHubController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import CommentSection from './CommentSection';
-import { votePoll, unVotePoll } from '@/services/PostController';
 import './PostDetails.css';
 import {
   ShareRounded,
@@ -19,6 +18,8 @@ import {
   Favorite,
   FavoriteBorder,
   Flag,
+  SwapHoriz,
+  PushPin,
 } from '@mui/icons-material';
 import RetroWindow from '@/components/RetroWindow/RetroWindow';
 
@@ -46,6 +47,128 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   const [extraMenuOpen, setExtraMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const menuRef = useRef();
+  
+  // Content expand state
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [needsSeeMore, setNeedsSeeMore] = useState(false);
+  const contentRef = useRef(null);
+  
+  // Translate state
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [translatedTitle, setTranslatedTitle] = useState(null);
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translateMessage, setTranslateMessage] = useState(null);
+  
+  // Summary state
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryContent, setSummaryContent] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryFetched, setSummaryFetched] = useState(false);
+  
+  // Check if content needs "See more" button
+  useEffect(() => {
+    if (contentRef.current && post?.content) {
+      const element = contentRef.current;
+      const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
+      const maxHeight = lineHeight * 5; // 5 lines for post details
+      
+      // Check after a small delay to ensure rendering is complete
+      const timer = setTimeout(() => {
+        if (element.scrollHeight > maxHeight) {
+          setNeedsSeeMore(true);
+        } else {
+          setNeedsSeeMore(false);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [post?.content]);
+  
+  const handleToggleContent = (e) => {
+    e?.stopPropagation();
+    setIsContentExpanded(!isContentExpanded);
+  };
+  
+  // AI Summary handler
+  const handleAISummary = async (e) => {
+    e?.stopPropagation();
+    
+    if (showSummary) {
+      setShowSummary(false);
+      return;
+    }
+    
+    if (summaryFetched && summaryContent) {
+      setShowSummary(true);
+      return;
+    }
+    
+    setSummaryLoading(true);
+
+    try {
+      const result = await getPostSummary(post.postId);
+      if (result?.success && result?.data?.summarizeResult) {
+        setSummaryContent(result.data.summarizeResult);
+        setSummaryFetched(true);
+        setShowSummary(true);
+      } else {
+        showSteamError(result?.message || 'Failed to generate summary', 'Error');
+      }
+    } catch (error) {
+      console.error('Summary error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to generate summary', 'Error');
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+  
+  // AI Translate handler
+  const handleAITranslate = async (e) => {
+    e?.stopPropagation();
+
+    if (translateLoading) return;
+
+    if (isTranslated) {
+      setIsTranslated(false);
+      return;
+    }
+
+    if (translatedContent || translatedTitle) {
+      setIsTranslated(true);
+      return;
+    }
+
+    setTranslateLoading(true);
+
+    try {
+      const result = await getTranslatePost(post.postId);
+      if (result?.success && result?.data) {
+        const { translatedContent, translatedTitle, translate_language_set, extraComment } = result.data;
+        
+        setTranslatedContent(translatedContent || null);
+        setTranslatedTitle(translatedTitle || null);
+
+        if (!translate_language_set && extraComment) {
+          setTranslateMessage(extraComment);
+        } else {
+          setTranslateMessage(null);
+        }
+
+        if (translatedContent || translatedTitle) {
+          setIsTranslated(true);
+        }
+      } else {
+        showSteamError(result?.message || 'Failed to translate post', 'Error');
+      }
+    } catch (error) {
+      console.error('Translate error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to translate post', 'Error');
+    } finally {
+      setTranslateLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -167,14 +290,6 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
     }
   };
 
-  const handleAISummary = () => {
-    console.log('AI Summary clicked for post:', post.postId);
-  };
-
-  const handleAITranslate = () => {
-    console.log('AI Translate clicked for post:', post.postId);
-  };
-
   const handleExtraOptionsToggle = () => {
     setExtraMenuOpen(prev => !prev);
   };
@@ -274,11 +389,48 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
             <RetroWindow
               windowWidth="100%"
               windowHeight="100%"
-              windowColor="blue" //there is only red, blue, yellow
-              windowTitle={`${post.content ? post.title : 'Post Title'}`}
+              windowColor="blue"
+              windowTitle={`${(isTranslated ? translatedTitle : post.content) ? (isTranslated ? translatedTitle : post.title) : 'Post Title'}`}
               windowContent={(
                 <div className='text-only-content'>
-                  {post.content && <p>{post.content}</p>}
+                  {(isTranslated ? translatedContent : post.content) && (
+                    <>
+                      <p
+                        ref={contentRef}
+                        className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                        style={{ padding: '0 0 12px' }}
+                      >
+                        {isTranslated ? translatedContent : post.content}
+                      </p>
+                      {needsSeeMore && (
+                        <button
+                          className='post-details-see-more-btn'
+                          onClick={handleToggleContent}
+                          style={{ padding: '4px 0 12px' }}
+                        >
+                          {isContentExpanded ? 'Show less' : 'See more...'}
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {showSummary && summaryContent && (
+                    <div className='summary-section' style={{ margin: '0 0 12px' }}>
+                      <div className='summary-header'>
+                        <h4 className='summary-title'>AI Summary</h4>
+                        <button 
+                          className='summary-close-btn' 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowSummary(false);
+                          }}
+                          title='Close summary'
+                        >
+                          <Close fontSize='small' />
+                        </button>
+                      </div>
+                      <p className='summary-content'>{summaryContent}</p>
+                    </div>
+                  )}
                   {post.hashtags && post.hashtags.length > 0 && (
                     <div className='post-hashtags'>
                       {post.hashtags.map((tag, idx) => (
@@ -334,11 +486,31 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                     </div>
                   </div>
                   <div className='post-details-actions-menu'>
-                    <button className='menu-btn' onClick={handleAISummary} title='AI Summary'>
-                      <AutoAwesome fontSize='small' />
+                    <button 
+                      className='menu-btn' 
+                      onClick={handleAISummary} 
+                      title={showSummary ? 'Hide Summary' : 'AI Summary'}
+                      disabled={summaryLoading}
+                    >
+                      {summaryLoading ? (
+                        <span className='summary-loading-spinner' />
+                      ) : (
+                        <AutoAwesome fontSize='small' />
+                      )}
                     </button>
-                    <button className='menu-btn' onClick={handleAITranslate} title='AI Translate'>
-                      <Translate fontSize='small' />
+                    <button 
+                      className='menu-btn' 
+                      onClick={handleAITranslate} 
+                      title={isTranslated ? 'Show Original' : 'AI Translate'}
+                      disabled={translateLoading}
+                    >
+                      {translateLoading ? (
+                        <span className='translate-loading-spinner' />
+                      ) : isTranslated ? (
+                        <SwapHoriz fontSize='small' />
+                      ) : (
+                        <Translate fontSize='small' />
+                      )}
                     </button>
                     <div className='extra-menu-wrapper' ref={menuRef}>
                       <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
@@ -359,8 +531,47 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                 {/* Post Content */}
                 {post.postType === 'IMAGE' || post.postType === 'VIDEO' ? (
                   <>
-                    {post.title && <h3 className='post-details-title'>{post.title}</h3>}
-                    {post.content && <p className='post-details-text'>{post.content}</p>}
+                    {(isTranslated ? translatedTitle : post.title) && (
+                      <h3 className='post-details-title'>
+                        {isTranslated ? translatedTitle : post.title}
+                      </h3>
+                    )}
+                    {(isTranslated ? translatedContent : post.content) && (
+                      <>
+                        <p
+                          ref={contentRef}
+                          className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                        >
+                          {isTranslated ? translatedContent : post.content}
+                        </p>
+                        {needsSeeMore && (
+                          <button
+                            className='post-details-see-more-btn'
+                            onClick={handleToggleContent}
+                          >
+                            {isContentExpanded ? 'Show less' : 'See more...'}
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {showSummary && summaryContent && (
+                      <div className='summary-section'>
+                        <div className='summary-header'>
+                          <h4 className='summary-title'>AI Summary</h4>
+                          <button 
+                            className='summary-close-btn' 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowSummary(false);
+                            }}
+                            title='Close summary'
+                          >
+                            <Close fontSize='small' />
+                          </button>
+                        </div>
+                        <p className='summary-content'>{summaryContent}</p>
+                      </div>
+                    )}
                   </>
                 ) : null}
 

@@ -34,14 +34,20 @@ export const reportPost = async (postId, reason) => {
  * Report a fan hub member
  * @param {number} memberId - The ID of the member to report
  * @param {string} reason - The reason for reporting
+ * @param {number} [relatedCommentId] - Optional related comment ID
  * @returns {Promise<Object>} Response data { success, message, data }
  */
-export const reportMember = async (memberId, reason) => {
+export const reportMember = async (memberId, reason, relatedCommentId) => {
   try {
-    const res = await axiosInstance.post("/fan-hub-member/report", {
+    const body = {
       memberId,
       reason,
-    });
+    };
+    if (relatedCommentId) {
+      body.relatedCommentId = relatedCommentId;
+    }
+
+    const res = await axiosInstance.post("/fan-hub-member/report", body);
 
     console.log("reportMember response:", res.data);
 
@@ -299,5 +305,127 @@ export const resolveMemberReport = async (reportId, resolveMessage) => {
       data: err.response?.data,
     });
     throw err;
+  }
+};
+
+/**
+ * Get all posts with their reports for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Object>} Response data with posts and nested reports
+ */
+export const getPostsWithReports = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/posts/reports/posts-with-reports/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getPostsWithReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data;
+    }
+
+    return res.data || { success: false, message: "No data returned" };
+  } catch (err) {
+    console.error("Get posts with reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Bulk resolve multiple reports for a post
+ * @param {number[]} reportIds - Array of report IDs to resolve
+ * @param {string} resolveMessage - Resolution message/reason
+ * @returns {Promise<Object>} Response data
+ */
+export const bulkResolveReports = async (reportIds, resolveMessage) => {
+  try {
+    const reportIdsParam = reportIds.map((id) => `reportIds=${id}`).join("&");
+    const res = await axiosInstance.put(
+      `/posts/reports/bulk-resolve?${reportIdsParam}&resolveMessage=${encodeURIComponent(resolveMessage)}`
+    );
+
+    console.log("bulkResolveReports response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || "Failed to resolve reports");
+  } catch (err) {
+    console.error("Bulk resolve reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get all members with their reports for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} pageNo - Page number
+ * @param {number} pageSize - Page size
+ * @param {string} sortBy - Sort field
+ * @returns {Promise<Object>} Response data with members and nested reports
+ */
+export const getMembersWithReports = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    const res = await axiosInstance.get(
+      `/fan-hub-member/reports/members-with-reports/${fanHubId}?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
+    );
+
+    console.log("getMembersWithReports response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data;
+    }
+
+    return res.data || { success: false, message: "No data returned" };
+  } catch (err) {
+    console.error("Get members with reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Bulk resolve multiple member reports
+ * @param {number[]} reportIds - Array of report IDs to resolve
+ * @param {string} resolveMessage - Resolution message/reason
+ * @returns {Promise<Object>} Response data
+ */
+export const bulkResolveMemberReports = async (reportIds, resolveMessage) => {
+  try {
+    const reportIdsParam = reportIds.map((id) => `reportIds=${id}`).join("&");
+    const res = await axiosInstance.put(
+      `/fan-hub-member/reports/bulk-resolve?${reportIdsParam}&resolveMessage=${encodeURIComponent(resolveMessage)}`
+    );
+
+    console.log("bulkResolveMemberReports response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    throw new Error(res.data?.message || "Failed to resolve member reports");
+  } catch (err) {
+    console.error("Bulk resolve member reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
   }
 };

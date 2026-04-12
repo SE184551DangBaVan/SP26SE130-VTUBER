@@ -227,6 +227,12 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   color: #323232;
   margin: 0;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .post-text {
@@ -234,6 +240,31 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   color: #323232;
   margin: 0;
   line-height: 1.6;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.post-text.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.see-more-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.see-more-btn:hover {
+  color: #333;
+  text-decoration: underline;
 }
 
 .post-media {
@@ -861,4 +892,222 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   .post-card {
     flex-direction: column;
   }
+}
+
+/* Translate Loading Spinner */
+.translate-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-btn:disabled:hover {
+  background: transparent;
+}
+
+/* Pinned Badge */
+.pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 152, 0, 0.12);
+  color: #e65100;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.pinned-badge svg {
+  font-size: 0.85rem;
+}
+
+.pin-icon-pinned {
+  color: #e65100;
+}
+
+/* AI Summary Section */
+.summary-section {
+  margin: 0 1rem 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(144, 202, 249, 0.15);
+  border-radius: 0.5rem;
+  border-left: 3px solid #90caf9;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.summary-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.summary-title::before {
+  content: '✨';
+  font-size: 0.9rem;
+}
+
+.summary-close-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.summary-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.summary-content {
+  font-size: 0.875rem;
+  color: #424242;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Summary Loading Spinner */
+.summary-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Pin Button & Confirmation */
+.pin-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.pin-confirm-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 0.75rem;
+  backdrop-filter: blur(2px);
+}
+
+.pin-confirm-dialog {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.pin-confirm-icon {
+  color: #1976d2;
+  margin-bottom: 0.75rem;
+}
+
+.pin-confirm-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #323232;
+  margin: 0 0 0.5rem;
+}
+
+.pin-confirm-text {
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.pin-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.pin-confirm-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.pin-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pin-confirm-cancel {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.pin-confirm-cancel:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.pin-confirm-pin {
+  background: #1976d2;
+  color: white;
+}
+
+.pin-confirm-pin:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.pin-confirm-unpin {
+  background: #e65100;
+  color: white;
+}
+
+.pin-confirm-unpin:hover:not(:disabled) {
+  background: #bf360c;
 }

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
-import { likePost, unlikePost } from '@/services/PostController';
+import { likePost, unlikePost, getTranslatePost, getPostSummary, pinPost, unpinPost } from '@/services/PostController';
+import { checkIsMember } from '@/services/FanHubController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import {
@@ -13,6 +14,9 @@ import {
   Translate,
   MoreHoriz,
   Flag,
+  SwapHoriz,
+  Close,
+  PushPin,
 } from '@mui/icons-material';
 import { votePoll, unVotePoll } from '@/services/PostController';
 import './PostsPage.css';
@@ -61,6 +65,109 @@ export default function PostCard({
   // Extra menu (report dropdown)
   const [extraMenuOpen, setExtraMenuOpen] = useState(false);
   const menuRef = useRef();
+
+  // Translate state
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [translatedTitle, setTranslatedTitle] = useState(null);
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translateMessage, setTranslateMessage] = useState(null);
+  
+  // Content expand state
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [needsSeeMore, setNeedsSeeMore] = useState(false);
+  const contentRef = useRef(null);
+  
+  // Summary state
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryContent, setSummaryContent] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryFetched, setSummaryFetched] = useState(false);
+  
+  // Pin state
+  const [userRoleInHub, setUserRoleInHub] = useState(null);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [showPinConfirm, setShowPinConfirm] = useState(false);
+  const [isPinned, setIsPinned] = useState(post?.isPinned || false);
+  
+  // Check user role in hub
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!post?.fanHubId || !userAuth) {
+        setUserRoleInHub(null);
+        return;
+      }
+      
+      try {
+        const memberData = await checkIsMember(post.fanHubId);
+        if (memberData?.roleInHub) {
+          setUserRoleInHub(memberData.roleInHub);
+        } else {
+          setUserRoleInHub(null);
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error);
+        setUserRoleInHub(null);
+      }
+    };
+    
+    checkUserRole();
+  }, [post?.fanHubId, userAuth]);
+  
+  const handlePinPost = async () => {
+    if (pinLoading) return;
+
+    setPinLoading(true);
+    try {
+      let result;
+      if (isPinned) {
+        result = await unpinPost(post.postId);
+        if (result?.success) {
+          setIsPinned(false);
+          showSteamSuccess(result.data || 'Post unpinned successfully!', result.message || 'Unpinned');
+        }
+      } else {
+        result = await pinPost(post.postId);
+        if (result?.success) {
+          setIsPinned(true);
+          showSteamSuccess(result.data || 'Post pinned successfully!', result.message || 'Pinned');
+        }
+      }
+    } catch (error) {
+      console.error('Pin/Unpin post error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to update pin status', 'Error');
+    } finally {
+      setPinLoading(false);
+      setShowPinConfirm(false);
+    }
+  };
+  
+  const canPinPost = userRoleInHub === 'MODERATOR' || userRoleInHub === 'VTUBER';
+  
+  // Check if content needs "See more" button
+  useEffect(() => {
+    if (contentRef.current && post.content) {
+      const element = contentRef.current;
+      const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
+      const maxHeight = lineHeight * 3; // 3 lines
+      
+      // Check after a small delay to ensure rendering is complete
+      const timer = setTimeout(() => {
+        if (element.scrollHeight > maxHeight) {
+          setNeedsSeeMore(true);
+        } else {
+          setNeedsSeeMore(false);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [post.content, translatedContent, isTranslated]);
+  
+  const handleToggleContent = (e) => {
+    e.stopPropagation();
+    setIsContentExpanded(!isContentExpanded);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -147,14 +254,87 @@ export default function PostCard({
     }
   };
 
-  const handleAISummary = (e) => {
+  const handleAISummary = async (e) => {
     e.stopPropagation();
-    console.log('AI Summary clicked for post:', post.postId);
+    
+    // If summary is already showing, just toggle it off
+    if (showSummary) {
+      setShowSummary(false);
+      return;
+    }
+    
+    // If we already have cached summary, just show it
+    if (summaryFetched && summaryContent) {
+      setShowSummary(true);
+      return;
+    }
+    
+    setSummaryLoading(true);
+
+    try {
+      const result = await getPostSummary(post.postId);
+      if (result?.success && result?.data?.summarizeResult) {
+        setSummaryContent(result.data.summarizeResult);
+        setSummaryFetched(true);
+        setShowSummary(true);
+      } else {
+        showSteamError(result?.message || 'Failed to generate summary', 'Error');
+      }
+    } catch (error) {
+      console.error('Summary error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to generate summary', 'Error');
+    } finally {
+      setSummaryLoading(false);
+    }
   };
 
-  const handleAITranslate = (e) => {
+  const handleAITranslate = async (e) => {
     e.stopPropagation();
-    console.log('AI Translate clicked for post:', post.postId);
+
+    if (translateLoading) return;
+
+    // If already showing translated, switch back to original (keep cached translation)
+    if (isTranslated) {
+      setIsTranslated(false);
+      return;
+    }
+
+    // If we already have cached translation, just show it without refetching
+    if (translatedContent || translatedTitle) {
+      setIsTranslated(true);
+      return;
+    }
+
+    setTranslateLoading(true);
+
+    try {
+      const result = await getTranslatePost(post.postId);
+      if (result?.success && result?.data) {
+        const { translatedContent, translatedTitle, translate_language_set, extraComment } = result.data;
+
+        // Only set translatedContent if it's not empty or null
+        setTranslatedContent(translatedContent || null);
+        setTranslatedTitle(translatedTitle || null);
+
+        if (!translate_language_set && extraComment) {
+          setTranslateMessage(extraComment);
+        } else {
+          setTranslateMessage(null);
+        }
+
+        // Only mark as translated if we have either title or content
+        if (translatedContent || translatedTitle) {
+          setIsTranslated(true);
+        }
+      } else {
+        showSteamError(result?.message || 'Failed to translate post', 'Error');
+      }
+    } catch (error) {
+      console.error('Translate error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to translate post', 'Error');
+    } finally {
+      setTranslateLoading(false);
+    }
   };
 
   const handleExtraOptionsToggle = (e) => {
@@ -203,20 +383,23 @@ export default function PostCard({
 
   // ---------- Content renderer ----------
   const renderPostTypeContent = () => {
+    const displayContent = isTranslated ? (translatedContent || post.content) : post.content;
+    const displayTitle = isTranslated ? (translatedTitle || post.title) : post.title;
+
     switch (post.postType) {
       case 'IMAGE':
-        return <ImagePostContent post={post} currentImageIndex={currentImageIndex} onPrevImage={handlePrevImage} onNextImage={handleNextImage} onDotClick={handleDotClick} />;
+        return <ImagePostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} currentImageIndex={currentImageIndex} onPrevImage={handlePrevImage} onNextImage={handleNextImage} onDotClick={handleDotClick} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
       case 'VIDEO':
-        return <VideoPostContent post={post} />;
+        return <VideoPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
       case 'TEXT':
-        return <TextPostContent post={post} />;
+        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
       case 'POLL':
-        return <PollPostContent post={post} />;
+        return <PollPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
       case 'ANNOUNCEMENT':
       case 'EVENT_SCHEDULE':
         return null;
       default:
-        return <TextPostContent post={post} />;
+        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
     }
   };
 
@@ -236,12 +419,75 @@ export default function PostCard({
             />
             <div className='post-author-details'>
               <span className='author-display-name'>{post.authorDisplayName}</span>
-              <span className='author-username'>@{post.authorUsername}</span>
+              <span className='author-username' style={hubData?.themeColor ? { color: hubData.themeColor } : {}}>
+                {formatTimeAgo(post.createdAt)}
+              </span>
+            </div>
+            {isPinned && (
+              <span className='pinned-badge'>
+                <PushPin fontSize='inherit' />
+                Pinned
+              </span>
+            )}
+          </div>
+          <div className='post-actions-menu'>
+            {canPinPost && (
+              <button
+                className='menu-btn'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPinConfirm(true);
+                }}
+                disabled={pinLoading}
+                title={isPinned ? 'Unpin post' : 'Pin post'}
+              >
+                {pinLoading ? (
+                  <span className='pin-loading-spinner' />
+                ) : (
+                  <PushPin fontSize='small' className={isPinned ? 'pin-icon-pinned' : ''} />
+                )}
+              </button>
+            )}
+            <button
+              className='menu-btn'
+              onClick={handleAISummary}
+              title={showSummary ? 'Hide Summary' : 'AI Summary'}
+              disabled={summaryLoading}
+            >
+              {summaryLoading ? (
+                <span className='summary-loading-spinner' />
+              ) : (
+                <AutoAwesome fontSize='small' />
+              )}
+            </button>
+            <button 
+              className='menu-btn' 
+              onClick={handleAITranslate} 
+              title={isTranslated ? 'Show Original' : 'AI Translate'}
+              disabled={translateLoading}
+            >
+              {translateLoading ? (
+                <span className='translate-loading-spinner' />
+              ) : isTranslated ? (
+                <SwapHoriz fontSize='small' />
+              ) : (
+                <Translate fontSize='small' />
+              )}
+            </button>
+            <div className='extra-menu-wrapper' ref={menuRef}>
+              <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+                <MoreHoriz fontSize='small' />
+              </button>
+              {extraMenuOpen && (
+                <div className='extra-dropdown'>
+                  <button className='dropdown-item' onClick={handleReportPost}>
+                    <Flag fontSize='small' />
+                    <span>Report post</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          <span className='post-time' style={hubData?.themeColor ? { color: hubData.themeColor } : {}}>
-            {formatTimeAgo(post.createdAt)}
-          </span>
         </div>
       );
     }
@@ -261,14 +507,40 @@ export default function PostCard({
           <div className='post-author-details'>
             <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
             <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
+            {isPinned && (
+              <span className='pinned-badge'>
+                <PushPin fontSize='inherit' />
+                Pinned
+              </span>
+            )}
           </div>
         </div>
         <div className='post-actions-menu'>
-          <button className='menu-btn' onClick={handleAISummary} title='AI Summary'>
-            <AutoAwesome fontSize='small' />
+          <button
+            className='menu-btn'
+            onClick={handleAISummary}
+            title={showSummary ? 'Hide Summary' : 'AI Summary'}
+            disabled={summaryLoading}
+          >
+            {summaryLoading ? (
+              <span className='summary-loading-spinner' />
+            ) : (
+              <AutoAwesome fontSize='small' />
+            )}
           </button>
-          <button className='menu-btn' onClick={handleAITranslate} title='AI Translate'>
-            <Translate fontSize='small' />
+          <button 
+            className='menu-btn' 
+            onClick={handleAITranslate} 
+            title={isTranslated ? 'Show Original' : 'AI Translate'}
+            disabled={translateLoading}
+          >
+            {translateLoading ? (
+              <span className='translate-loading-spinner' />
+            ) : isTranslated ? (
+              <SwapHoriz fontSize='small' />
+            ) : (
+              <Translate fontSize='small' />
+            )}
           </button>
           <div className='extra-menu-wrapper' ref={menuRef}>
             <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
@@ -388,6 +660,45 @@ export default function PostCard({
       {renderHeader()}
       {renderPostTypeContent()}
       {renderFooter()}
+      
+      {/* Pin Confirmation Dialog */}
+      {showPinConfirm && (
+        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
+          <div className='pin-confirm-dialog'>
+            <div className='pin-confirm-icon'>
+              <PushPin fontSize='large' />
+            </div>
+            <h4 className='pin-confirm-title'>{isPinned ? 'Unpin this post?' : 'Pin this post?'}</h4>
+            <p className='pin-confirm-text'>
+              {isPinned
+                ? 'This post will be unpinned and return to its normal position in the feed.'
+                : 'This post will be pinned to the top of the hub for all members to see.'}
+            </p>
+            <div className='pin-confirm-actions'>
+              <button
+                className='pin-confirm-btn pin-confirm-cancel'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPinConfirm(false);
+                }}
+                disabled={pinLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className={`pin-confirm-btn ${isPinned ? 'pin-confirm-unpin' : 'pin-confirm-pin'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePinPost();
+                }}
+                disabled={pinLoading}
+              >
+                {pinLoading ? (isPinned ? 'Unpinning...' : 'Pinning...') : (isPinned ? 'Unpin Post' : 'Pin Post')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -396,18 +707,50 @@ export default function PostCard({
 //  Content Sub-Components
 // ============================================================
 
-function ImagePostContent({ post, currentImageIndex, onPrevImage, onNextImage, onDotClick }) {
+function ImagePostContent({ post, displayContent, displayTitle, isTranslated, currentImageIndex, onPrevImage, onNextImage, onDotClick, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
   // Single image — no carousel needed
   if (!post.mediaUrls || post.mediaUrls.length === 1) {
     return (
       <div className='post-content'>
-        {post.title && <h3 className='post-title'>{post.title}</h3>}
-        {post.content && <p className='post-text'>{post.content}</p>}
+        {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+        {displayContent && (
+          <>
+            <p 
+              ref={contentRef}
+              className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+            >
+              {displayContent}
+            </p>
+            {needsSeeMore && (
+              <button className='see-more-btn' onClick={onToggleContent}>
+                {isContentExpanded ? 'Show less' : 'See more...'}
+              </button>
+            )}
+          </>
+        )}
+        {showSummary && summaryContent && (
+          <div className='summary-section'>
+            <div className='summary-header'>
+              <h4 className='summary-title'>AI Summary</h4>
+              <button 
+                className='summary-close-btn' 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSummaryClose();
+                }}
+                title='Close summary'
+              >
+                <Close fontSize='small' />
+              </button>
+            </div>
+            <p className='summary-content'>{summaryContent}</p>
+          </div>
+        )}
         {post.mediaUrls && post.mediaUrls.length > 0 && (
           <div className='post-media image-media'>
             <img
               src={post.mediaUrls[0]}
-              alt={post.title || 'Post image'}
+              alt={displayTitle || 'Post image'}
               onError={(e) => { e.target.src = '/placeholder-image.png'; }}
             />
           </div>
@@ -426,8 +769,40 @@ function ImagePostContent({ post, currentImageIndex, onPrevImage, onNextImage, o
   // Multiple images — carousel
   return (
     <div className='post-content'>
-      {post.title && <h3 className='post-title'>{post.title}</h3>}
-      {post.content && <p className='post-text'>{post.content}</p>}
+      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+      {displayContent && (
+        <>
+          <p 
+            ref={contentRef}
+            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+          >
+            {displayContent}
+          </p>
+          {needsSeeMore && (
+            <button className='see-more-btn' onClick={onToggleContent}>
+              {isContentExpanded ? 'Show less' : 'See more...'}
+            </button>
+          )}
+        </>
+      )}
+      {showSummary && summaryContent && (
+        <div className='summary-section'>
+          <div className='summary-header'>
+            <h4 className='summary-title'>AI Summary</h4>
+            <button 
+              className='summary-close-btn' 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSummaryClose();
+              }}
+              title='Close summary'
+            >
+              <Close fontSize='small' />
+            </button>
+          </div>
+          <p className='summary-content'>{summaryContent}</p>
+        </div>
+      )}
       <div className='post-media image-gallery'>
         <div className='image-carousel'>
           <button className='carousel-btn carousel-prev' onClick={onPrevImage}>
@@ -439,7 +814,7 @@ function ImagePostContent({ post, currentImageIndex, onPrevImage, onNextImage, o
           <div className='carousel-image-container'>
             <img
               src={post.mediaUrls[currentImageIndex]}
-              alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
+              alt={`${displayTitle || 'Post'} - Image ${currentImageIndex + 1}`}
               onError={(e) => { e.target.src = '/placeholder-image.png'; }}
             />
           </div>
@@ -472,11 +847,43 @@ function ImagePostContent({ post, currentImageIndex, onPrevImage, onNextImage, o
   );
 }
 
-function VideoPostContent({ post }) {
+function VideoPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
   return (
     <div className='post-content'>
-      {post.title && <h3 className='post-title'>{post.title}</h3>}
-      {post.content && <p className='post-text'>{post.content}</p>}
+      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+      {displayContent && (
+        <>
+          <p 
+            ref={contentRef}
+            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+          >
+            {displayContent}
+          </p>
+          {needsSeeMore && (
+            <button className='see-more-btn' onClick={onToggleContent}>
+              {isContentExpanded ? 'Show less' : 'See more...'}
+            </button>
+          )}
+        </>
+      )}
+      {showSummary && summaryContent && (
+        <div className='summary-section'>
+          <div className='summary-header'>
+            <h4 className='summary-title'>AI Summary</h4>
+            <button 
+              className='summary-close-btn' 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSummaryClose();
+              }}
+              title='Close summary'
+            >
+              <Close fontSize='small' />
+            </button>
+          </div>
+          <p className='summary-content'>{summaryContent}</p>
+        </div>
+      )}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
         <div className='post-media video-media'>
           <video controls>
@@ -496,11 +903,43 @@ function VideoPostContent({ post }) {
   );
 }
 
-function TextPostContent({ post }) {
+function TextPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
   return (
     <div className='post-content'>
-      {post.title && <h3 className='post-title'>{post.title}</h3>}
-      {post.content && <p className='post-text'>{post.content}</p>}
+      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+      {displayContent && (
+        <>
+          <p 
+            ref={contentRef}
+            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+          >
+            {displayContent}
+          </p>
+          {needsSeeMore && (
+            <button className='see-more-btn' onClick={onToggleContent}>
+              {isContentExpanded ? 'Show less' : 'See more...'}
+            </button>
+          )}
+        </>
+      )}
+      {showSummary && summaryContent && (
+        <div className='summary-section'>
+          <div className='summary-header'>
+            <h4 className='summary-title'>AI Summary</h4>
+            <button 
+              className='summary-close-btn' 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSummaryClose();
+              }}
+              title='Close summary'
+            >
+              <Close fontSize='small' />
+            </button>
+          </div>
+          <p className='summary-content'>{summaryContent}</p>
+        </div>
+      )}
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
@@ -512,7 +951,7 @@ function TextPostContent({ post }) {
   );
 }
 
-function PollPostContent({ post }) {
+function PollPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
   const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
   const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
@@ -565,8 +1004,40 @@ function PollPostContent({ post }) {
 
   return (
     <div className='post-content'>
-      {post.title && <h3 className='post-title'>{post.title}</h3>}
-      {post.content && <p className='post-text'>{post.content}</p>}
+      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+      {displayContent && (
+        <>
+          <p 
+            ref={contentRef}
+            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+          >
+            {displayContent}
+          </p>
+          {needsSeeMore && (
+            <button className='see-more-btn' onClick={onToggleContent}>
+              {isContentExpanded ? 'Show less' : 'See more...'}
+            </button>
+          )}
+        </>
+      )}
+      {showSummary && summaryContent && (
+        <div className='summary-section'>
+          <div className='summary-header'>
+            <h4 className='summary-title'>AI Summary</h4>
+            <button 
+              className='summary-close-btn' 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSummaryClose();
+              }}
+              title='Close summary'
+            >
+              <Close fontSize='small' />
+            </button>
+          </div>
+          <p className='summary-content'>{summaryContent}</p>
+        </div>
+      )}
       {post.voteOptions && (
         <div className='poll-display'>
           <div className='poll-options-list'>
