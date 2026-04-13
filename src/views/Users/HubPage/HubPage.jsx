@@ -21,6 +21,8 @@ import LoadingImg4 from '../../../assets/Decor/loading-4.gif'
 import LoadingImg5 from '../../../assets/Decor/Loading-5.gif'
 import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 
+import SpeakerIco from '../../../assets/UI-Elements/announcement.svg'
+
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
 
 export default function HubPage({ ownedHub }) {
@@ -664,6 +666,18 @@ export default function HubPage({ ownedHub }) {
                 <span className='btn-icon'>+</span>
                 <span>Create Post</span>
               </button>
+              {isOwner && (
+                <button
+                  className='create-announcement-header-btn'
+                  onClick={() => {
+                    sessionStorage.setItem('createPostPreSelectedHub', activeFanHubId);
+                    router.push('/create-announcement');
+                  }}
+                  title='Create Announcement'
+                >
+                  <img className='btn-icon' src={SpeakerIco.src} alt='Announce'/>
+                </button>
+              )}
               {!isOwner && !isMember && (
                 <button
                   className='join-fanhub-btn header-join-btn'

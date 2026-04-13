@@ -103,7 +103,7 @@ function CategoryCarousel({ category, items, userPoints, purchasedItemIds, onIte
                         <span>Purchased</span>
                       </div>
                     )}
-                    <div className="shop-item-border-accent"></div>
+                    <div className={`shop-item-border-accent ${item.price <= 20 && 'cheap'} ${item.price > 20 && item.price <= 50 && 'fair'} ${item.price > 50 && item.price <= 100 && 'epic'} ${item.price > 100 && 'legendary'}`}></div>
                     <div className="shop-item-pixel-effect"></div>
                   </div>
                 </div>
