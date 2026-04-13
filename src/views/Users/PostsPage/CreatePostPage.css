@@ -258,7 +258,12 @@
   min-height: 120px;
 }
 
-/* Textarea Wrapper for Date Picker Button */
+.content-header-row {
+  display: flex;
+  flex-direction: row;
+  gap: 60%;
+}
+
 .textarea-wrapper {
   position: relative;
 }

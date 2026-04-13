@@ -124,7 +124,6 @@
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Points Deduction Animation ── */
 .points-deduction-anim {
   position: absolute;
   left: 50%;
@@ -248,7 +247,7 @@ body:has(.purchase-modal-content) .shop-points-display {
 .modal-item-preview::before {
   content: "";
   position: absolute;
-  top: 15px;
+  top: 20px;
   left: 0;
   width: 40px;
   height: 40px;
@@ -259,7 +258,7 @@ body:has(.purchase-modal-content) .shop-points-display {
 .modal-item-preview::after {
   content: "";
   position: absolute;
-  bottom: 15px;
+  bottom: 20px;
   right: 0;
   width: 40px;
   height: 40px;
@@ -274,6 +273,7 @@ body:has(.purchase-modal-content) .shop-points-display {
   border-radius: 8px;
   background: #f3f3f6;
   padding: 8px;
+  image-rendering: pixelated;
 }
 
 .modal-item-name {
@@ -661,6 +661,7 @@ body:has(.purchase-modal-content) .shop-points-display {
   object-fit: contain;
   padding: 20px;
   position: relative;
+  image-rendering: pixelated;
   z-index: 1;
 }
 
@@ -716,25 +717,26 @@ body:has(.purchase-modal-content) .shop-points-display {
   height: 3px;
 }
 
-.shop-item-card:nth-child(4n+1) .shop-item-border-accent {
+.shop-item-card .shop-item-border-accent.fair {
   background: linear-gradient(90deg, #9b59b6, #b07cc6);
 }
 
-.shop-item-card:nth-child(4n+2) .shop-item-border-accent {
+.shop-item-card .shop-item-border-accent.cheap {
   background: linear-gradient(90deg, #3498db, #5dade2);
 }
 
-.shop-item-card:nth-child(4n+3) .shop-item-border-accent {
+.shop-item-card .shop-item-border-accent.epic {
   background: linear-gradient(90deg, #ff8c42, #ffa766);
 }
 
-.shop-item-card:nth-child(4n) .shop-item-border-accent {
+.shop-item-card .shop-item-border-accent.legendary {
   background: linear-gradient(90deg, #ff5028, #ff6b4a);
 }
 
 .shop-loading {
   padding: 40px 16px;
-  width: 100%;
+  transform: translate(-100px, -60px);
+  width: 110%;
   height: 100vh;
   display: flex;
   justify-content: center;
