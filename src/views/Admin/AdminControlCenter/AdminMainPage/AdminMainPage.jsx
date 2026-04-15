@@ -11,6 +11,9 @@ export default function AdminMainPage() {
   const [reviewReason, setReviewReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  //Windows Function cause I'm autistic
+  const [showWindow, setShowWindow] = useState(false);
+
   useEffect(() => {
     fetchApplications();
   }, []);
@@ -85,69 +88,159 @@ export default function AdminMainPage() {
   };
 
   return (
-    <div className='admin-page-container'>
-      <div className='admin-page-header'>
-        <h1>VTuber Application Management</h1>
-        <button className='refresh-btn' onClick={fetchApplications}>
-          ↻ Refresh
-        </button>
+  <div className="desktop-container">
+    {/* Desktop Background */}
+    <div className="desktop">
+
+      {/* Desktop Icon */}
+      <div 
+        className="desktop-icon"
+        onDoubleClick={() => setShowModal(false) || setSelectedApp(null) || setLoading(false) || setShowWindow(true)}
+      >
+        <div className="icon-image">📁</div>
+        <div className="icon-label">Vtuber Applications</div>
       </div>
 
-      <div className='applications-table-container'>
-        {loading ? (
-          <div className='loading-state'>Loading applications...</div>
-        ) : applications.length === 0 ? (
-          <div className='empty-state'>No applications found</div>
-        ) : (
-          <table className='applications-table'>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Channel Name</th>
-                <th>Channel Link</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => (
-                <tr key={app.id}>
-                  <td>{app.id}</td>
-                  <td>{app.username}</td>
-                  <td>{app.channelName}</td>
-                  <td>
-                    <a 
-                      href={app.channelLink} 
-                      target='_blank' 
-                      rel='noopener noreferrer'
-                      className='channel-link'
-                    >
-                      {app.channelLink}
-                    </a>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(app.createdAt)}</td>
-                  <td>
-                    <button 
-                      className='edit-btn'
-                      onClick={() => handleEditClick(app)}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* App Window */}
+      {showWindow && (
+        <div className="window-container">
+          <div className="window">
 
+            {/* Window Header */}
+            <div className="window-header">
+              <span>VTUBER_APP_MANAGER.exe</span>
+              <div className="window-controls">
+                <button onClick={() => setShowWindow(false)}>—</button>
+                <button onClick={() => setShowWindow(false)}>✕</button>
+              </div>
+            </div>
+
+            {/* Window Body (YOUR ORIGINAL UI) */}
+            <div className="window-body">
+
+              <div className='admin-page-header'>
+                <h1>VTuber Application Management</h1>
+                <button className='refresh-btn' onClick={fetchApplications}>
+                  ↻ Refresh
+                </button>
+              </div>
+
+              <div className='applications-table-container'>
+                {loading ? (
+                  <div className='loading-state'>Loading applications...</div>
+                ) : applications.length === 0 ? (
+                  <div className='empty-state'>No applications found</div>
+                ) : (
+                  <table className='applications-table'>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Channel Name</th>
+                        <th>Channel Link</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {applications.map((app) => (
+                        <tr key={app.id}>
+                          <td>{app.id}</td>
+                          <td>{app.username}</td>
+                          <td>{app.channelName}</td>
+                          <td>
+                            <a 
+                              href={app.channelLink} 
+                              target='_blank' 
+                              rel='noopener noreferrer'
+                              className='channel-link'
+                            >
+                              {app.channelLink}
+                            </a>
+                          </td>
+                          <td>
+                            <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td>{formatDate(app.createdAt)}</td>
+                          <td>
+                            <button 
+                              className='edit-btn'
+                              onClick={() => handleEditClick(app)}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                )}
+              </div>
+              <div className='applications-table-container'>
+                {loading ? (
+                  <div className='loading-state'>Loading applications...</div>
+                ) : applications.length === 0 ? (
+                  <div className='empty-state'>No applications found</div>
+                ) : (
+                  <table className='applications-table'>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Channel Name</th>
+                        <th>Channel Link</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {applications.map((app) => (
+                        <tr key={app.id}>
+                          <td>{app.id}</td>
+                          <td>{app.username}</td>
+                          <td>{app.channelName}</td>
+                          <td>
+                            <a 
+                              href={app.channelLink} 
+                              target='_blank' 
+                              rel='noopener noreferrer'
+                              className='channel-link'
+                            >
+                              {app.channelLink}
+                            </a>
+                          </td>
+                          <td>
+                            <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td>{formatDate(app.createdAt)}</td>
+                          <td>
+                            <button 
+                              className='edit-btn'
+                              onClick={() => handleEditClick(app)}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL stays unchanged */}
       {showModal && selectedApp && (
         <div className='modal-overlay' onClick={handleCloseModal}>
           <div className='modal-content' onClick={(e) => e.stopPropagation()}>
@@ -245,5 +338,6 @@ export default function AdminMainPage() {
         </div>
       )}
     </div>
+  </div>
   );
 }

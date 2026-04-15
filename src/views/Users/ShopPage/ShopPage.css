@@ -171,8 +171,7 @@ body:has(.purchase-modal-content) .shop-points-display {
   inset: 0;
   z-index: 100;
   background: rgba(115, 115, 115, 0.8);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,8 +285,23 @@ body:has(.purchase-modal-content) .shop-points-display {
   margin: 6px 0;
   color: #1a1a1a;
   padding: 0 0 0 20px;
-  border-left: 4px solid #555;
   border-radius: 4px;
+}
+
+.modal-item-name.elite {
+  border-left: 4px solid #9b59b6;
+}
+
+.modal-item-name.cheap {
+  border-left: 4px solid #3498db;
+}
+
+.modal-item-name.epic {
+  border-left: 4px solid #ff8c42;
+}
+
+.modal-item-name.legendary {
+  border-left: 4px solid #ff5028;
 }
 
 .modal-item-description {
@@ -717,7 +731,7 @@ body:has(.purchase-modal-content) .shop-points-display {
   height: 3px;
 }
 
-.shop-item-card .shop-item-border-accent.fair {
+.shop-item-card .shop-item-border-accent.elite {
   background: linear-gradient(90deg, #9b59b6, #b07cc6);
 }
 

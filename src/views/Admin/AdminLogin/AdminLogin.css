@@ -1,10 +1,10 @@
 /* From Uiverse.io by pharmacist-sabot */
 /* --- Root Variables for the component --- */
 .glitch-form-wrapper {
-    --bg-color: #0d0d0d;
-    --primary-color: #00f2ea;
-    --secondary-color: #a855f7;
-    --text-color: #e5e5e5;
+    --bg-color: #FDF7D0;
+    --primary-color: #645F3A;
+    --secondary-color: #ffffff;
+    --text-color: #666241;
     --font-family: "Fira Code", Consolas, "Courier New", Courier, monospace;
     --glitch-anim-duration: 0.5s;
 }
@@ -14,6 +14,10 @@
     height: 100vh;
     justify-content: center;
     align-items: center;
+    background-image: url('../../../assets/UI-Elements/Summer5.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .glitch-form-wrapper {
@@ -23,7 +27,11 @@
     justify-content: center;
     align-items: center;
     font-family: var(--font-family);
-    background-color: #050505;
+    background-color: #A3A283;
+    border-top: 3px solid #CBC9AA;
+    border-left: 3px solid #CBC9AA;
+    border-right: 2px solid #65664D;
+    border-bottom: 2px solid #4B4A34;
 }
 
 /* --- Card Structure --- */
@@ -31,7 +39,7 @@
     background-color: var(--bg-color);
     width: 100%;
     max-width: 380px;
-    border: 1px solid rgba(0, 242, 234, 0.2);
+    border: 1px solid #41401eb8;
     box-shadow:
         0 0 20px rgba(0, 242, 234, 0.1),
         inset 0 0 10px rgba(0, 0, 0, 0.5);
@@ -57,12 +65,6 @@
     display: flex;
     align-items: center;
     gap: 0.5em;
-}
-
-.glitch-form-wrapper .card-title svg {
-    width: 1.2em;
-    height: 1.2em;
-    stroke: var(--primary-color);
 }
 
 .glitch-form-wrapper .card-dots span {
@@ -101,7 +103,7 @@
     width: 100%;
     background: transparent;
     border: none;
-    border-bottom: 2px solid rgba(0, 242, 234, 0.3);
+    border-bottom: 2px solid rgba(22, 25, 25, 0.3);
     padding: 0.75em 0;
     font-size: 1rem;
     color: var(--text-color);

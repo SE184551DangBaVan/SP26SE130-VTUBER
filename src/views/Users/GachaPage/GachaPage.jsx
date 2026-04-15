@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSideBar } from '@/contexts/SideBarContext';
 import { getCurrentUserProfile } from '@/services/UserController';
 import { getActiveBanners, doGachaPull } from '@/services/GachaBannerController';
@@ -25,7 +25,9 @@ export default function GachaPage() {
   // Gacha result popup
   const [showGachaResult, setShowGachaResult] = useState(false);
   const [gachaResults, setGachaResults] = useState([]);
-  const [gachaAnimating, setGachaAnimating] = useState(false);
+  const [revealPhase, setRevealPhase] = useState('idle'); // 'idle' | 'reveal' | 'summary'
+  const [revealIndex, setRevealIndex] = useState(0);
+  const [revealedItems, setRevealedItems] = useState([]);
 
   // Tooltip state
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, item: null });
@@ -90,14 +92,10 @@ export default function GachaPage() {
     setShowSummonModal(true);
   };
 
-  // Confirm summon -> perform gacha pulls
+  // Confirm summon -> perform all pulls, then start reveal
   const handleConfirmSummon = async () => {
     setShowSummonModal(false);
     if (!selectedBanner) return;
-
-    setGachaAnimating(true);
-    setGachaResults([]);
-    setShowGachaResult(true);
 
     const totalPulls = summonCount;
     const results = [];
@@ -106,16 +104,22 @@ export default function GachaPage() {
       const result = await doGachaPull(selectedBanner.bannerId);
       if (result) {
         results.push(result);
-        setGachaResults([...results]);
-      }
-      // Small delay between pulls for visual effect
-      if (i < totalPulls - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 400));
       }
     }
 
     setGachaResults(results);
-    setGachaAnimating(false);
+    setShowGachaResult(true);
+
+    if (results.length <= 1) {
+      // x1: go straight to summary
+      setRevealPhase('summary');
+      setRevealedItems(results);
+    } else {
+      // x10: start reveal phase one by one
+      setRevealPhase('reveal');
+      setRevealIndex(0);
+      setRevealedItems([]);
+    }
 
     // Refresh user points
     try {
@@ -130,21 +134,34 @@ export default function GachaPage() {
     setShowSummonModal(false);
   };
 
+  // Advance to next item in reveal phase
+  const handleNextReveal = useCallback(() => {
+    if (revealIndex < gachaResults.length - 1) {
+      setRevealedItems((prev) => [...prev, gachaResults[revealIndex]]);
+      setRevealIndex((prev) => prev + 1);
+    } else {
+      // Last item, move to summary
+      setRevealedItems((prev) => [...prev, gachaResults[revealIndex]]);
+      setRevealPhase('summary');
+    }
+  }, [revealIndex, gachaResults]);
+
+  // Click on backdrop: reveal phase = next item, summary phase = close
+  const handleBackdropClick = useCallback(() => {
+    if (revealPhase === 'summary') {
+      handleGachaResultClose();
+    } else {
+      handleNextReveal();
+    }
+  }, [revealPhase, handleNextReveal]);
+
   const handleGachaResultClose = () => {
     setShowGachaResult(false);
     setGachaResults([]);
+    setRevealPhase('idle');
+    setRevealIndex(0);
+    setRevealedItems([]);
   };
-
-  // Close gacha result when clicking backdrop (only when not animating)
-  useEffect(() => {
-    if (!gachaAnimating) {
-      const handleKeyDown = (e) => {
-        if (e.key === 'Escape') handleGachaResultClose();
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [gachaAnimating]);
 
   if (loading) {
     return (
@@ -172,6 +189,19 @@ export default function GachaPage() {
 
   return (
     <div className={`gacha-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
+      {/* SVG Filters for MAIN_REWARD glow */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq">
+          <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 9 0" />
+        </filter>
+        <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq2">
+          <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 3 0" />
+        </filter>
+        <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq3">
+          <feColorMatrix values="1 0 0 0.2 0 0 1 0 0.2 0 0 0 1 0.2 0 0 0 0 2 0" />
+        </filter>
+      </svg>
+
       {/* Left Sidebar - Banner List */}
       {!sideBarRetractor && banners.length > 1 && (
         <div className="gacha-banner-sidebar">
@@ -210,7 +240,6 @@ export default function GachaPage() {
 
         {/* Banner Carousel */}
         <div className="banner-carousel">
-          {/* Navigation Arrows */}
           {banners.length > 1 && (
             <>
               <button className="banner-arrow banner-arrow-left" onClick={handlePrev}>
@@ -311,69 +340,103 @@ export default function GachaPage() {
 
       {/* Gacha Result Popup */}
       {showGachaResult && (
-        <div className="gacha-result-backdrop" onClick={!gachaAnimating ? handleGachaResultClose : undefined}>
+        <div
+          className="gacha-result-backdrop"
+          onClick={handleBackdropClick}
+        >
           <div className="gacha-result-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="gacha-result-title">
-              {gachaResults.length > 1 ? `Summon x${gachaResults.length}` : 'Summon Result'}
-            </h2>
-
-            {/* Single result - zoom out animation */}
-            {gachaResults.length === 1 && !gachaAnimating && (
-              <div className="gacha-single-result">
+            {revealPhase === 'reveal' && gachaResults[revealIndex] && (
+              <>
+                <h2 className="gacha-result-title">
+                  Obtained
+                </h2>
                 <div
-                  className={`gacha-result-card ${gachaResults[0].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'}`}
-                  onMouseMove={(e) => handleTooltipMove(e, gachaResults[0])}
+                  key={revealIndex}
+                  className={`gacha-result-card ${gachaResults[revealIndex].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-reveal-card`}
+                  onMouseMove={(e) => handleTooltipMove(e, gachaResults[revealIndex])}
                   onMouseLeave={handleTooltipLeave}
                 >
                   <div className="gacha-result-card-inner">
+                    {gachaResults[revealIndex].type === 'MAIN_REWARD' && (
+                      <div className="gacha-spin-wrap">
+                        <div className="gacha-backdrop"></div>
+                        <div className="gacha-spin gacha-spin-blur"></div>
+                        <div className="gacha-spin gacha-spin-intense"></div>
+                      </div>
+                    )}
                     <img
-                      src={gachaResults[0].imageUrl || '/gacha/item-default.jpg'}
-                      alt={gachaResults[0].itemName}
+                      src={gachaResults[revealIndex].imageUrl || '/gacha/item-default.jpg'}
+                      alt={gachaResults[revealIndex].itemName}
                       className="gacha-result-image"
                     />
-                    <span className="gacha-result-name">{gachaResults[0].itemName}</span>
+                    <span className="gacha-result-name">{gachaResults[revealIndex].itemName}</span>
                   </div>
                 </div>
-              </div>
+                <p className="gacha-result-hint">Click anywhere to continue</p>
+              </>
             )}
 
-            {/* Multiple results - grid */}
-            {gachaResults.length > 1 && !gachaAnimating && (
-              <div className="gacha-items-summary">
-                {gachaResults.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`gacha-result-card ${item.type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-result-card-anim`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                    onMouseMove={(e) => handleTooltipMove(e, item)}
-                    onMouseLeave={handleTooltipLeave}
-                  >
-                    <div className="gacha-result-card-inner">
-                      <img
-                        src={item.imageUrl || '/gacha/item-default.jpg'}
-                        alt={item.itemName}
-                        className="gacha-result-image"
-                      />
-                      <span className="gacha-result-name">{item.itemName}</span>
+            {/* SUMMARY PHASE: Grid of all items */}
+            {revealPhase === 'summary' && (
+              <>
+                <h2 className="gacha-result-title">
+                  {revealedItems.length > 1 ? `Items Obtained` : 'Summon Result'}
+                </h2>
+                {revealedItems.length === 1 ? (
+                  <div className="gacha-single-result">
+                    <div
+                      className={`gacha-result-card ${revealedItems[0].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-summary-card`}
+                      onMouseMove={(e) => handleTooltipMove(e, revealedItems[0])}
+                      onMouseLeave={handleTooltipLeave}
+                    >
+                      <div className="gacha-result-card-inner">
+                        {revealedItems[0].type === 'MAIN_REWARD' && (
+                          <div className="gacha-spin-wrap">
+                            <div className="gacha-backdrop"></div>
+                            <div className="gacha-spin gacha-spin-blur"></div>
+                            <div className="gacha-spin gacha-spin-intense"></div>
+                          </div>
+                        )}
+                        <img
+                          src={revealedItems[0].imageUrl || '/gacha/item-default.jpg'}
+                          alt={revealedItems[0].itemName}
+                          className="gacha-result-image"
+                        />
+                        <span className="gacha-result-name">{revealedItems[0].itemName}</span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Still animating */}
-            {gachaAnimating && (
-              <div className="gacha-summoning-animation">
-                <div className="gacha-spin-icon">
-                  <img src={selectedBanner?.bannerImgUrl || PointsIco.src} alt="" />
-                </div>
-                <p>Summoning...</p>
-                <div className="gacha-progress-dots">
-                  {Array.from({ length: summonCount }).map((_, i) => (
-                    <span key={i} className={`dot ${i < gachaResults.length ? 'done' : ''}`} />
-                  ))}
-                </div>
-              </div>
+                ) : (
+                  <div className="gacha-items-summary">
+                    {revealedItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`gacha-result-card ${item.type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-summary-card`}
+                        style={{ animationDelay: `${index * 0.08}s` }}
+                        onMouseMove={(e) => handleTooltipMove(e, item)}
+                        onMouseLeave={handleTooltipLeave}
+                      >
+                        <div className="gacha-result-card-inner">
+                          {item.type === 'MAIN_REWARD' && (
+                            <div className="gacha-spin-wrap">
+                              <div className="gacha-backdrop"></div>
+                              <div className="gacha-spin gacha-spin-blur"></div>
+                              <div className="gacha-spin gacha-spin-intense"></div>
+                            </div>
+                          )}
+                          <img
+                            src={item.imageUrl || '/gacha/item-default.jpg'}
+                            alt={item.itemName}
+                            className="gacha-result-image"
+                          />
+                          <span className="gacha-result-name">{item.itemName}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="gacha-result-hint">Click anywhere to exit</p>
+              </>
             )}
           </div>
         </div>
@@ -385,6 +448,7 @@ export default function GachaPage() {
           className="gacha-item-tooltip"
           style={{ left: tooltip.x + 16, top: tooltip.y - 10 }}
         >
+          <span >{tooltip.item.itemName}</span> <br/>
           <span className="tooltip-cost">{tooltip.item.cost} Pts</span>
         </div>
       )}
