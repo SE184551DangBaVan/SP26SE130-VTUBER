@@ -8,6 +8,9 @@ import {useAuth} from "@/functions/Auth/useAuth.jsx";
 import { getCurrentUserProfile, updateUserProfile } from '@/services/UserController';
 import { languageOptions } from '@/constants/languageOptions';
 
+import PointsIco from '../../assets/UI-Elements/Coin.png';
+import PaidPointsIco from "../../assets/UI-Elements/le'Gem.gif";
+
 const Navbar = () => {
     const { logout, userAuth, loading } = useAuth();
     const router = useRouter();
@@ -253,14 +256,14 @@ const Navbar = () => {
                                         <div className="coins-section">
                                             <div className="coins-display">
                                                 <span className="coin-icon-wrapper">
-                                                    <span className="coin-icon">💎</span>
+                                                    <img className="coin-icon" src={PointsIco.src} alt='points'/>
                                                     <span className="coin-tooltip">Points</span>
                                                 </span>
                                                 <span className="coin-amount">{profileData?.points ?? 0}</span>
                                             </div>
                                             <div className="coins-display paid-coins-display">
                                                 <span className="coin-icon-wrapper">
-                                                    <span className="coin-icon paid-coin-icon">💜</span>
+                                                    <img className="coin-icon paid-coin-icon" src={PaidPointsIco.src} alt='paid points'/>
                                                     <span className="coin-tooltip">Paid Points</span>
                                                 </span>
                                                 <span className="coin-amount paid-coin-amount">{profileData?.paidPoints ?? 0}</span>

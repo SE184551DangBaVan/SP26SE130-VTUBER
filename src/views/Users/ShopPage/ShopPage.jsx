@@ -103,7 +103,7 @@ function CategoryCarousel({ category, items, userPoints, purchasedItemIds, onIte
                         <span>Purchased</span>
                       </div>
                     )}
-                    <div className={`shop-item-border-accent ${item.price <= 20 && 'cheap'} ${item.price > 20 && item.price <= 50 && 'fair'} ${item.price > 50 && item.price <= 100 && 'epic'} ${item.price > 100 && 'legendary'}`}></div>
+                    <div className={`shop-item-border-accent ${item.price <= 20 && 'cheap'} ${item.price > 20 && item.price <= 50 && 'elite'} ${item.price > 50 && item.price <= 100 && 'epic'} ${item.price > 100 && 'legendary'}`}></div>
                     <div className="shop-item-pixel-effect"></div>
                   </div>
                 </div>
@@ -179,7 +179,7 @@ function PurchaseModal({ item, userPoints, onConfirm, onCancel }) {
 
           <div className='modal-item-information-block'>
             <div className='modal-item-row'>
-              <h2 className="modal-item-name">{item.itemName}</h2>
+              <h2 className={`modal-item-name ${item.price <= 20 && 'cheap'} ${item.price > 20 && item.price <= 50 && 'elite'} ${item.price > 50 && item.price <= 100 && 'epic'} ${item.price > 100 && 'legendary'}`}>{item.itemName}</h2>
               <div className="modal-price-row">
                 <span className="modal-price-label">Price</span>
                 <span className={`modal-price-value ${!canAfford ? 'price-unaffordable' : ''}`}>

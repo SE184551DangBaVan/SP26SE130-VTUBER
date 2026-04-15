@@ -593,7 +593,7 @@ body:has(.page-main-content) .nav-container .button-primary {
 }
 
 .coin-icon {
-  font-size: 20px;
+  width: 24px;
 }
 
 .coin-icon-wrapper {
@@ -643,7 +643,7 @@ body:has(.page-main-content) .nav-container .button-primary {
 }
 
 .paid-coin-icon {
-  font-size: 18px;
+  width: 22px;
 }
 
 .paid-coin-amount {

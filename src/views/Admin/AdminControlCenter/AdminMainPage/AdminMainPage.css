@@ -1,3 +1,7 @@
+body:has(.desktop-container) {
+  overflow-y: hidden;
+}
+
 .admin-page-container {
   padding: 24px;
   max-width: 1400px;
@@ -355,6 +359,186 @@
 .submit-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+body:has(.desktop-container) .logout__btn-container {
+    position: absolute;
+    top: 90% !important;
+    right: -20px !important;
+    width: 200px;
+    height: 100px;
+    z-index: 1000;
+    scale: 0.8;
+}
+
+.desktop-container {
+  height: 100vh;
+  background: url('../../../../assets/UI-Elements/Summer5.png');
+  background-size: cover;
+  font-family: "Fira Code", monospace;
+}
+
+.desktop {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.desktop-icon {
+  width: 100px;
+  height: 100px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  padding: 10px;
+  color: #3a3a2a;
+}
+
+.desktop-icon:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.icon-image {
+  font-size: 30px;
+}
+
+.icon-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.window-container {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.window {
+  width: 1200px;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
+  box-shadow: 4px 4px 0px #00000040;
+}
+
+.window-header {
+  display: flex;
+  justify-content: space-between;
+  background: #2f2f1f;
+  color: #FDF7D0;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.window-controls button {
+  background: #CBC9AA;
+  border: none;
+  margin-left: 5px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.window-body {
+  background: #FDF7D0;
+  padding: 10px;
+  max-height: 90vh;
+  overflow-y: scroll;
+}
+
+.window-body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.03) 0px,
+    rgba(0,0,0,0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+.window-body::-webkit-scrollbar {
+  width: 20px;
+}
+
+.window-body::-webkit-scrollbar-track {
+  background: #c0c0a0; /* beige track */
+  border-left: 2px solid #808060;
+  border-right: 2px solid #ffffcc;
+}
+
+.window-body::-webkit-scrollbar-thumb {
+  background: #d4d0c8;
+  border: 2px outset #ffffff;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #ffffff;
+}
+
+.window-body::-webkit-scrollbar-thumb:hover {
+  background: #c8c4b8;
+}
+
+.window-body::-webkit-scrollbar-button {
+  height: 16px;
+  background: #d4d0c8;
+  border: 2px outset #fff;
+}
+
+/* Optional: arrows (top/bottom buttons) */
+.window-body::-webkit-scrollbar-button:single-button:vertical:decrement {
+  background: #d4d0c8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><polygon points='5,2 8,7 2,7' fill='black'/></svg>") no-repeat center;
+}
+
+.window-body::-webkit-scrollbar-button:single-button:vertical:increment {
+  background: #d4d0c8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><polygon points='2,3 8,3 5,8' fill='black'/></svg>") no-repeat center;
+}
+
+.applications-table-container {
+  background: #FDF7D0;
+  border: 2px inset #999;
+}
+
+.applications-table thead {
+  background: #dcd8b0;
+}
+
+.applications-table th {
+  border-bottom: 2px solid #999;
+}
+
+.applications-table td {
+  border-bottom: 1px solid #ccc;
+}
+
+.refresh-btn,
+.edit-btn,
+.submit-btn,
+.cancel-btn {
+  background: #CBC9AA;
+  border: 2px outset #fff;
+  color: #333;
+}
+
+.refresh-btn:active,
+.edit-btn:active {
+  border: 2px inset #333;
+}
+
+.modal-content {
+  background: #FDF7D0;
+  border: 3px solid #999;
+}
+
+.modal-header {
+  background: #2f2f1f;
+  color: #fff;
 }
 
 /* Responsive */
