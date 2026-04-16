@@ -48,6 +48,12 @@ const isRememberMe = () => {
   return localStorage.getItem("token") !== null;
 };
 
+// Check if current user is ADMIN (system account)
+const isAdminUser = () => {
+  const role = sessionStorage.getItem("role") || localStorage.getItem("role");
+  return role === "ADMIN";
+};
+
 // Refresh token API call
 const refreshAuthToken = async (refreshToken) => {
   try {
@@ -117,6 +123,15 @@ axiosInstance.interceptors.response.use(
 
     // If error is 401 and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't try to refresh tokens for admin users - they use system accounts
+      if (isAdminUser()) {
+        console.warn("Admin token expired - clearing auth and redirecting to login");
+        sessionStorage.clear();
+        localStorage.clear();
+        window.dispatchEvent(new Event("storage"));
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
