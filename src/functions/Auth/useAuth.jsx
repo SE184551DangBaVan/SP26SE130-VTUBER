@@ -91,6 +91,15 @@ export const AuthProvider = ({ children }) => {
     setProfile(prev => ({ ...prev, ...updates }));
   }, []);
 
+  const setPoints = useCallback((pointsOrUpdater) => {
+    setProfile(prev => {
+      const newPoints = typeof pointsOrUpdater === 'function' 
+        ? pointsOrUpdater(prev.points) 
+        : pointsOrUpdater;
+      return { ...prev, points: newPoints };
+    });
+  }, []);
+
   // -- Actions --
 
   const login = useCallback(async (username, password, rememberMe) => {
@@ -215,11 +224,12 @@ export const AuthProvider = ({ children }) => {
     logout,
     refreshUser,
     updateProfile,
+    setPoints,
     showSessionExpired,
     setShowSessionExpired,
     ...profile, // Spreads displayName, points, etc. for direct access
     profile,     // Also provides the grouped object
-  }), [userAuth, loading, login, loginAdmin, logout, refreshUser, updateProfile, showSessionExpired, profile]);
+  }), [userAuth, loading, login, loginAdmin, logout, refreshUser, updateProfile, setPoints, showSessionExpired, profile]);
 
   return (
     <AuthContext.Provider value={value}>
