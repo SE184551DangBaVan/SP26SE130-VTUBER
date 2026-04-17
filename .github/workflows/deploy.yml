@@ -40,10 +40,24 @@ jobs:
 
           rsync -avz --delete \
             -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
-            .next/ public/ package.json package-lock.json next.config.js \
+            .next \
+            public \
+            package.json \
+            package-lock.json \
+            next.config.js \
+            ecosystem.config.js \
             ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:/home/Home/Frontend/SP26SE130-VTUBER/
 
           rm -f /tmp/deploy_key
+
+      - name: Verify Upload
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            ls -la /home/Home/Frontend/SP26SE130-VTUBER/
 
       - name: Restart Application via SSH
         uses: appleboy/ssh-action@master
