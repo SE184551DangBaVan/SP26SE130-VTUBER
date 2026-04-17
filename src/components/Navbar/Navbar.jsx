@@ -61,10 +61,11 @@ const Navbar = () => {
     const profileDropdownRef = useRef(null);
     const languageDropdownRef = useRef(null);
 
-    // Fetch user profile data when logged in
+    // Fetch user profile data when logged in (skip for ADMIN role)
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!userAuth) {
+            // Admin accounts don't have user profiles - skip fetching
+            if (!userAuth || userAuth.role === 'ADMIN') {
                 setProfileData(null);
                 return;
             }

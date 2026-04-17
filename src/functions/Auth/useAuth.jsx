@@ -75,20 +75,40 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
         try {
             const token = getAuthToken();
+            const savedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
+            
             if(token){
-                const response = await checkToken(token);
-                if(response.data.expired || !response.data.valid){
-                    console.warn("token is expired or is not valid!");
-                    setShowSessionExpired(true);
-                    logout();
-                }
-                else{
-                    const authData = {
-                        userId: response.data.id,
-                        role: response.data.role,
-                        email: response.data.username,
+                // For admin users, skip token validation - they use system accounts
+                if (savedRole === 'ADMIN') {
+                    const userId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+                    const username = sessionStorage.getItem("username") || localStorage.getItem("username");
+                    
+                    if (userId && username) {
+                        setUserAuth({
+                            userId: userId,
+                            role: 'ADMIN',
+                            email: username,
+                        });
+                    } else {
+                        // Admin tokens missing, clear auth
+                        logout();
                     }
-                    setUserAuth(authData);
+                } else {
+                    // For regular users, validate token
+                    const response = await checkToken(token);
+                    if(response.data.expired || !response.data.valid){
+                        console.warn("token is expired or is not valid!");
+                        setShowSessionExpired(true);
+                        logout();
+                    }
+                    else{
+                        const authData = {
+                            userId: response.data.id,
+                            role: response.data.role,
+                            email: response.data.username,
+                        }
+                        setUserAuth(authData);
+                    }
                 }
             }
         } catch (error) {
