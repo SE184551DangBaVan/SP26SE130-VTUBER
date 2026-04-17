@@ -1,0 +1,138 @@
+.daily-mission-dropdown {
+  width: 280px;
+  padding: 16px;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+}
+
+.daily-mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.daily-mission-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.mission-date {
+  font-size: 12px;
+  color: #888;
+  background: #f5f5f5;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mission-progress-container {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.donut-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.donut-ring {
+  fill: none;
+  stroke: #f0f0f0;
+  stroke-width: 3.5;
+}
+
+.donut-segment {
+  fill: none;
+  stroke: #00bcd4;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.donut-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  text-anchor: middle;
+  fill: #333;
+}
+
+.mission-details {
+  flex-grow: 1;
+}
+
+.mission-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.mission-milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.milestone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.milestone-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0e0e0;
+}
+
+.milestone.reached {
+  color: #555;
+}
+
+.milestone.reached .milestone-dot {
+  background: #00bcd4;
+}
+
+.milestone.claimed {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.milestone.claimed .milestone-dot {
+  background: #4caf50;
+}
+
+.mission-footer {
+  text-align: center;
+  font-size: 11px;
+  color: #888;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+.mission-footer p {
+  margin: 0;
+}
+
+.daily-mission-loading {
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}

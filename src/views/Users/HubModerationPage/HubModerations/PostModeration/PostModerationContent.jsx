@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services/ModeratorController.jsx";
-import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation } from "@/services/PostController.jsx";
+import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation, approveAllAiSafePosts, rejectAllAiUnsafePosts } from "@/services/PostController.jsx";
 import "./PostModerationContent.css";
 
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
@@ -232,6 +232,38 @@ export default function PostModerationContent({ fanHubId }) {
     }
   };
 
+  const handleApproveAllAiSafe = async () => {
+    if (!window.confirm("Are you sure you want to approve all AI_SAFE posts?")) return;
+    try {
+      const result = await approveAllAiSafePosts(fanHubId);
+      if (result?.success) {
+        showToast(result.data || "AI_SAFE posts approved successfully!", "success");
+        await fetchPosts(true);
+      } else {
+        showToast(result?.message || "Failed to approve AI_SAFE posts", "error");
+      }
+    } catch (err) {
+      console.error("Approve all AI_SAFE error:", err);
+      showToast("Error approving AI_SAFE posts", "error");
+    }
+  };
+
+  const handleRejectAllAiUnsafe = async () => {
+    if (!window.confirm("Are you sure you want to reject all AI_UNSAFE posts?")) return;
+    try {
+      const result = await rejectAllAiUnsafePosts(fanHubId);
+      if (result?.success) {
+        showToast(result.data || "AI_UNSAFE posts rejected successfully!", "success");
+        await fetchPosts(true);
+      } else {
+        showToast(result?.message || "Failed to reject AI_UNSAFE posts", "error");
+      }
+    } catch (err) {
+      console.error("Reject all AI_UNSAFE error:", err);
+      showToast("Error rejecting AI_UNSAFE posts", "error");
+    }
+  };
+
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
       case "approved": return "status-approved";
@@ -288,6 +320,10 @@ export default function PostModerationContent({ fanHubId }) {
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh posts">
           {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
         </button>
+        <div className="ai-validation-actions">
+          <button className="ai-action-btn approve-safe-btn" onClick={handleApproveAllAiSafe}>✓ Approve all AI_SAFE</button>
+          <button className="ai-action-btn reject-unsafe-btn" onClick={handleRejectAllAiUnsafe}>✕ Reject all AI_UNSAFE</button>
+        </div>
         {selectedPostIds.length > 0 && (
           <div className="bulk-actions">
             <span className="selected-count">{selectedPostIds.length} selected</span>

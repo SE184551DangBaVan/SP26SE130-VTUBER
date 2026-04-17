@@ -172,6 +172,9 @@ export default function SettingsPage() {
           setUserData(data);
         }
 
+        // Update global auth states
+        await auth.refreshUser();
+
         showSuccess("Avatar updated successfully!");
         setIsAvatarPreviewOpen(false);
         setSelectedAvatarFile(null);
@@ -267,6 +270,7 @@ export default function SettingsPage() {
       }
 
       if (profileUpdateSuccess) {
+        await auth.refreshUser();
         showSuccess("Settings saved successfully!");
       }
     } catch (error) {

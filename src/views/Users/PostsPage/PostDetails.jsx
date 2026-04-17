@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getPostById, likePost, unlikePost, votePoll, unVotePoll, getTranslatePost, getPostSummary } from '@/services/PostController';
+import { getPostById, likePost, unlikePost, votePoll, unVotePoll, getTranslatePost, getPostSummary, userDeleteOwnPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
@@ -20,6 +20,7 @@ import {
   Flag,
   SwapHoriz,
   PushPin,
+  DeleteOutline,
 } from '@mui/icons-material';
 import RetroWindow from '@/components/RetroWindow/RetroWindow';
 
@@ -28,7 +29,7 @@ const MAX_NEST_DEPTH = 5;
 export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { userAuth } = useAuth();
+  const { userAuth, points, setPoints } = useAuth();
   const { openReportModal } = useReportModal();
   
   // Determine if we're using prop-based or URL-based postId
@@ -65,6 +66,11 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   const [summaryContent, setSummaryContent] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryFetched, setSummaryFetched] = useState(false);
+  
+  // Delete state
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Check if content needs "See more" button
   useEffect(() => {
@@ -307,6 +313,27 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
     });
   };
 
+  const handleDeletePost = async () => {
+    if (deleteLoading) return;
+
+    setDeleteLoading(true);
+    try {
+      const result = await userDeleteOwnPost(post.postId);
+      if (result?.success) {
+        setIsDeleted(true);
+        showSteamSuccess('Post deleted successfully', 'Success');
+      } else {
+        showSteamError(result?.message || 'Failed to delete post', 'Error');
+      }
+    } catch (error) {
+      console.error('Delete post error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to delete post', 'Error');
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const renderLeftPanel = () => {
     switch (post.postType) {
       case 'IMAGE':
@@ -453,165 +480,215 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
           <Close />
         </button>
 
-        <div className='post-details-content'>
-          {/* Left Panel - Media */}
-          <div className='post-details-left'>
-            {loading ? (
-              <div className='post-details-loading'>Loading...</div>
-            ) : (
-              renderLeftPanel()
-            )}
+        {isDeleted ? (
+          <div className='post-deleted-view'>
+            <DeleteOutline style={{ fontSize: 64, color: '#ff4d4f', marginBottom: 16 }} />
+            <h2 className='post-deleted-title'>Post has been deleted</h2>
+            <p className='post-deleted-text'>You have successfully deleted your post.</p>
+            <button className='post-deleted-back-btn' onClick={handleClose}>
+              Go Back
+            </button>
           </div>
+        ) : (
+          <div className='post-details-content'>
+            {/* Left Panel - Media */}
+            <div className='post-details-left'>
+              {loading ? (
+                <div className='post-details-loading'>Loading...</div>
+              ) : (
+                renderLeftPanel()
+              )}
+            </div>
 
-          {/* Right Panel - Post Info + Comments */}
-          <div className='post-details-right'>
-            {loading ? (
-              <div className='post-details-loading'>Loading...</div>
-            ) : (
-              <>
-                {/* Post Header */}
-                <div className='post-details-header'>
-                  <div className='post-details-author-info'>
-                    <img
-                      className='post-details-avatar'
-                      src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-                      alt={post.authorDisplayName}
-                      onError={(e) => {
-                        e.target.src = '/profile-pic-undefined.jpg';
-                      }}
-                    />
-                    <div className='post-details-author-details'>
-                      <span className='fanhub-name'>h/{post.fanHubName}</span>
-                      <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
-                    </div>
-                  </div>
-                  <div className='post-details-actions-menu'>
-                    <button 
-                      className='menu-btn' 
-                      onClick={handleAISummary} 
-                      title={showSummary ? 'Hide Summary' : 'AI Summary'}
-                      disabled={summaryLoading}
-                    >
-                      {summaryLoading ? (
-                        <span className='summary-loading-spinner' />
-                      ) : (
-                        <AutoAwesome fontSize='small' />
-                      )}
-                    </button>
-                    <button 
-                      className='menu-btn' 
-                      onClick={handleAITranslate} 
-                      title={isTranslated ? 'Show Original' : 'AI Translate'}
-                      disabled={translateLoading}
-                    >
-                      {translateLoading ? (
-                        <span className='translate-loading-spinner' />
-                      ) : isTranslated ? (
-                        <SwapHoriz fontSize='small' />
-                      ) : (
-                        <Translate fontSize='small' />
-                      )}
-                    </button>
-                    <div className='extra-menu-wrapper' ref={menuRef}>
-                      <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
-                        <MoreHoriz fontSize='small' />
-                      </button>
-                      {extraMenuOpen && (
-                        <div className='extra-dropdown'>
-                          <button className='dropdown-item' onClick={handleReportPost}>
-                            <Flag fontSize='small' />
-                            <span>Report post</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Post Content */}
-                {post.postType === 'IMAGE' || post.postType === 'VIDEO' ? (
-                  <>
-                    {(isTranslated ? translatedTitle : post.title) && (
-                      <h3 className='post-details-title'>
-                        {isTranslated ? translatedTitle : post.title}
-                      </h3>
-                    )}
-                    {(isTranslated ? translatedContent : post.content) && (
-                      <>
-                        <p
-                          ref={contentRef}
-                          className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
-                        >
-                          {isTranslated ? translatedContent : post.content}
-                        </p>
-                        {needsSeeMore && (
-                          <button
-                            className='post-details-see-more-btn'
-                            onClick={handleToggleContent}
-                          >
-                            {isContentExpanded ? 'Show less' : 'See more...'}
-                          </button>
-                        )}
-                      </>
-                    )}
-                    {showSummary && summaryContent && (
-                      <div className='summary-section'>
-                        <div className='summary-header'>
-                          <h4 className='summary-title'>AI Summary</h4>
-                          <button 
-                            className='summary-close-btn' 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowSummary(false);
-                            }}
-                            title='Close summary'
-                          >
-                            <Close fontSize='small' />
-                          </button>
-                        </div>
-                        <p className='summary-content'>{summaryContent}</p>
+            {/* Right Panel - Post Info + Comments */}
+            <div className='post-details-right'>
+              {loading ? (
+                <div className='post-details-loading'>Loading...</div>
+              ) : (
+                <>
+                  {/* Post Header */}
+                  <div className='post-details-header'>
+                    <div className='post-details-author-info'>
+                      <img
+                        className='post-details-avatar'
+                        src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
+                        alt={post.authorDisplayName}
+                        onError={(e) => {
+                          e.target.src = '/profile-pic-undefined.jpg';
+                        }}
+                      />
+                      <div className='post-details-author-details'>
+                        <span className='fanhub-name'>h/{post.fanHubName}</span>
+                        <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
                       </div>
-                    )}
-                  </>
-                ) : null}
-
-                {/* Like/Comment/Share */}
-                <div className='post-details-footer'>
-                  <div className='post-details-footer-left'>
-                    <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}
-                      title={`${isLiked ? 'unlike' : 'like'}`}>
-                      {likeLoading ? (
-                        <span className='like-loading-spinner' />
-                      ) : isLiked ? (
-                        <Favorite fontSize='small' />
-                      ) : (
-                        <FavoriteBorder fontSize='small' />
-                      )}
-                      <span className='action-count'>{formatCount(likeCount)}</span>
-                    </button>
-                    <button className='action-btn share-btn'>
-                      <ShareRounded fontSize='small' />
-                      <span>Share</span>
-                    </button>
+                    </div>
+                    <div className='post-details-actions-menu'>
+                      <button 
+                        className='menu-btn' 
+                        onClick={handleAISummary} 
+                        title={showSummary ? 'Hide Summary' : 'AI Summary'}
+                        disabled={summaryLoading}
+                      >
+                        {summaryLoading ? (
+                          <span className='summary-loading-spinner' />
+                        ) : (
+                          <AutoAwesome fontSize='small' />
+                        )}
+                      </button>
+                      <button 
+                        className='menu-btn' 
+                        onClick={handleAITranslate} 
+                        title={isTranslated ? 'Show Original' : 'AI Translate'}
+                        disabled={translateLoading}
+                      >
+                        {translateLoading ? (
+                          <span className='translate-loading-spinner' />
+                        ) : isTranslated ? (
+                          <SwapHoriz fontSize='small' />
+                        ) : (
+                          <Translate fontSize='small' />
+                        )}
+                      </button>
+                      <div className='extra-menu-wrapper' ref={menuRef}>
+                        <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+                          <MoreHoriz fontSize='small' />
+                        </button>
+                        {extraMenuOpen && (
+                          <div className='extra-dropdown'>
+                            <button className='dropdown-item' onClick={handleReportPost}>
+                              <Flag fontSize='small' />
+                              <span>Report post</span>
+                            </button>
+                            {userAuth?.userId === post.authorId && (
+                              <button className='dropdown-item delete-option' onClick={() => {
+                                setExtraMenuOpen(false);
+                                setShowDeleteConfirm(true);
+                              }}>
+                                <DeleteOutline fontSize='small' />
+                                <span>Delete post</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Divider */}
-                <div className='post-details-divider' />
+                  {/* Post Content */}
+                  {post.postType === 'IMAGE' || post.postType === 'VIDEO' ? (
+                    <>
+                      {(isTranslated ? translatedTitle : post.title) && (
+                        <h3 className='post-details-title'>
+                          {isTranslated ? translatedTitle : post.title}
+                        </h3>
+                      )}
+                      {(isTranslated ? translatedContent : post.content) && (
+                        <>
+                          <p
+                            ref={contentRef}
+                            className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                          >
+                            {isTranslated ? translatedContent : post.content}
+                          </p>
+                          {needsSeeMore && (
+                            <button
+                              className='post-details-see-more-btn'
+                              onClick={handleToggleContent}
+                            >
+                              {isContentExpanded ? 'Show less' : 'See more...'}
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {showSummary && summaryContent && (
+                        <div className='summary-section'>
+                          <div className='summary-header'>
+                            <h4 className='summary-title'>AI Summary</h4>
+                            <button 
+                              className='summary-close-btn' 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowSummary(false);
+                              }}
+                              title='Close summary'
+                            >
+                              <Close fontSize='small' />
+                            </button>
+                          </div>
+                          <p className='summary-content'>{summaryContent}</p>
+                        </div>
+                      )}
+                    </>
+                  ) : null}
 
-                {/* Comment Section */}
-                <CommentSection
-                  postId={post.postId}
-                  userAuth={userAuth}
-                  router={router}
-                  commentCount={post.commentCount || 0}
-                  fanHubId={post.fanHubId}
-                />
-              </>
-            )}
+                  {/* Like/Comment/Share */}
+                  <div className='post-details-footer'>
+                    <div className='post-details-footer-left'>
+                      <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}
+                        title={`${isLiked ? 'unlike' : 'like'}`}>
+                        {likeLoading ? (
+                          <span className='like-loading-spinner' />
+                        ) : isLiked ? (
+                          <Favorite fontSize='small' />
+                        ) : (
+                          <FavoriteBorder fontSize='small' />
+                        )}
+                        <span className='action-count'>{formatCount(likeCount)}</span>
+                      </button>
+                      <button className='action-btn share-btn'>
+                        <ShareRounded fontSize='small' />
+                        <span>Share</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className='post-details-divider' />
+
+                  {/* Comment Section */}
+                  <CommentSection
+                    postId={post.postId}
+                    router={router}
+                    commentCount={post.commentCount || 0}
+                    fanHubId={post.fanHubId}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
+          <div className='pin-confirm-dialog delete-confirm-dialog'>
+            <div className='pin-confirm-icon delete-icon-bg'>
+              <DeleteOutline fontSize='large' />
+            </div>
+            <h4 className='pin-confirm-title'>Delete this post?</h4>
+            <p className='pin-confirm-text'>
+              Are you sure you want to delete your post? This action cannot be undone.
+            </p>
+            <div className='pin-confirm-actions'>
+              <button
+                className='pin-confirm-btn pin-confirm-cancel'
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className='pin-confirm-btn pin-confirm-unpin'
+                onClick={handleDeletePost}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Post'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

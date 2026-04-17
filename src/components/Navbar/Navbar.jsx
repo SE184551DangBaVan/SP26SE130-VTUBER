@@ -5,19 +5,47 @@ import { useRouter } from "next/navigation";
 import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd } from '@mui/icons-material';
 import { useState, useRef, useEffect } from 'react';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
-import { getCurrentUserProfile, updateUserProfile } from '@/services/UserController';
+import { updateUserProfile } from '@/services/UserController';
 import { languageOptions } from '@/constants/languageOptions';
+import NotificationDropdown from '../Notification/NotificationDropdown';
+import DailyMissionDropdown from '../DailyMission/DailyMissionDropdown';
+import { useNotifications } from '@/hooks/useNotifications';
 
 import PointsIco from '../../assets/UI-Elements/Coin.png';
 import PaidPointsIco from "../../assets/UI-Elements/le'Gem.gif";
 
 const Navbar = () => {
-    const { logout, userAuth, loading } = useAuth();
+    const {
+        logout,
+        userAuth,
+        loading,
+        displayName,
+        avatarUrl,
+        points,
+        paidPoints,
+        translateLanguage,
+        bio,
+        refreshUser
+    } = useAuth();
     const router = useRouter();
     const [navScrollOffset, setNavScrollOffset] = useState(0);
     const rafRef = useRef(null);
     const lastScrollValue = useRef(0);
     const [open, setOpen] = useState(true);
+
+    // Notifications logic
+    const {
+        notifications,
+        unreadCount,
+        handleMarkAsRead,
+        handleMarkAllAsRead,
+        handleDelete,
+        filter,
+        setFilter,
+        hasMore,
+        handleLoadMore,
+        loadingMore
+    } = useNotifications(userAuth);
 
     // Throttled scroll handler using requestAnimationFrame
     useEffect(() => {
@@ -44,9 +72,6 @@ const Navbar = () => {
         };
     }, []);
 
-    // User profile data from API
-    const [profileData, setProfileData] = useState(null);
-
     // Dropdown states
     const [dailyMissionOpen, setDailyMissionOpen] = useState(false);
     const [notificationOpen, setNotificationOpen] = useState(false);
@@ -60,26 +85,6 @@ const Navbar = () => {
     const notificationRef = useRef(null);
     const profileDropdownRef = useRef(null);
     const languageDropdownRef = useRef(null);
-
-    // Fetch user profile data when logged in (skip for ADMIN role)
-    useEffect(() => {
-        const fetchProfile = async () => {
-            // Admin accounts don't have user profiles - skip fetching
-            if (!userAuth || userAuth.role === 'ADMIN') {
-                setProfileData(null);
-                return;
-            }
-            try {
-                const result = await getCurrentUserProfile();
-                if (result) {
-                    setProfileData(result);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user profile:", error);
-            }
-        };
-        fetchProfile();
-    }, [userAuth]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -111,14 +116,14 @@ const Navbar = () => {
         setUpdatingLanguage(true);
         try {
             const result = await updateUserProfile({
-                email: profileData?.email || userAuth?.email,
-                displayName: profileData?.displayName || "",
+                email: userAuth?.email || "",
+                displayName: displayName || "",
                 translateLanguage: language,
-                bio: profileData?.bio || "",
+                bio: bio || "",
             });
 
             if (result?.success) {
-                setProfileData((prev) => ({ ...prev, translateLanguage: language }));
+                await refreshUser();
             }
         } catch (error) {
             console.error("Failed to update language:", error);
@@ -203,8 +208,8 @@ const Navbar = () => {
                                     <AssignmentOutlined />
                                 </button>
                                 {dailyMissionOpen && (
-                                    <div className="dropdown-menu daily-mission-dropdown">
-                                        <p className="dropdown-placeholder">Daily Mission Dropdown</p>
+                                    <div className="dropdown-menu navbar-daily-mission-dropdown">
+                                        <DailyMissionDropdown />
                                     </div>
                                 )}
                             </div>
@@ -217,11 +222,32 @@ const Navbar = () => {
                                     aria-label="Notifications"
                                 >
                                     <NotificationsOutlined />
+                                    {unreadCount > 0 && (
+                                        <span className="notification-badge">
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
                                 </button>
                                 {notificationOpen && (
-                                    <div className="dropdown-menu notification-dropdown">
-                                        <p className="dropdown-placeholder">Notification Dropdown</p>
-                                    </div>
+                                    <NotificationDropdown
+                                        notifications={notifications}
+                                        onMarkAllAsRead={handleMarkAllAsRead}
+                                        onDelete={handleDelete}
+                                        filter={filter}
+                                        onFilterChange={setFilter}
+                                        hasMore={hasMore}
+                                        onLoadMore={handleLoadMore}
+                                        loadingMore={loadingMore}
+                                        onNotificationClick={(notif) => {
+                                            handleMarkAsRead(notif.id);
+                                            if (notif.relatedPostId) {
+                                                router.push(`/posts?id=${notif.relatedPostId}`);
+                                            } else if (notif.triggeredByUsername) {
+                                                router.push(`/user/${notif.triggeredByUsername}`);
+                                            }
+                                            setNotificationOpen(false);
+                                        }}
+                                    />
                                 )}
                             </div>
 
@@ -233,7 +259,7 @@ const Navbar = () => {
                                     aria-label="User Profile"
                                 >
                                     <img
-                                        src={profileData?.avatarUrl || "/profile-pic-undefined.jpg"}
+                                        src={avatarUrl || "/profile-pic-undefined.jpg"}
                                         alt="User Avatar"
                                         className="user-avatar"
                                     />
@@ -243,13 +269,13 @@ const Navbar = () => {
                                         {/* Profile Header */}
                                         <div className="profile-dropdown-header">
                                             <img
-                                                src={profileData?.avatarUrl || "/profile-pic-undefined.jpg"}
+                                                src={avatarUrl || "/profile-pic-undefined.jpg"}
                                                 alt="User Avatar"
                                                 className="profile-avatar"
                                             />
                                             <div className="profile-greeting">
                                                 <span className="greeting-text">Greetings,</span>
-                                                <span className="username-text" title={`${profileData?.displayName || userAuth.email}`}>{profileData?.displayName || userAuth.email}!</span>
+                                                <span className="username-text" title={`${displayName || userAuth.email}`}>{displayName || userAuth.email}!</span>
                                             </div>
                                         </div>
 
@@ -260,14 +286,14 @@ const Navbar = () => {
                                                     <img className="coin-icon" src={PointsIco.src} alt='points'/>
                                                     <span className="coin-tooltip">Points</span>
                                                 </span>
-                                                <span className="coin-amount">{profileData?.points ?? 0}</span>
+                                                <span className="coin-amount">{points ?? 0}</span>
                                             </div>
                                             <div className="coins-display paid-coins-display">
                                                 <span className="coin-icon-wrapper">
                                                     <img className="coin-icon paid-coin-icon" src={PaidPointsIco.src} alt='paid points'/>
                                                     <span className="coin-tooltip">Paid Points</span>
                                                 </span>
-                                                <span className="coin-amount paid-coin-amount">{profileData?.paidPoints ?? 0}</span>
+                                                <span className="coin-amount paid-coin-amount">{paidPoints ?? 0}</span>
                                             </div>
                                             <button className="add-coins-btn" aria-label="Add coins">
                                                 <AddOutlined />
@@ -277,7 +303,7 @@ const Navbar = () => {
                                         {/* Menu Items */}
                                         <div className="profile-menu-items">
                                             <button className="profile-menu-item"
-                                                    onClick={() => {router.push(`/user/${profileData?.username || userAuth.userId}`)}}>
+                                                    onClick={() => {router.push(`/user/${userAuth.email}`)}}>
                                                 <PersonOutline />
                                                 <span>User profile</span>
                                             </button>
@@ -304,19 +330,19 @@ const Navbar = () => {
                                                     onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                                                 >
                                                     <TranslateOutlined />
-                                                    <span>AI Translate: {profileData?.translateLanguage || 'EN'}</span>
+                                                    <span>AI Translate: {translateLanguage || 'EN'}</span>
                                                 </button>
                                                 {languageDropdownOpen && (
                                                     <div className="language-dropdown">
                                                         {languageOptions.map((lang) => (
                                                             <button
                                                                 key={lang.value}
-                                                                className={`language-option ${profileData?.translateLanguage === lang.value ? 'active' : ''}`}
+                                                                className={`language-option ${translateLanguage === lang.value ? 'active' : ''}`}
                                                                 onClick={() => handleUpdateLanguage(lang.value)}
                                                                 disabled={updatingLanguage}
                                                             >
                                                                 {lang.label}
-                                                                {profileData?.translateLanguage === lang.value && (
+                                                                {translateLanguage === lang.value && (
                                                                     <span className="check-mark">✓</span>
                                                                 )}
                                                             </button>

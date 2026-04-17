@@ -8,20 +8,24 @@ import {
   sendComment,
   likeComment,
   unlikeComment,
+  giftComment,
 } from '@/services/CommentController';
+import { COMMENT_GIFTING_COST } from '@/constants/giftingConstants';
 import { checkIsMember } from '@/services/FanHubController';
 import { joinFanHub } from '@/services/MemberController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
-import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag } from '@mui/icons-material';
+import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist } from '@mui/icons-material';
 
 const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
 const MAX_NEST_DEPTH = 5;
 
-export default function CommentSection({ postId, userAuth, router, commentCount, fanHubId }) {
+export default function CommentSection({ postId, router, commentCount, fanHubId }) {
   const localRouter = useRouter();
   const navRouter = router || localRouter;
+  const { userAuth, points, setPoints } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -206,6 +210,47 @@ export default function CommentSection({ postId, userAuth, router, commentCount,
     }
   };
 
+  const handleGiftComment = async (commentId, authorId) => {
+    if (!userAuth) {
+      navRouter.push('/login');
+      return;
+    }
+
+    // Prevent self-gifting
+      console.log("gifting comment id:" + commentId)
+      console.log("author id: " + authorId);
+    console.log("curernt logged in uesr id: " + userAuth.userId);
+    if (userAuth.userId === authorId) {
+      showSteamError("You cannot gift yourself", "Warning");
+      return;
+    }
+
+    if (points < COMMENT_GIFTING_COST) {
+      showSteamError(`You need at least ${COMMENT_GIFTING_COST} points to send a rose.`, 'Insufficient Points');
+      return;
+    }
+
+    try {
+      const result = await giftComment(commentId);
+      if (result?.success) {
+        setPoints(prev => (prev || 0) - COMMENT_GIFTING_COST);
+        showSteamSuccess(result.data || 'Rose sent successfully!', 'Success');
+        // Refresh to update gift counts
+        setOffset(0);
+        setHasMore(true);
+        fetchComments(0);
+      } else {
+        showSteamError(result?.message || 'Failed to send rose', 'Error');
+      }
+    } catch (error) {
+      console.error('Gifting error:', error);
+      showSteamError(
+        error?.response?.data?.message || 'Failed to send rose',
+        'Error'
+      );
+    }
+  };
+
   const handleReplyClick = (commentId) => {
     setReplyingTo(replyingTo === commentId ? null : commentId);
     setReplyText('');
@@ -237,6 +282,7 @@ export default function CommentSection({ postId, userAuth, router, commentCount,
                 depth={0}
                 onLike={handleLikeComment}
                 onReply={handleReplyClick}
+                onGift={handleGiftComment}
                 replyingTo={replyingTo}
                 replyText={replyText}
                 setReplyText={setReplyText}
@@ -328,6 +374,7 @@ function CommentItem({
   comment,
   depth,
   onLike,
+  onGift,
   onReply,
   replyingTo,
   replyText,
@@ -344,6 +391,7 @@ function CommentItem({
   const [hasMoreReplies, setHasMoreReplies] = useState(comment.hasChildren);
   const [repliesOffset, setRepliesOffset] = useState(0);
   const [commentMenuOpen, setCommentMenuOpen] = useState(false);
+  const [giftLoading, setGiftLoading] = useState(false);
   const commentMenuRef = useRef();
   const isReplying = replyingTo === comment.commentId;
 
@@ -371,8 +419,7 @@ function CommentItem({
     }
     openReportModal({
       type: REPORT_TYPE.MEMBER,
-      // TODO: Replace userId with memberId once backend adds memberId to comment response
-      targetId: comment.memberId || comment.userId,
+      targetId: comment.memberId,
       targetName: comment.displayName || comment.username,
       relatedCommentId: comment.commentId,
     });
@@ -457,6 +504,26 @@ function CommentItem({
                 )}
                 <span>{comment.likeCount || 0}</span>
               </button>
+
+              <button
+                className={`comment-action-btn gift-btn`}
+                onClick={async () => {
+                  if (giftLoading) return;
+                  setGiftLoading(true);
+                  await onGift(comment.commentId, comment.userId);
+                  setGiftLoading(false);
+                }}
+                disabled={giftLoading}
+                title={`Send a rose (${COMMENT_GIFTING_COST} points)`}
+              >
+                {giftLoading ? (
+                  <div className="gift-loading-spinner-small" />
+                ) : (
+                  <LocalFlorist fontSize='small' style={{ color: '#e91e63' }} />
+                )}
+                <span>{comment.giftCount || 0}</span>
+              </button>
+
               {depth < MAX_NEST_DEPTH && (
                 <button
                   className='comment-action-btn'
@@ -519,6 +586,7 @@ function CommentItem({
               depth={depth + 1}
               onLike={onLike}
               onReply={onReply}
+              onGift={onGift}
               replyingTo={replyingTo}
               replyText={replyText}
               setReplyText={setReplyText}

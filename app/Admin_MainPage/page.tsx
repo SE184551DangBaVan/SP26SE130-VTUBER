@@ -10,30 +10,29 @@ import LogoutButton from '@/functions/AccountActions/LogoutButton';
 
 export default function AdminMainPageRoute() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const authen = useAuth();
-  const userAuth = authen ? authen.userAuth : null;
+  const [firebaseLoading, setFirebaseLoading] = useState(true);
+  const { userAuth, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser || null);
-      setLoading(false);
+      setFirebaseLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      // Redirect to admin login if not authenticated or not ADMIN role
+    if (!firebaseLoading && !authLoading) {
+      console.log(userAuth);
       if (!userAuth || userAuth.role !== 'ADMIN') {
         router.push('/login/admin');
       }
     }
-  }, [userAuth, loading, router]);
+  }, [userAuth, firebaseLoading, authLoading, router]);
 
-  if (loading) return <div className="loader" />;
+  if (firebaseLoading || authLoading) return <div className="loader" />;
   
   // Only render if user has ADMIN role
   if (!userAuth || userAuth.role !== 'ADMIN') {

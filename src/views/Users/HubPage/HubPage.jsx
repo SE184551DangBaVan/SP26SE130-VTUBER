@@ -45,7 +45,6 @@ export default function HubPage({ ownedHub }) {
   const [hubData, setHubData] = useState(ownedHub || null);
   const [posts, setPosts] = useState([]);
   const [members, setMembers] = useState([]);
-  const [memberDetails, setMemberDetails] = useState({});
   const [postsLoading, setPostsLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('latest');
@@ -272,28 +271,9 @@ export default function HubPage({ ownedHub }) {
 
       setMembersLoading(true);
       try {
+          // currently fetches 50 at once and no pagination
         const membersData = await getHubMembers(activeFanHubId, 0, 50, 'joinedAt');
         setMembers(membersData);
-
-        const memberDetailsMap = {};
-
-        await Promise.all(
-          membersData.map(async (member) => {
-            try {
-              const userData = await getUserById(member.userId);
-              if (userData) {
-                // Store by member.id (not userId) for easier access when promoting
-                memberDetailsMap[member.id] = {
-                  ...userData,
-                  memberData: member
-                };
-              }
-            } catch (error) {
-              console.error(`Error fetching user ${member.userId}:`, error);
-            }
-          })
-        );
-        setMemberDetails(memberDetailsMap);
       } catch (error) {
         console.error('Error fetching members:', error);
       } finally {
@@ -859,13 +839,12 @@ export default function HubPage({ ownedHub }) {
                 ) : (
                   <div className='members-list'>
                     {members.map((member) => {
-                      const userDetails = memberDetails[member.id];
                       const isAlreadyModerator = member.roleInHub === 'MODERATOR';
                       return (
                         <div key={member.id} className='member-item'>
                           <img
                             className='member-avatar'
-                            src={userDetails?.avatarUrl || '/profile-pic-undefined.jpg'}
+                            src={member.avatarUrl || '/profile-pic-undefined.jpg'}
                             alt={member.displayName}
                             onError={(e) => {
                               e.target.src = '/profile-pic-undefined.jpg';
