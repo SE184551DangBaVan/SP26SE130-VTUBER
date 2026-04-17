@@ -32,6 +32,7 @@ jobs:
           source: ".next/,public/,package.json,package-lock.json,next.config.js"
           target: "/home/Home/Frontend/SP26SE130-VTUBER/"
           strip_components: 0
+          rm: true
 
       - name: Restart Application via SSH
         uses: appleboy/ssh-action@master
