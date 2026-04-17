@@ -32,7 +32,6 @@ jobs:
           script: |
             mkdir -p /home/Home/Frontend/SP26SE130-VTUBER/
             sudo chown -R $USER:$USER /home/Home/Frontend/SP26SE130-VTUBER/
-            whoami && ls -la /home/Home/Frontend/
 
       - name: Upload Build to VM
         run: |
@@ -44,7 +43,7 @@ jobs:
             .next/ public/ package.json package-lock.json next.config.js \
             ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:/home/Home/Frontend/SP26SE130-VTUBER/
 
-          rm /tmp/deploy_key
+          rm -f /tmp/deploy_key
 
       - name: Restart Application via SSH
         uses: appleboy/ssh-action@master
@@ -57,6 +56,5 @@ jobs:
             npm install --omit=dev
 
             sudo $(which pm2) delete Fanhub_Vtuber || true
-            sudo PORT=80 $(which pm2) start npm --name "Fanhub_Vtuber" -- start
-
+            sudo $(which pm2) start ecosystem.config.js --env production
             sudo $(which pm2) save
