@@ -45,19 +45,10 @@ jobs:
             package.json \
             package-lock.json \
             next.config.js \
-            ecosystem.config.js \
+            ecosystem.config.cjs \
             ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:/home/Home/Frontend/SP26SE130-VTUBER/
 
           rm -f /tmp/deploy_key
-
-      - name: Verify Upload
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            ls -la /home/Home/Frontend/SP26SE130-VTUBER/
 
       - name: Restart Application via SSH
         uses: appleboy/ssh-action@master
@@ -68,7 +59,7 @@ jobs:
           script: |
             cd /home/Home/Frontend/SP26SE130-VTUBER/
             npm install --omit=dev
-
+            
             sudo $(which pm2) delete Fanhub_Vtuber || true
-            sudo $(which pm2) start ecosystem.config.js --env production
+            sudo $(which pm2) start ecosystem.config.cjs --env production
             sudo $(which pm2) save
