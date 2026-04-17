@@ -32,17 +32,19 @@ jobs:
           script: |
             mkdir -p /home/Home/Frontend/SP26SE130-VTUBER/
             sudo chown -R $USER:$USER /home/Home/Frontend/SP26SE130-VTUBER/
+            whoami && ls -la /home/Home/Frontend/
 
       - name: Upload Build to VM
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".next/,public/,package.json,package-lock.json,next.config.js"
-          target: "/home/Home/Frontend/SP26SE130-VTUBER/"
-          strip_components: 0
-          rm: true
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            .next/ public/ package.json package-lock.json next.config.js \
+            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:/home/Home/Frontend/SP26SE130-VTUBER/
+
+          rm /tmp/deploy_key
 
       - name: Restart Application via SSH
         uses: appleboy/ssh-action@master
