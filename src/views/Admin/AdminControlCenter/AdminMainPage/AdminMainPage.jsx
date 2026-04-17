@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { DESKTOP_ICONS_CONFIG } from '../AdminDesktopConfig/desktopIconsConfig';
 import './AdminMainPage.css';
 
+import AdminIco from '../../../../assets/UI-Elements/admin-logo.svg';
+
 export default function AdminMainPage() {
   const [showWindow, setShowWindow] = useState(false);
   const [activeWindowId, setActiveWindowId] = useState(null);
@@ -25,12 +27,9 @@ export default function AdminMainPage() {
   return (
     <div className="desktop-container">
       <div className="desktop-container-loader">
+        <img className='admin-logo' src={AdminIco.src} />
         <div className='desktop-container-loader-watermark'>
-          ⢀⣀⣀⠀ ⣀⣀⡀<br/>
-          ⢸⣶⣹⠀ ⣷⢞⡅⠀⣤⡆⠀⠀⠀⠀⠀⠀⠀⠀  ⣿⡇<br/>
-          ⢸⡳⢼⠀ ⡟⡾⡄⠿⣿⡿⠇  ⣿⡇⠀⣿⣿⠀⣿⡿⠛⢿⣧⠀ ⣼⣿⠛⢿⣿ ⣿⡿⠻⡟<br/>
-          ⢸⡳⢾⣤ ⣷⣣⠇⠀⣿⡇⠀  ⣿⡇⠀⣽⣿⠀⣿⡇⠀ ⢸⣿⠀⣿⡿⠶⠾⠿ ⣿⡇⠀⠁<br/>
-          ⠀⠙⢷⣚⣮⠟⠁⠀ ⠻⣷⡄   ⠿⣷⣤⣿⣿⠀⣿⣧⣤⣾⠟⠀ ⠻⣿⣤⣾⠿   ⣿⡇<br/>
+          FANHUB ADMIN
         </div>
       </div>
 

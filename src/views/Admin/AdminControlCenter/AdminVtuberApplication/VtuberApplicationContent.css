@@ -3,8 +3,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e0e0e0;
+  padding: 5px 15px;
+  padding-bottom: 10px;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
 .admin-page-header h1 {
@@ -126,7 +130,7 @@
 }
 
 /* Modal Styles */
-.modal-overlay {
+.window .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -139,35 +143,42 @@
   z-index: 1000;
 }
 
-.modal-content {
+.window .modal-content {
   background: #fff;
   border-radius: 12px;
   width: 90%;
+  border-radius: 0;
   max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.modal-header {
+.window .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
-.modal-header h2 {
+.window .modal-header h2 {
   margin: 0;
-  font-size: 22px;
-  color: #1a1a2e;
+  font-size: 20px;
+  font-weight: 400;
+  color: #101010;
+  font-family: 'Pixelify Sans', sans-serif;
 }
 
-.modal-close {
+.window .modal-close {
   background: none;
   border: none;
   font-size: 28px;
-  color: #999;
+  color: #111111;
   cursor: pointer;
   line-height: 1;
   padding: 0;
@@ -180,107 +191,124 @@
   transition: background-color 0.2s;
 }
 
-.modal-close:hover {
+.window .modal-close:hover {
   background-color: #f0f0f0;
   color: #333;
 }
 
-.modal-body {
+.window .modal-body {
   padding: 24px;
   max-height: 65vh;
   overflow-y: scroll;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
-.modal-body::-webkit-scrollbar {
+.window .modal-body::-webkit-scrollbar {
   width: 0;
 }
 
-.application-details {
+.window .application-details {
   margin-bottom: 24px;
   padding: 16px;
-  background-color: #f9f9f9;
+  background-color: #D7CDA9;
   border-radius: 8px;
 }
 
-.detail-row {
+.window .detail-row {
   display: flex;
   margin-bottom: 12px;
   gap: 12px;
 }
 
-.detail-row:last-child {
+.window .detail-row:last-child {
   margin-bottom: 0;
 }
 
-.detail-label {
+.window .detail-label {
   font-weight: 600;
   color: #555;
   min-width: 120px;
   flex-shrink: 0;
 }
 
-.detail-value {
+.window .detail-value {
   color: #333;
   word-break: break-word;
 }
 
-.review-form {
+.window .review-form {
   margin-top: 20px;
 }
 
-.form-group {
+.window .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.window .form-group label {
+  font-family: 'Pixelify Sans', sans-serif;
   display: block;
   font-weight: 600;
-  color: #333;
+  color: #555555;
   margin-bottom: 8px;
   font-size: 14px;
 }
 
-.status-buttons {
+.window .status-buttons {
   display: flex;
   gap: 12px;
 }
 
-.status-option-btn {
+.window .status-option-btn {
   flex: 1;
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  background-color: #fff;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
   color: #555;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.status-option-btn:hover {
-  border-color: #4a90d9;
-  color: #4a90d9;
+.window .status-option-btn:hover {
+  background: #84845d;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
-.status-option-btn.selected {
-  border-color: #28a745;
-  background-color: #28a745;
-  color: #fff;
+.window .status-option-btn.selected {
+  color: #155724;
+  background: #838261;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
-.status-option-btn.reject.selected {
-  border-color: #dc3545;
-  background-color: #dc3545;
+.window .status-option-btn.reject.selected {
+  color: rgb(150, 0, 0);
+  background: #838261;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
 }
 
-.reason-input {
+.window .reason-input {
   width: 100%;
   padding: 12px;
   font-size: 14px;
-  font-family: inherit;
-  border: 2px solid #e0e0e0;
-  background-color: #ccc;
+  font-family: 'Jersey 20', sans-serif;
+  background-color: #FEFBD6;
   color: #333;
   border-radius: 6px;
   resize: vertical;
@@ -288,53 +316,64 @@
   box-sizing: border-box;
 }
 
-.reason-input:focus {
+.window .reason-input:focus {
   outline: none;
   border-color: #4a90d9;
 }
 
-.modal-footer {
+.window .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid #e0e0e0;
+  background: #A3A283;
 }
 
-.cancel-btn {
+.window .cancel-btn {
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
   color: #555;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 6px;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.cancel-btn:hover {
-  background-color: #e0e0e0;
+.window .cancel-btn:hover {
+  background: #838261;
 }
 
-.submit-btn {
+.window .submit-btn {
   padding: 10px 24px;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
-  background-color: #4a90d9;
-  border: none;
-  border-radius: 6px;
+  color: #555;
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border 0.3s ease;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background-color: #3a7bc8;
+.window .submit-btn:hover:not(:disabled) {
+  background: #838261;
 }
 
-.submit-btn:disabled {
-  background-color: #ccc;
+.window .submit-btn:disabled {
+  background-color: #5b5a4c;
+  color: #999;
+  border-top: 3px solid #cbc9aa00;
+  border-left: 3px solid #cbc9aa00;
+  border-right: 2px solid #65664d00;
+  border-bottom: 2px solid #4b4a3400;
+  box-shadow: 0 0 0 #00000000;
+  transform: translate(2px, 2px);
   cursor: not-allowed;
 }
 

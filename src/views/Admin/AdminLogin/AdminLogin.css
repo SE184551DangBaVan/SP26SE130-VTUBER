@@ -1,3 +1,60 @@
+.app:has(.glitch-form-wrapper) .desktop-container-loader {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  background-color: #303030;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 60px;
+  animation: retro-slow-pop 4s forwards
+}
+
+.app:has(.glitch-form-wrapper) .desktop-container-loader .admin-logo {
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  animation: retro-slow-fade 2s forwards;
+}
+
+.app:has(.glitch-form-wrapper) .desktop-container-loader .desktop-container-loader-watermark {
+  font-family: "Bitcount Grid Double", system-ui;
+  font-size: 96px;
+  padding: 40px 0 0 20px;
+  color: #ffffff40;
+  line-height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  animation: retro-slow-fade 2s forwards;
+}
+
+@keyframes retro-slow-pop {
+  0% {
+    background-color: #303030;
+  }
+  60% {
+    background-color: #303030;
+  }
+  100% {
+    background-color: #ffffff00;
+  }
+}
+
+@keyframes retro-slow-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 /* From Uiverse.io by pharmacist-sabot */
 /* --- Root Variables for the component --- */
 .glitch-form-wrapper {
@@ -32,6 +89,10 @@
     border-left: 3px solid #CBC9AA;
     border-right: 2px solid #65664D;
     border-bottom: 2px solid #4B4A34;
+    z-index: 1;
+    opacity: 0;
+    animation: retro-slow-fade 0.5s forwards;
+    animation-delay: 4s;
 }
 
 /* --- Card Structure --- */

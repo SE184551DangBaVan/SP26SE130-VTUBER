@@ -5,6 +5,7 @@ import './AdminLogin.css'
 import { useState } from 'react';
 import { showSuccess, showError, showLoading, updateToast } from '../../../utils/toastUtils';
 import { adminLogin, useAuth } from '../../../functions/Auth/useAuth';
+import AdminIco from '../../../assets/UI-Elements/admin-logo.svg';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -41,49 +42,62 @@ export default function AdminLogin() {
     };
 
   return (
-    <div className="glitch-form-wrapper">
+    <>
+      <div className="desktop-container-loader">
+        <img className='admin-logo' src={AdminIco.src} alt="Admin logo" />
+        <div className='desktop-container-loader-watermark'>
+          FANHUB ADMIN
+        </div>
+      </div>
+
+      <div className="glitch-form-wrapper">
         {/* From Uiverse.io by pharmacist-sabot*/}
         <form className="glitch-card" onSubmit={handleAdminLogin}>
-            <div className="card-header">
+          <div className="card-header">
             <div className="card-title">
-                <span>ADMIN_LOGIN</span>
+              <span>ADMIN_LOGIN</span>
             </div>
 
             <div className="card-dots"><span></span><span></span><span></span></div>
-            </div>
+          </div>
 
-            <div className="card-body">
+          <div className="card-body">
             <div className="form-group">
-                <input
+              <input
                 type="text"
                 id="username"
                 name="username"
                 placeholder=""
                 required
-                value={username} onChange={(e) => setUsername(e.target.value)}
-                />
-                <label htmlFor="username" className="form-label" data-text="USERNAME"
-                >USERNAME</label>
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <label htmlFor="username" className="form-label" data-text="USERNAME">
+                USERNAME
+              </label>
             </div>
 
             <div className="form-group">
-                <input
+              <input
                 type="password"
                 id="password"
                 name="password"
                 placeholder=""
                 required
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                />
-                <label htmlFor="password" className="form-label" data-text="PASSWORD"
-                >PASSWORD</label>
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <label htmlFor="password" className="form-label" data-text="PASSWORD">
+                PASSWORD
+              </label>
             </div>
 
             <button data-text="SYSTEM_LOGIN" type="submit" className="submit-btn">
-                <span className="btn-text">SYSTEM_LOGIN</span>
+              <span className="btn-text">SYSTEM_LOGIN</span>
             </button>
-            </div>
+          </div>
         </form>
-    </div>
+      </div>
+    </>
   )
 }
