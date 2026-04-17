@@ -353,7 +353,6 @@ export default function PostModerationContent({ fanHubId }) {
                 <th className="sortable" onClick={() => handleSort("id")}>Post ID{getSortIcon("id")}</th>
                 <th>Author</th>
                 <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
-                <th>Title</th>
                 <th>Content</th>
                 <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
                 <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
@@ -373,13 +372,15 @@ export default function PostModerationContent({ fanHubId }) {
                   <td className="post-id">#{post.postId}</td>
                   <td className="author-display-name">{post.authorDisplayName}</td>
                   <td className="post-type"><span className="post-type-badge">{getPostTypeLabel(post.postType)}</span></td>
-                  <td className="post-title">{post.title}</td>
-                  <td className="post-content"><span className="content-preview">{post.content}</span></td>
+                  <td className="post-content">
+                    <div className="post-title" title={post.title}>{post.title}</div>
+                    <span className="content-preview">{post.content}</span>
+                  </td>
                   <td className="post-action" onClick={(e) => e.stopPropagation()}>
                     <StatusDropdown postId={post.postId} currentStatus={post.status} isOpen={openDropdownId === post.postId} onOpenChange={setOpenDropdownId} onStatusChange={(newStatus) => handleStatusChange(post.postId, newStatus, post.status)} />
                   </td>
                   <td className="post-ai-validation"><span className={`ai-validation-badge ${getAiValidationStatusClass(post.aiValidationStatus)}`}>{post.aiValidationStatus || "UNKNOWN"}</span></td>
-                  <td className="post-created-date"><span className="date-display">{formatDate(post.createdAt)}</span></td>
+                  <td className="post-created-date"><span className="date-display">{formatDate(post.createdAt || post.createdDate || post.dateCreated)}</span></td>
                 </tr>
               ))}
             </tbody>
