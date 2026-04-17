@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
+export const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
 
 export const getAuthToken = () => {
   return sessionStorage.getItem("token") || localStorage.getItem("token");

@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation';
 import './AdminLogin.css'
 import { useState } from 'react';
 import { showSuccess, showError, showLoading, updateToast } from '../../../utils/toastUtils';
-import { adminLogin } from '../../../functions/Auth/useAuth';
+import { adminLogin, useAuth } from '../../../functions/Auth/useAuth';
 
 export default function AdminLogin() {
   const router = useRouter();
+  const { loginAdmin } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +20,7 @@ export default function AdminLogin() {
       const toastId = showLoading("Logging in...");
       try {
         setError("");
-        const response = await adminLogin(username, password);
+        const response = await loginAdmin(username, password);
         if (response) {
           updateToast(toastId, "success", "Login Success!");
           setTimeout(() => {

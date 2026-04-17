@@ -9,27 +9,30 @@ import AdminLogin from '@/views/Admin/AdminLogin/AdminLogin';
 
 export default function AdminLoginPage() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const authen = useAuth();
-  const userAuth = authen ? authen.userAuth : null;
+  const [firebaseLoading, setFirebaseLoading] = useState(true);
+  const { userAuth, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser || null);
-      setLoading(false);
+      setFirebaseLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!loading && userAuth) {
-      router.push('/');
+    if (!firebaseLoading && !authLoading && userAuth) {
+      if (userAuth.role === 'ADMIN') {
+        router.push('/Admin_MainPage');
+      } else {
+        router.push('/');
+      }
     }
-  }, [userAuth, loading, router]);
+  }, [userAuth, firebaseLoading, authLoading, router]);
 
-  if (loading) return <div className="loader" />;
+  if (firebaseLoading || authLoading) return <div className="loader" />;
   if (userAuth) return null;
 
   return (
