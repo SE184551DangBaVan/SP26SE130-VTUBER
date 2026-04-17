@@ -548,3 +548,56 @@ export const unpinPost = async (postId) => {
     throw err;
   }
 };
+
+/**
+ * Approve all posts with "AI_SAFE" status in a specific fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Response data
+ */
+export const approveAllAiSafePosts = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/ai-validation/approve-all?fanHubId=${fanHubId}`);
+    return res.data;
+  } catch (err) {
+    console.error("Approve all AI_SAFE posts error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Reject all posts with "AI_UNSAFE" status in a specific fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Response data
+ */
+export const rejectAllAiUnsafePosts = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/ai-validation/reject-all?fanHubId=${fanHubId}`);
+    return res.data;
+  } catch (err) {
+    console.error("Reject all AI_UNSAFE posts error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * User deletes their own post
+ * @param {number} postId - Post ID
+ * @returns {Promise<Object>} Response data
+ */
+export const userDeleteOwnPost = async (postId) => {
+  try {
+    const res = await axiosInstance.put(`/posts/delete/${postId}`);
+
+    console.log("userDeleteOwnPost response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Delete own post error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+

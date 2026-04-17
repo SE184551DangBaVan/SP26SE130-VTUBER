@@ -57,6 +57,50 @@
   transform: none;
 }
 
+/* AI Validation Actions */
+.ai-validation-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ai-action-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.ai-action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.approve-safe-btn {
+  background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
+}
+
+.approve-safe-btn:hover {
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.4);
+}
+
+.reject-unsafe-btn {
+  background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(198, 40, 40, 0.3);
+}
+
+.reject-unsafe-btn:hover {
+  box-shadow: 0 4px 16px rgba(198, 40, 40, 0.4);
+}
+
 /* Bulk Actions */
 .bulk-actions {
   display: flex;

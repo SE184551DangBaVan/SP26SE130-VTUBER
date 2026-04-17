@@ -506,6 +506,27 @@
   border: 2px solid #000;
 }
 
+.post-details-footer .action-btn.gift-btn:hover {
+  background: #ffb7c5; /* Rose pink */
+  color: #323232;
+  box-shadow: 4px 2px 0px #000;
+  transform: translate(-4px, -2px);
+}
+
+.post-details-footer .action-btn.gift-btn svg {
+  color: #e91e63;
+}
+
+.gift-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(233, 30, 99, 0.3);
+  border-top-color: #e91e63;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 .post-details-footer .action-btn:hover {
   background: red;
   color: #fff;

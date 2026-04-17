@@ -298,3 +298,25 @@ export const uploadAvatarFrame = async (avatarFile, frameFile = null) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Get user daily mission status
+ * @returns {Promise<Object|null>} Daily mission status data or null
+ */
+export const getUserDailyMissionStatus = async () => {
+  try {
+    const res = await axiosInstance.get(`/user/my-daily-mission`);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+    return null;
+  } catch (err) {
+    console.error("Fetch daily mission status error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};

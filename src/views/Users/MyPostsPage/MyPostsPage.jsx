@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUserPosts } from "@/services/PostController";
+import { getUserPosts, userDeleteOwnPost } from "@/services/PostController";
 import { useRouter } from "next/navigation";
 import "./MyPostsPage.css";
 import {useSideBar} from "@/contexts/SideBarContext.tsx";
+import { toast } from "react-toastify";
 
 // Default placeholder image for videos
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
@@ -25,6 +26,7 @@ export default function MyPostsPage() {
   // Modal state for post details
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeletingConfirm, setIsDeletingConfirm] = useState(false);
 
   const { sideBarRetractor } = useSideBar();
 
@@ -146,6 +148,8 @@ export default function MyPostsPage() {
         return "status-pending";
       case "rejected":
         return "status-rejected";
+      case "deleted":
+        return "status-deleted";
       default:
         return "status-unknown";
     }
@@ -209,12 +213,38 @@ export default function MyPostsPage() {
 
   const handleViewPost = (post) => {
     // Navigate to post detail page
-    router.push(`/post/${post.postId}`);
+    router.push(`/posts?id=${post.postId}`);
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!isDeletingConfirm) {
+      setIsDeletingConfirm(true);
+      return;
+    }
+
+    try {
+      const res = await userDeleteOwnPost(postId);
+      if (res.success) {
+        toast.success("Post deleted successfully");
+        // Update the post status to DELETED instead of removing it
+        setPosts(prev => prev.map(p => 
+          p.postId === postId ? { ...p, status: "DELETED" } : p
+        ));
+        closeModal();
+      } else {
+        toast.error(res.message || "Failed to delete post");
+        setIsDeletingConfirm(false);
+      }
+    } catch (err) {
+      toast.error("An error occurred while deleting the post");
+      setIsDeletingConfirm(false);
+    }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedPost(null);
+    setIsDeletingConfirm(false);
   };
 
   // Close modal on Escape key
@@ -267,8 +297,9 @@ export default function MyPostsPage() {
               <th className="sortable" onClick={() => handleSort("postType")}>
                 Type{getSortIcon("postType")}
               </th>
-              <th>Title</th>
-              <th>Content</th>
+              <th className="sortable" onClick={() => handleSort("title")}>
+                Content{getSortIcon("title")}
+              </th>
               <th className="sortable" onClick={() => handleSort("status")}>
                 Status{getSortIcon("status")}
               </th>
@@ -293,9 +324,9 @@ export default function MyPostsPage() {
                 <td className="post-type">
                   <span className="post-type-badge">{getPostTypeLabel(post.postType)}</span>
                 </td>
-                <td className="post-title">{post.title}</td>
-                <td className="post-content">
-                  <span className="content-preview">{post.content}</span>
+                <td className="post-content-combined">
+                  <div className="post-title-row">{post.title}</div>
+                  <div className="post-content-row">{post.content}</div>
                 </td>
                 <td className="post-status">
                   <span className={`status-badge ${getStatusClass(post.status)}`}>
@@ -473,15 +504,34 @@ export default function MyPostsPage() {
             </div>
 
             <div className="modal-footer">
+              {selectedPost.status !== "DELETED" && (
+                isDeletingConfirm ? (
+                  <div className="delete-confirm-group">
+                    <span className="confirm-text">Are you sure?</span>
+                    <button className="modal-delete-btn confirm" onClick={() => handleDeletePost(selectedPost.postId)}>
+                      Yes, Delete
+                    </button>
+                    <button className="modal-cancel-delete-btn" onClick={() => setIsDeletingConfirm(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button className="modal-delete-btn" onClick={() => handleDeletePost(selectedPost.postId)}>
+                    Delete Post
+                  </button>
+                )
+              )}
               <button className="modal-close-btn" onClick={closeModal}>
                 Close
               </button>
-              <button 
-                className="modal-view-post-btn" 
-                onClick={() => handleViewPost(selectedPost)}
-              >
-                View Full Post
-              </button>
+              {selectedPost.status === "APPROVED" && (
+                <button 
+                  className="modal-view-post-btn" 
+                  onClick={() => handleViewPost(selectedPost)}
+                >
+                  View Full Post
+                </button>
+              )}
             </div>
           </div>
         </div>

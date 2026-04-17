@@ -671,6 +671,41 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
   background: #a5d9e3;
 }
 
+.action-btn.gift-btn {
+  border-color: #000;
+  color: #323232;
+}
+
+.action-btn.gift-btn:hover {
+  background: #ffb7c5; /* Rose pink */
+  transform: translate(-2px, -2px);
+  box-shadow: 2px 2px 0px #000;
+}
+
+.action-btn.gift-btn svg {
+  color: #e91e63;
+}
+
+.gift-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(233, 30, 99, 0.3);
+  border-top-color: #e91e63;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.gift-loading-spinner-small {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(233, 30, 99, 0.3);
+  border-top-color: #e91e63;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 .action-btn svg {
   font-size: 18px;
 }
@@ -1110,4 +1145,80 @@ body:has(#side-bar.rebound-animation) .posts-page-container {
 
 .pin-confirm-unpin:hover:not(:disabled) {
   background: #bf360c;
+}
+
+/* Delete Post Styles */
+.post-deleted-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  color: #8e8f99;
+  gap: 12px;
+  border: 2px dashed #ddd;
+  margin: 10px;
+}
+
+.post-deleted-placeholder span {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.post-deleted-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.post-deleted-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2a2b33;
+  margin-bottom: 8px;
+}
+
+.post-deleted-text {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.post-deleted-back-btn {
+  padding: 10px 24px;
+  background: #2a2b33;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.post-deleted-back-btn:hover {
+  background: #444;
+  transform: translateY(-2px);
+}
+
+.delete-option {
+  color: #ff4d4f !important;
+}
+
+.delete-option:hover {
+  background-color: #fff1f0 !important;
+}
+
+.delete-confirm-dialog {
+  border-top: 4px solid #ff4d4f !important;
+}
+
+.delete-icon-bg {
+  background-color: #fff1f0 !important;
+  color: #ff4d4f !important;
 }
