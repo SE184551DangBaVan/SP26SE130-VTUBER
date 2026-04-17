@@ -1,11 +1,13 @@
 import VtuberApplicationContent from '../AdminVtuberApplication/VtuberApplicationContent';
-import ShopItemsContent from '../AdminWindowContents/ShopItemsContent';
-import AnalyticsContent from '../AdminWindowContents/AnalyticsContent';
+import ShopItemsContent from '../AdminShopItems/ShopItemsManagement';
+import AnalyticsContent from '../AdminAnalytics/AnalyticsContent';
+import AdminFeedback from '../AdminFeedback/AdminFeedback';
 
 import ApplicationIco from '../../../../assets/UI-Elements/note.svg';
 import ShopItemIco from '../../../../assets/UI-Elements/shopping-cart.svg';
 import BannerItemIco from '../../../../assets/UI-Elements/stock.svg';
 import AnalyticIco from '../../../../assets/UI-Elements/analytics.svg';
+import FeedbackIco from '../../../../assets/UI-Elements/feedback.svg';
 
 export const DESKTOP_ICONS_CONFIG = [
     {
@@ -13,7 +15,7 @@ export const DESKTOP_ICONS_CONFIG = [
         label: 'Analytics',
         icon: <img src={AnalyticIco.src} alt="Analytics" style={{ width: '42px', height: '42px' }} />,
         component: AnalyticsContent,
-        windowTitle: 'ANALYTICS_MANAGER.exe'
+        windowTitle: 'ANALYTICS_VIEWER.exe'
     },
     {
         id: 'vtuber-applications',
@@ -28,5 +30,13 @@ export const DESKTOP_ICONS_CONFIG = [
         icon: <img src={ShopItemIco.src} alt="Shop Items" style={{ width: '48px', height: '48px' }} />,
         component: ShopItemsContent,
         windowTitle: 'SHOP_ITEMS_MANAGER.exe'
+    },
+    
+    {
+        id: 'view-feedback',
+        label: 'View Feedback',
+        icon: <img src={FeedbackIco.src} alt="View Feedback" style={{ width: '52px', height: '52px', transform: 'translate(12%, 0)' }} />,
+        component: AdminFeedback,
+        windowTitle: 'VIEW_FEEDBACK.exe'
     }
 ];

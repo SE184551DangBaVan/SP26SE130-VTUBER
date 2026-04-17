@@ -44,13 +44,31 @@ export const getShopItems = async (pageNo = 0, pageSize = 100, sortBy = "id") =>
  * @param {string} payload.image - Base64 image string
  * @returns {Promise<Object>} Add result
  */
-export const addShopItem = async (payload) => {
+export const addShopItem = async ({ itemName, description, category, price, imageFile }) => {
   try {
-    const res = await axiosInstance.post(`/shop-items/add`, payload, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const formData = new FormData();
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    const requestPayload = {
+      itemName,
+      description,
+      category: category?.toUpperCase?.() || '',
+      price,
+    };
+
+    formData.append('request', JSON.stringify(requestPayload));
+
+    const res = await axiosInstance.post(
+      `/shop-items/add`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
 
     console.log("addShopItem response:", res.data);
     return res.data;
