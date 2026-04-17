@@ -15,9 +15,9 @@ import PointsIco from '../../assets/UI-Elements/Coin.png';
 import PaidPointsIco from "../../assets/UI-Elements/le'Gem.gif";
 
 const Navbar = () => {
-    const { 
-        logout, 
-        userAuth, 
+    const {
+        logout,
+        userAuth,
         loading,
         displayName,
         avatarUrl,
@@ -34,10 +34,10 @@ const Navbar = () => {
     const [open, setOpen] = useState(true);
 
     // Notifications logic
-    const { 
-        notifications, 
-        unreadCount, 
-        handleMarkAsRead, 
+    const {
+        notifications,
+        unreadCount,
+        handleMarkAsRead,
         handleMarkAllAsRead,
         handleDelete,
         filter,
@@ -229,7 +229,7 @@ const Navbar = () => {
                                     )}
                                 </button>
                                 {notificationOpen && (
-                                    <NotificationDropdown 
+                                    <NotificationDropdown
                                         notifications={notifications}
                                         onMarkAllAsRead={handleMarkAllAsRead}
                                         onDelete={handleDelete}

@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
-  
+
   // Group profile data to minimize re-renders
   const [profile, setProfile] = useState({
     displayName: "",
@@ -132,6 +132,77 @@ export const AuthProvider = ({ children }) => {
       router.push("/login");
     }
   }, [userAuth, loading, isPublic, router]);
+    const initAuth = async () => {
+        try {
+            const token = getAuthToken();
+            const savedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
+
+            if(token){
+                // For admin users, skip token validation - they use system accounts
+                if (savedRole === 'ADMIN') {
+                    const userId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+                    const username = sessionStorage.getItem("username") || localStorage.getItem("username");
+
+                    if (userId && username) {
+                        setUserAuth({
+                            userId: userId,
+                            role: 'ADMIN',
+                            email: username,
+                        });
+                    } else {
+                        // Admin tokens missing, clear auth
+                        logout();
+                    }
+                } else {
+                    // For regular users, validate token
+                    const response = await checkToken(token);
+                    if(response.data.expired || !response.data.valid){
+                        console.warn("token is expired or is not valid!");
+                        setShowSessionExpired(true);
+                        logout();
+                    }
+                    else{
+                        const authData = {
+                            userId: response.data.id,
+                            role: response.data.role,
+                            email: response.data.username,
+                        }
+                        setUserAuth(authData);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
+      setLoading(false);
+    };
+    initAuth();
+  }, []);
+
+
+    useEffect(() => {
+        if (!loading && !userAuth && !isPublic) {
+            console.log("Unauthorized access attempt. Redirecting...");
+            router.push("/login");
+        }
+    }, [userAuth, loading, isPublic, isPrivatePath, router]);
+
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedEmail = sessionStorage.getItem("username") || localStorage.getItem("username");
+      const updatedRole = sessionStorage.getItem("role") || localStorage.getItem("role");
+
+      if (updatedEmail) {
+        setUserAuth({ email: updatedEmail, role: updatedRole || null });
+      } else {
+        setUserAuth(null);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const login = async (username, password, rememberMe) => {
     try {
@@ -141,7 +212,7 @@ export const AuthProvider = ({ children }) => {
       if (response && response.data.success) {
         const userId = response.data.data.id;
         const storage = rememberMe ? localStorage : sessionStorage;
-        
+
         storage.setItem("userID", userId);
         storage.setItem("username", response.data.data.username);
         storage.setItem("token", response.data.data.token);
@@ -184,7 +255,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {loading ? <div className="loader" /> : children}
-      
+
       {showSessionExpired && (
         <div className="session-expired-overlay">
           <div className="session-expired-modal">
@@ -219,3 +290,85 @@ export const adminLogin = async (username, password) => {
     return error;
   }
 };
+
+//#region 
+// import axios from "axios";
+// import { useState, useContext, createContext, useEffect } from "react";
+
+// const AuthContext = createContext(null);
+
+// export const useAuth = () => {
+//   return useContext(AuthContext);
+// };
+
+// export const AuthProvider = ({ children }) => {
+//   const [userAuth, setUserAuth] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const savedUser = sessionStorage.getItem("username");
+//     // const savedRole = sessionStorage.getItem("selectedRole");
+
+//     if (savedUser && savedRole) {
+//       setUserAuth({ username: savedUser/*, role: savedRole*/ });
+//     }
+//     setLoading(false);
+//   }, []);
+
+//   useEffect(() => {
+//     const handleStorageChange = () => {
+//       const updatedUser = sessionStorage.getItem("username");
+//       //const updatedRole = sessionStorage.getItem("selectedRole");
+
+//       if (updatedUser && updatedRole) {
+//         setUserAuth({ username: updatedUser/*, role: updatedRole*/ });
+//       } else {
+//         setUserAuth(null);
+//       }
+//     };
+
+//     window.addEventListener("storage", handleStorageChange);
+//     return () => window.removeEventListener("storage", handleStorageChange);
+//   }, []);
+
+//   const login = async (username, password) => {
+//     try {
+//       const response = await axios.post(
+//         "http://",
+//         { username, password }
+//       );
+
+//       if (response.status === 200 && response.data.success) {
+//         const token = response.data.data; // JWT Token
+//         const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT
+//         const { sub, role } = payload; // Extract username & role
+
+//         sessionStorage.setItem("accessToken", token);
+//         sessionStorage.setItem("username", sub);
+//         //sessionStorage.setItem("selectedRole", role);
+
+//         window.dispatchEvent(new Event("storage"));
+
+//         return sub; // Return the role
+//       }
+//     } catch (error) {
+//       console.error("Login error:", error);
+//       return null;
+//     }
+//   };
+
+//   const logout = () => {
+//     sessionStorage.clear();
+//     window.dispatchEvent(new Event("storage"));
+//   };
+
+//   if (loading) {
+//     return <div className="loader" />;
+//   }
+
+//   return (
+//     <AuthContext.Provider value={{ userAuth, login, logout }}>
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// };
