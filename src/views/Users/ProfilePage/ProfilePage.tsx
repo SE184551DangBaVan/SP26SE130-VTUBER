@@ -178,6 +178,7 @@ export default function ProfilePage({ username }: { username: string }) {
         ...userData,
         displayName: editNameValue.trim(),
       });
+      await auth.refreshUser();
       setIsEditingName(false);
       setEditNameValue("");
       showSuccess("Display name updated successfully!");
@@ -210,6 +211,7 @@ export default function ProfilePage({ username }: { username: string }) {
         ...userData,
         bio: editBioValue.trim() || "No bio yet...",
       });
+      await auth.refreshUser();
       setIsEditingBio(false);
       setEditBioValue("");
       showSuccess("Bio updated successfully!");
@@ -331,6 +333,7 @@ export default function ProfilePage({ username }: { username: string }) {
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl("");
         }
+        await auth.refreshUser();
         showSuccess("Avatar updated successfully!");
       } else {
         showError(result?.message || "Failed to upload avatar");

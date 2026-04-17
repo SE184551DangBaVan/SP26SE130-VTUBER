@@ -3,21 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
-import { likePost, unlikePost, getTranslatePost, getPostSummary, pinPost, unpinPost } from '@/services/PostController';
+import { likePost, unlikePost, getTranslatePost, getPostSummary, pinPost, unpinPost, userDeleteOwnPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
-import {
-  ShareRounded,
-  CommentRounded,
-  AutoAwesome,
-  Translate,
-  MoreHoriz,
-  Flag,
-  SwapHoriz,
-  Close,
-  PushPin,
-} from '@mui/icons-material';
+import { ShareRounded, CommentRounded, AutoAwesome, Translate, MoreHoriz, Flag, SwapHoriz, Close, PushPin, LocalFlorist, DeleteOutline } from '@mui/icons-material';
 import { votePoll, unVotePoll } from '@/services/PostController';
 import './PostsPage.css';
 
@@ -89,6 +79,11 @@ export default function PostCard({
   const [pinLoading, setPinLoading] = useState(false);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [isPinned, setIsPinned] = useState(post?.isPinned || false);
+
+  // Delete state
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Check user role in hub
   useEffect(() => {
@@ -139,6 +134,27 @@ export default function PostCard({
     } finally {
       setPinLoading(false);
       setShowPinConfirm(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (deleteLoading) return;
+
+    setDeleteLoading(true);
+    try {
+      const result = await userDeleteOwnPost(post.postId);
+      if (result?.success) {
+        setIsDeleted(true);
+        showSteamSuccess('Post deleted successfully', 'Success');
+      } else {
+        showSteamError(result?.message || 'Failed to delete post', 'Error');
+      }
+    } catch (error) {
+      console.error('Delete post error:', error);
+      showSteamError(error?.response?.data?.message || 'Failed to delete post', 'Error');
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
   
@@ -238,7 +254,6 @@ export default function PostCard({
       setLikeLoading(false);
     }
   };
-
   // ---------- Navigation helpers ----------
   const handleHubClick = (e) => {
     e.stopPropagation();
@@ -354,6 +369,12 @@ export default function PostCard({
       targetId: post.postId,
       targetName: post.title || `Post #${post.postId}`,
     });
+  };
+
+  const handleOpenDeleteConfirm = (e) => {
+    e.stopPropagation();
+    setExtraMenuOpen(false);
+    setShowDeleteConfirm(true);
   };
 
   const handleAvatarClick = (e) => {
@@ -484,6 +505,12 @@ export default function PostCard({
                     <Flag fontSize='small' />
                     <span>Report post</span>
                   </button>
+                  {userAuth?.userId === post.authorId && (
+                    <button className='dropdown-item delete-option' onClick={handleOpenDeleteConfirm}>
+                      <DeleteOutline fontSize='small' />
+                      <span>Delete post</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -552,6 +579,12 @@ export default function PostCard({
                   <Flag fontSize='small' />
                   <span>Report post</span>
                 </button>
+                {userAuth?.userId === post.authorId && (
+                  <button className='dropdown-item delete-option' onClick={handleOpenDeleteConfirm}>
+                    <DeleteOutline fontSize='small' />
+                    <span>Delete post</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -657,9 +690,18 @@ export default function PostCard({
 
   return (
     <div className='post-card' onClick={onClick}>
-      {renderHeader()}
-      {renderPostTypeContent()}
-      {renderFooter()}
+      {isDeleted ? (
+        <div className='post-deleted-placeholder'>
+          <DeleteOutline />
+          <span>Post has been deleted</span>
+        </div>
+      ) : (
+        <>
+          {renderHeader()}
+          {renderPostTypeContent()}
+          {renderFooter()}
+        </>
+      )}
       
       {/* Pin Confirmation Dialog */}
       {showPinConfirm && (
@@ -694,6 +736,43 @@ export default function PostCard({
                 disabled={pinLoading}
               >
                 {pinLoading ? (isPinned ? 'Unpinning...' : 'Pinning...') : (isPinned ? 'Unpin Post' : 'Pin Post')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
+          <div className='pin-confirm-dialog delete-confirm-dialog'>
+            <div className='pin-confirm-icon delete-icon-bg'>
+              <DeleteOutline fontSize='large' />
+            </div>
+            <h4 className='pin-confirm-title'>Delete this post?</h4>
+            <p className='pin-confirm-text'>
+              Are you sure you want to delete your post? This action cannot be undone.
+            </p>
+            <div className='pin-confirm-actions'>
+              <button
+                className='pin-confirm-btn pin-confirm-cancel'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(false);
+                }}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className='pin-confirm-btn pin-confirm-unpin'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeletePost();
+                }}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Post'}
               </button>
             </div>
           </div>

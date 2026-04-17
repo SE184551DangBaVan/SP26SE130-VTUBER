@@ -141,3 +141,25 @@ export const unlikeComment = async (commentId) => {
     throw err;
   }
 };
+
+/**
+ * Send a gift to a comment author
+ * @param {number} commentId - Comment ID
+ * @returns {Promise<Object>} Response data
+ */
+export const giftComment = async (commentId) => {
+  try {
+    const res = await axiosInstance.post(`/posts/comment/gift/${commentId}`);
+
+    console.log("giftComment response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Gift comment error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
