@@ -121,11 +121,27 @@ export default function PostsPage() {
       return;
     }
     const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      showSteamSuccess('Link copied!', 'Shared');
-    }).catch(() => {
-      showSteamError('Failed to copy link', 'Error');
-    });
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showSteamSuccess('Link copied!', 'Shared');
+      }).catch(() => {
+        showSteamError('Failed to copy link', 'Error');
+      });
+    } else {
+      // Fallback for browsers that don't support navigator.clipboard
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSteamSuccess('Link copied!', 'Shared');
+      } catch (err) {
+        showSteamError('Failed to copy link', 'Error');
+      }
+    }
   };
 
   const handleHubClick = (post) => {
