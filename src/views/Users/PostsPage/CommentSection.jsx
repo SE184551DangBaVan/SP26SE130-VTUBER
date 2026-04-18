@@ -164,7 +164,9 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       }
     } catch (error) {
       console.error('Error sending comment:', error);
-      showSteamError(error?.response?.data?.message || 'Failed to post comment', 'Error');
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to post comment';
+      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
     }
   };
 

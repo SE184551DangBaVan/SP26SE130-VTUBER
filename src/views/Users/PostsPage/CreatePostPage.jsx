@@ -8,6 +8,7 @@ import { getMyJoinedHubs } from '@/services/FanHubController';
 import { createPost, createPollPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
+import { showSteamError } from '@/utils/SteamNotification';
 import { EventRounded } from '@mui/icons-material';
 import './CreatePostPage.css';
 
@@ -302,7 +303,15 @@ export default function CreatePostPage() {
       }
     } catch (error) {
       console.error('Create post error:', error);
-      updateToast(toastId, 'error', error.message || 'Failed to create post');
+      
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to create post';
+      
+      updateToast(toastId, 'error', errorMessage);
+      
+      if (error.response?.status === 403) {
+        showSteamError(errorMessage, 'Forbidden');
+      }
     } finally {
       setSubmitting(false);
     }

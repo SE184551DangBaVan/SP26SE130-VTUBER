@@ -323,10 +323,10 @@ function PostReportsTable({ fanHubId }) {
         <div className="report-resolve-overlay" onClick={closeDetailsModal}>
           <div className="post-details-modal" onClick={(e) => e.stopPropagation()}>
             <div className="post-details-header">
-              <button className="post-details-close" onClick={closeDetailsModal}>
+              <h2>Post Report Details</h2>
+              <button className="report-details-close" onClick={closeDetailsModal}>
                 ×
               </button>
-              <h2>Post Report Details</h2>
             </div>
             <div className="post-details-body">
               {/* Post Info */}

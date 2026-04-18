@@ -25,7 +25,7 @@
   position: relative;
 }
 
-.post-details-close {
+.post-view-close {
   position: absolute;
   top: 16px;
   left: 16px;
@@ -44,7 +44,7 @@
   transition: background 0.2s;
 }
 
-.post-details-close:hover {
+.post-view-close:hover {
   background: rgba(0, 0, 0, 0.8);
 }
 
@@ -261,34 +261,35 @@
   overflow: hidden;
 }
 
-.post-details-header {
+.post-view-header {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-.post-details-author-info {
+.post-view-author-info {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.post-details-avatar {
+.post-view-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.post-details-author-details {
+.post-view-author-details {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.post-details-author-details .fanhub-name {
+.post-view-author-details .fanhub-name {
   font-size: 14px;
   font-weight: 600;
   color: #323232;
@@ -296,17 +297,17 @@
   transition: color 0.2s;
 }
 
-.post-details-author-details .fanhub-name:hover {
+.post-view-author-details .fanhub-name:hover {
   color: #2d8cf0;
   text-decoration: underline;
 }
 
-.post-details-author-details .post-time {
+.post-view-author-details .post-time {
   font-size: 12px;
   color: #878a8c;
 }
 
-.post-details-actions-menu {
+.post-view-actions-menu {
   display: flex;
   gap: 4px;
 }
