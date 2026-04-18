@@ -3,12 +3,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import "./ChatBot.css";
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
 import { getChatMessages, sendChatMessage } from "@/services/ChatMessageController";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const INITIAL_PAGE_SIZE = 7;
 const LOAD_MORE_PAGE_SIZE = 10;
 
 export default function ChatBot() {
   const { loading, userAuth } = useAuth();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
@@ -33,7 +36,7 @@ export default function ChatBot() {
     if (hasLoadedMessages && messages.length > 0) {
       scrollToBottom();
     }
-  }, [hasLoadedMessages]);
+  }, [hasLoadedMessages, messages.length]);
 
   // Load initial messages when chatbot is first opened
   useEffect(() => {
@@ -47,6 +50,7 @@ export default function ChatBot() {
             text: msg.content,
             createdAt: msg.createdAt,
             thought: msg.thought,
+            metadataResponse: msg.metadataResponse,
           })).reverse(); // Reverse to show oldest first
           
           setMessages(formattedMessages);
@@ -80,6 +84,7 @@ export default function ChatBot() {
           text: msg.content,
           createdAt: msg.createdAt,
           thought: msg.thought,
+          metadataResponse: msg.metadataResponse,
         })).reverse();
 
         setMessages((prev) => [...newMessages, ...prev]);
@@ -126,6 +131,7 @@ export default function ChatBot() {
           text: result.data.content,
           createdAt: result.data.createdAt,
           thought: result.data.thought,
+          metadataResponse: result.data.metadataResponse,
         };
         
         // Remove temporary user message and add both with proper IDs
@@ -133,6 +139,25 @@ export default function ChatBot() {
           const filtered = prev.filter(m => m.id !== userMessage.id);
           return [...filtered, userMessage, botMessage];
         });
+
+        // If metadataResponse exists and is POST, handle auto-navigation
+        if (result.data.metadataResponse?.metadataType === "POST") {
+          const navMessageId = Date.now() + 1;
+          const navMessage = {
+            id: navMessageId,
+            type: "bot",
+            text: "Navigating user to returned post...",
+            isSystem: true
+          };
+          
+          setMessages(prev => [...prev, navMessage]);
+          
+          setTimeout(() => {
+            router.push(`/posts?id=${result.data.metadataResponse.postId}`);
+            // Remove the system message after navigation
+            setMessages(prev => prev.filter(m => m.id !== navMessageId));
+          }, 1000);
+        }
       } else {
         // Remove user message if send failed
         setMessages((prev) => prev.filter(m => m.id !== userMessage.id));
@@ -226,14 +251,38 @@ export default function ChatBot() {
                 key={message.id}
                 className={`message ${message.type === "user" ? "user-message" : "bot-message"}`}
               >
-                {message.type === "bot" && (
+                {message.type === "bot" && !message.isSystem && (
                   <img
                     src="/mambo.webp"
                     alt="Bot Avatar"
                     className="message-avatar"
                   />
                 )}
-                <div className="message-bubble">{message.text}</div>
+                <div className={`message-bubble ${message.isSystem ? "system-message" : ""}`}>
+                  {message.text}
+                  {message.metadataResponse && message.metadataResponse.metadataType === "POST" && (
+                    <div className="post-preview-container">
+                      <Link 
+                        href={`/posts?id=${message.metadataResponse.postId}`}
+                        className="post-preview-link"
+                      >
+                        {message.metadataResponse.imagePreviewUrl && (
+                          <img 
+                            src={message.metadataResponse.imagePreviewUrl} 
+                            alt="Post Preview" 
+                            className="post-preview-image"
+                          />
+                        )}
+                        <div className="post-preview-content">
+                          <div className="post-preview-title">{message.metadataResponse.postTitle}</div>
+                          {message.metadataResponse.postContent && (
+                            <div className="post-preview-text">{message.metadataResponse.postContent}</div>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             {isTyping && (
