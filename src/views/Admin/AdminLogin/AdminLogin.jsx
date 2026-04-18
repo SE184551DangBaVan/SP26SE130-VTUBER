@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import './AdminLogin.css'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { showSuccess, showError, showLoading, updateToast } from '../../../utils/toastUtils';
 import { adminLogin, useAuth } from '../../../functions/Auth/useAuth';
 import AdminIco from '../../../assets/UI-Elements/admin-logo.svg';
@@ -15,6 +15,16 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const audio = new Audio('/sfx/windows-95-startup-sound.mp3');
+    audio.volume = 0.05;
+    audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
 
   const handleAdminLogin = async (e) => {
       e.preventDefault();
