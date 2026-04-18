@@ -141,9 +141,22 @@ export default function SelectedPostPage() {
         text: post?.content,
         url: window.location.href
       });
-    } else {
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
+    } else {
+      // Fallback for browsers that don't support navigator.clipboard
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = window.location.href;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Link copied to clipboard!');
+      } catch (err) {
+        alert('Failed to copy link');
+      }
     }
   };
 
