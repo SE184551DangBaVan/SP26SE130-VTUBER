@@ -13,6 +13,7 @@ export default function BansManagementContent({ fanHubId }) {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy] = useState("createdAt");
+  const [sortDirection] = useState("desc");
 
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [refreshing, setRefreshing] = useState(false);

@@ -476,7 +476,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   return (
     <div className='post-details-overlay' onClick={handleClose}>
       <div className='post-details-container' onClick={(e) => e.stopPropagation()}>
-        <button className='post-details-close' onClick={handleClose}>
+        <button className='post-view-close' onClick={handleClose}>
           <Close />
         </button>
 
@@ -507,22 +507,22 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
               ) : (
                 <>
                   {/* Post Header */}
-                  <div className='post-details-header'>
-                    <div className='post-details-author-info'>
+                  <div className='post-view-header'>
+                    <div className='post-view-author-info'>
                       <img
-                        className='post-details-avatar'
+                        className='post-view-avatar'
                         src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
                         alt={post.authorDisplayName}
                         onError={(e) => {
                           e.target.src = '/profile-pic-undefined.jpg';
                         }}
                       />
-                      <div className='post-details-author-details'>
+                      <div className='post-view-author-details'>
                         <span className='fanhub-name'>h/{post.fanHubName}</span>
                         <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
                       </div>
                     </div>
-                    <div className='post-details-actions-menu'>
+                    <div className='post-view-actions-menu'>
                       <button 
                         className='menu-btn' 
                         onClick={handleAISummary} 
@@ -713,6 +713,9 @@ function PollDisplay({ post }) {
       setTotalVotes(prev => prev + 1);
     } catch (error) {
       console.error('Error voting:', error);
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to vote';
+      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
     } finally {
       setVoting(false);
     }
@@ -733,6 +736,9 @@ function PollDisplay({ post }) {
       setTotalVotes(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error unvoting:', error);
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to remove vote';
+      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
     } finally {
       setVoting(false);
     }

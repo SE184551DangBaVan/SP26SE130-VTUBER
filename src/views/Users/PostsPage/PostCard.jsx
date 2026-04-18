@@ -1050,6 +1050,9 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
       setTotalVotes(prev => prev + 1);
     } catch (error) {
       console.error('Error voting:', error);
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to vote';
+      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
     } finally {
       setVoting(false);
     }
@@ -1070,6 +1073,9 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
       setTotalVotes(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error unvoting:', error);
+      const serverError = error.response?.data;
+      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to remove vote';
+      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
     } finally {
       setVoting(false);
     }

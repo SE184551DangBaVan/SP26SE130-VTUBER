@@ -591,7 +591,7 @@
 
 .post-details-header {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
@@ -607,7 +607,7 @@
   margin: 0;
 }
 
-.post-details-close {
+.report-details-close {
   background: none;
   border: none;
   color: #9ca3af;
@@ -619,7 +619,7 @@
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.post-details-close:hover {
+.report-details-close:hover {
   color: #374151;
   transform: scale(1.1);
 }
