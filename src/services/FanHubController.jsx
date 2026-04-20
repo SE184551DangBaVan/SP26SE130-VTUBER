@@ -54,6 +54,7 @@ export const getFanHubs = async (pageNo = 0, pageSize = 50) => {
 
 export const createFanHub = async (payload) => {
   try {
+      console.log("payload:" + JSON.stringify(payload));
     const res = await axiosInstance.post(
       `/fan-hub/create`,
       payload

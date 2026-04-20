@@ -75,7 +75,7 @@ export default function PostCard({
   const [summaryFetched, setSummaryFetched] = useState(false);
   
   // Pin state
-  const [userRoleInHub, setUserRoleInHub] = useState(null);
+  const [roleInHub, setRoleInHub] = useState(null);
   const [pinLoading, setPinLoading] = useState(false);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [isPinned, setIsPinned] = useState(post?.isPinned || false);
@@ -87,26 +87,26 @@ export default function PostCard({
   
   // Check user role in hub
   useEffect(() => {
-    const checkUserRole = async () => {
+    const checkRoleInHub = async () => {
       if (!post?.fanHubId || !userAuth) {
-        setUserRoleInHub(null);
+        setRoleInHub(null);
         return;
       }
       
       try {
         const memberData = await checkIsMember(post.fanHubId);
         if (memberData?.roleInHub) {
-          setUserRoleInHub(memberData.roleInHub);
+          setRoleInHub(memberData.roleInHub);
         } else {
-          setUserRoleInHub(null);
+          setRoleInHub(null);
         }
       } catch (error) {
         console.error('Error checking user role:', error);
-        setUserRoleInHub(null);
+        setRoleInHub(null);
       }
     };
     
-    checkUserRole();
+    checkRoleInHub();
   }, [post?.fanHubId, userAuth]);
   
   const handlePinPost = async () => {
@@ -158,7 +158,7 @@ export default function PostCard({
     }
   };
   
-  const canPinPost = userRoleInHub === 'MODERATOR' || userRoleInHub === 'VTUBER';
+  const canPinPost = roleInHub === 'MODERATOR' || roleInHub === 'VTUBER';
   
   // Check if content needs "See more" button
   useEffect(() => {

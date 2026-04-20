@@ -18,7 +18,7 @@ const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, Loadi
 export default function CreateHubPage() {
   const { userAuth } = useAuth();
   const [userId, setUserId] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(true);
 
@@ -79,12 +79,12 @@ export default function CreateHubPage() {
 
         if (userData) {
           // Always update the stored role with the latest from API
-          setUserRole(userData.role);
+          setRole(userData.role);
           
           // Update stored role in session/local storage
           if (userData.role) {
-            sessionStorage.setItem('userRole', userData.role);
-            localStorage.setItem('userRole', userData.role);
+            sessionStorage.setItem('role', userData.role);
+            localStorage.setItem('role', userData.role);
           }
 
           if (userData.role === 'VTUBER') {
@@ -105,7 +105,7 @@ export default function CreateHubPage() {
   // Check for owned FanHub when user is VTUBER
   useEffect(() => {
     const checkForOwnedHub = async () => {
-      if (!username || userRole !== 'VTUBER') return;
+      if (!username || role !== 'VTUBER') return;
 
       setHubLoading(true);
       try {
@@ -123,10 +123,10 @@ export default function CreateHubPage() {
       }
     };
 
-    if (userRole === 'VTUBER' && !checking) {
+    if (role === 'VTUBER' && !checking) {
       checkForOwnedHub();
     }
-  }, [userRole, checking, username]);
+  }, [role, checking, username]);
 
   const handleApplicationSubmit = async (e) => {
     e.preventDefault();
@@ -148,7 +148,7 @@ export default function CreateHubPage() {
         setTimeout(async () => {
           const userData = await getUserById(userId);
           if (userData?.role === 'VTUBER') {
-            setUserRole('VTUBER');
+            setRole('VTUBER');
             setChecking(false);
           } else {
             showSuccess('Application submitted! Please wait for admin approval.');
@@ -296,7 +296,7 @@ export default function CreateHubPage() {
     );
   }
   
-  if (userRole === 'VTUBER' && !checking) {
+  if (role === 'VTUBER' && !checking) {
     if (hubLoading) {
       return (
         <div className='create-hub-page-container'>
