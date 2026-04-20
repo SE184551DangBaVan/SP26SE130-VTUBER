@@ -372,12 +372,10 @@ const Navbar = () => {
                                                 <FeedbackOutlined />
                                                 <span>Send Feedbacks</span>
                                             </button>
-                                            {userAuth?.role !== 'VTUBER' && (
-                                                <button className="profile-menu-item" onClick={() => router.push('/create-hub')}>
-                                                    <LiveTvRounded />
-                                                    <span>Apply as a Vtuber</span>
-                                                </button>
-                                            )}
+                                            <button className="profile-menu-item" onClick={() => router.push('/vtuber-application')}>
+                                                <LiveTvRounded />
+                                                <span>Vtuber Application</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )}

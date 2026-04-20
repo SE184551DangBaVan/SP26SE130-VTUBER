@@ -259,3 +259,52 @@ export const updateFanHub = async (fanHubId, hubData) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Create a FanHub with images in a single call (v2)
+ * @param {Object} payload - Hub data
+ * @param {File} bannerFile - Banner file
+ * @param {File} avatarFile - Avatar file
+ * @param {File[]} backgroundFiles - Array of background files (max 4)
+ * @returns {Promise<Object>} Creation result
+ */
+export const createFanHubV2 = async (payload, bannerFile, avatarFile, backgroundFiles = []) => {
+  try {
+    const formData = new FormData();
+
+    // Wrap JSON in a Blob with explicit application/json type
+    const jsonPart = JSON.stringify(payload);
+    const blob = new Blob([jsonPart], { type: "application/json" });
+    formData.append("request", blob);
+
+    if (bannerFile) {
+      formData.append("banner", bannerFile);
+    }
+
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+
+    // Append each background file (max 4)
+    const backgroundsToAdd = backgroundFiles.slice(0, 4);
+    backgroundsToAdd.forEach((file) => {
+      formData.append("backgrounds", file);
+    });
+
+    const res = await axiosInstance.post(
+      `/fan-hub/create/v2`,
+      formData
+    );
+
+    console.log("createFanHubV2 response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Create FanHub V2 error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
