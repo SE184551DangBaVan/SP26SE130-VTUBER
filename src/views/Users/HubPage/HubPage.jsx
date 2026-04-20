@@ -125,11 +125,11 @@ export default function HubPage({ ownedHub }) {
   );
 
   // Track current user's role in this hub (for moderators)
-  const [userRoleInHub, setUserRoleInHub] = useState(null);
+  const [roleInHub, setRoleInHub] = useState(null);
 
   // Check if user can create posts (Owner, Moderator, or Member)
-  // Note: userRoleInHub will be set from fanHubsJoined, so this should work correctly
-  const canCreatePost = isOwner || userRoleInHub === 'MODERATOR' || userRoleInHub === 'MEMBER';
+  // Note: roleInHub will be set from fanHubsJoined, so this should work correctly
+  const canCreatePost = isOwner || roleInHub === 'MODERATOR' || roleInHub === 'MEMBER';
 
   // Handle create post click
   const handleCreatePostClick = () => {
@@ -248,10 +248,10 @@ export default function HubPage({ ownedHub }) {
 
         if (memberData && memberData.isMember) {
           setIsMember(true);
-          setUserRoleInHub(memberData.roleInHub || 'MEMBER');
+          setRoleInHub(memberData.roleInHub || 'MEMBER');
         } else {
           setIsMember(false);
-          setUserRoleInHub(null);
+          setRoleInHub(null);
         }
       } catch (error) {
         console.error('Error fetching user membership:', error);
@@ -265,7 +265,7 @@ export default function HubPage({ ownedHub }) {
       if (!activeFanHubId) return;
 
       // Only fetch members if user is Owner or Moderator (others get 403)
-      if (!isOwner && userRoleInHub !== 'MODERATOR') {
+      if (!isOwner && roleInHub !== 'MODERATOR') {
         return;
       }
 
@@ -282,7 +282,7 @@ export default function HubPage({ ownedHub }) {
     };
 
     fetchMembers();
-  }, [activeFanHubId, isOwner, userRoleInHub]);
+  }, [activeFanHubId, isOwner, roleInHub]);
 
   // Handle promote member to moderator
   const handlePromoteClick = (member) => {
@@ -334,7 +334,7 @@ export default function HubPage({ ownedHub }) {
       if (result?.success) {
         updateToast(toastId, 'success', 'Joined FanHub successfully!');
         setIsMember(true);
-        setUserRoleInHub('MEMBER');
+        setRoleInHub('MEMBER');
 
         // Dispatch event to update sidebar's JoinedHubsContainer
         window.dispatchEvent(new CustomEvent('hubsUpdated'));
@@ -628,7 +628,7 @@ export default function HubPage({ ownedHub }) {
               </div>
             </div>
             <div className='hub-header-actions'>
-              {(userRoleInHub === 'MODERATOR' || userRoleInHub === 'VTUBER') && (
+              {(roleInHub === 'MODERATOR' || roleInHub === 'VTUBER') && (
                 <button
                   className='moderation-header-btn'
                   onClick={handleModerationClick}
@@ -826,7 +826,7 @@ export default function HubPage({ ownedHub }) {
             </div>
           </div>
 
-          {(isOwner || userRoleInHub === 'MODERATOR') && (
+          {(isOwner || roleInHub === 'MODERATOR') && (
             <div className='hub-card fanhub-member-list'>
               <div className='hub-card-header'>
                 <span>Members ({members.length})</span>

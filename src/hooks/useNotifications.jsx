@@ -11,6 +11,7 @@ import {
 } from '@/services/NotificationController';
 import { showSteamNotification } from '@/utils/SteamNotification';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { API_BASE_URL } from '@/utils/axiosInstance';
 
 export const useNotifications = (userAuth) => {
     const [notifications, setNotifications] = useState([]);
@@ -147,8 +148,7 @@ export const useNotifications = (userAuth) => {
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
         if (!token) return;
 
-        const baseUrl = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-        const sseUrl = `${baseUrl}/notifications/stream`; 
+        const sseUrl = `${API_BASE_URL}/notifications/stream`; 
         
         const ctrl = new AbortController();
         abortControllerRef.current = ctrl;

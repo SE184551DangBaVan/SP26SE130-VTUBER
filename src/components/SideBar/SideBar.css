@@ -119,8 +119,6 @@
 
 #side-bar-header {
   position: relative;
-  pointer-events: none;
-  width: var(--sidebar-width);
   left: 16px;
   width: calc(var(--sidebar-width) - 16px);
   min-height: 60px;

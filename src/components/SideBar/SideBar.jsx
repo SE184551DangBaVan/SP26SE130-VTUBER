@@ -86,22 +86,26 @@ export default function SideBar() {
           <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => handleNavigation("explore", "/explore")}><img src={ExploreIco.src} alt='' className="fas"/><span>Explore</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => handleNavigation("posts", "/posts")}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'news' ? 'news' : ''}`} onClick={() => handleNavigation("news", "/news-feed")}><img src={NewsIco.src} alt='' className="fas news-ico"/><span>News</span></div>
-          {vtuberHub && !loadingVtuberHub &&  (
-            <div 
-              className={`side-bar-button ${sideBarSelected === 'my-hub' ? 'myHub' : ''}`} 
-              onClick={() => handleNavigation("my-hub", `/hub/${vtuberHub.subdomain}`)}
-            >
-              <img src={HubIco.src} alt='' className="fas"/>
-              <span>Go to your Hub</span>
-            </div>
-          )}
-          {loadingVtuberHub && (
-            <div className="side-bar-button" style={{ opacity: 0.5, cursor: 'default' }}>
-              <span>Loading...</span>
-            </div>
-          )}
-          {!vtuberHub && !loadingVtuberHub &&  (
-            <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
+          {userAuth?.role === 'VTUBER' && (
+            <>
+              {vtuberHub && !loadingVtuberHub &&  (
+                <div 
+                  className={`side-bar-button ${sideBarSelected === 'my-hub' ? 'myHub' : ''}`} 
+                  onClick={() => handleNavigation("my-hub", `/hub/${vtuberHub.subdomain}`)}
+                >
+                  <img src={HubIco.src} alt='' className="fas"/>
+                  <span>Go to your Hub</span>
+                </div>
+              )}
+              {!vtuberHub && !loadingVtuberHub &&  (
+                <div className={`side-bar-button ${sideBarSelected === 'create-hub' ? 'createHub' : ''}`} onClick={() => handleNavigation("create-hub", "/create-hub")}><AddRounded className="fas"/><span>Create A Hub</span></div>
+              )}
+              {loadingVtuberHub && (
+                <div className="side-bar-button" style={{ opacity: 0.5, cursor: 'default' }}>
+                  <span>Loading...</span>
+                </div>
+              )}
+            </>
           )}
           <hr/>
           <JoinedHubsContainer />
