@@ -2,12 +2,14 @@ import VtuberApplicationContent from '../AdminVtuberApplication/VtuberApplicatio
 import ShopItemsContent from '../AdminShopItems/ShopItemsManagement';
 import AnalyticsContent from '../AdminAnalytics/AnalyticsContent';
 import AdminFeedback from '../AdminFeedback/AdminFeedback';
+import AdminHubManagement from '../AdminHubManagement/AdminHubManagement';
 
 import ApplicationIco from '../../../../assets/UI-Elements/note.svg';
 import ShopItemIco from '../../../../assets/UI-Elements/shopping-cart.svg';
 import BannerItemIco from '../../../../assets/UI-Elements/stock.svg';
 import AnalyticIco from '../../../../assets/UI-Elements/analytics.svg';
 import FeedbackIco from '../../../../assets/UI-Elements/feedback.svg';
+import FanHubIco from '../../../../assets/UI-Elements/fanhub.svg';
 
 export const DESKTOP_ICONS_CONFIG = [
     {
@@ -23,6 +25,13 @@ export const DESKTOP_ICONS_CONFIG = [
         icon: <img src={ApplicationIco.src} alt="Vtuber Applications" style={{ width: '36px', height: '36px' }} />,
         component: VtuberApplicationContent,
         windowTitle: 'VTUBER_APPLICATION_MANAGER.exe'
+    },
+    {
+        id: 'fan-hub-management',
+        label: 'Fan Hub Management',
+        icon: <img src={FanHubIco.src} alt="Fan Hub Management" style={{ width: '42px', height: '42px' }} />,
+        component: AdminHubManagement,
+        windowTitle: 'ADMIN_HUB_MANAGER.exe'
     },
     {
         id: 'shop-items',

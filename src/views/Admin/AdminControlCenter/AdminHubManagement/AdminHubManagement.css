@@ -78,48 +78,7 @@
   background-color: #f9f9f9;
 }
 
-.channel-link {
-  color: #4a90d9;
-  text-decoration: none;
-  word-break: break-all;
-  max-width: 300px;
-  display: inline-block;
-}
-
-.channel-link:hover {
-  text-decoration: underline;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 20px;
-  text-transform: uppercase;
-}
-
-.status-pending {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.status-accepted {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-rejected {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.status-unknown {
-  background-color: #e2e3e5;
-  color: #383d41;
-}
-
-.edit-btn {
+.strike-btn {
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 500;
@@ -127,6 +86,12 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.strike-btn:hover {
+  background: #f5c6cb;
 }
 
 /* Modal Styles */
@@ -211,7 +176,15 @@
   width: 0;
 }
 
-.window .application-details {
+.window .strike-confirmation p {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.window .hub-details {
   margin-bottom: 24px;
   padding: 16px;
   background-color: #D7CDA9;
@@ -240,12 +213,8 @@
   word-break: break-word;
 }
 
-.window .review-form {
-  margin-top: 20px;
-}
-
 .window .form-group {
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .window .form-group label {
@@ -255,52 +224,6 @@
   color: #555555;
   margin-bottom: 8px;
   font-size: 14px;
-}
-
-.window .status-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.window .status-option-btn {
-  flex: 1;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #A3A283;
-  border-top: 3px solid #CBC9AA;
-  border-left: 3px solid #CBC9AA;
-  border-right: 2px solid #65664D;
-  border-bottom: 2px solid #4B4A34;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.window .status-option-btn:hover {
-  background: #84845d;
-  border-top: 3px solid #CBC9AA;
-  border-left: 3px solid #CBC9AA;
-  border-right: 2px solid #65664D;
-  border-bottom: 2px solid #4B4A34;
-}
-
-.window .status-option-btn.selected {
-  color: #155724;
-  background: #838261;
-  border-top: 3px solid #CBC9AA;
-  border-left: 3px solid #CBC9AA;
-  border-right: 2px solid #65664D;
-  border-bottom: 2px solid #4B4A34;
-}
-
-.window .status-option-btn.reject.selected {
-  color: rgb(150, 0, 0);
-  background: #838261;
-  border-top: 3px solid #CBC9AA;
-  border-left: 3px solid #CBC9AA;
-  border-right: 2px solid #65664D;
-  border-bottom: 2px solid #4B4A34;
 }
 
 .window .reason-input {
@@ -347,7 +270,7 @@
   background: #838261;
 }
 
-.window .submit-btn {
+.window .confirm-btn {
   padding: 10px 24px;
   font-size: 14px;
   font-weight: 600;
@@ -361,11 +284,11 @@
   transition: background-color 0.2s, border 0.3s ease;
 }
 
-.window .submit-btn:hover:not(:disabled) {
+.window .confirm-btn:hover:not(:disabled) {
   background: #838261;
 }
 
-.window .submit-btn:disabled {
+.window .confirm-btn:disabled {
   background-color: #5b5a4c;
   color: #999;
   border-top: 3px solid #cbc9aa00;
@@ -396,8 +319,8 @@
 }
 
 .refresh-btn,
-.edit-btn,
-.submit-btn,
+.strike-btn,
+.confirm-btn,
 .cancel-btn {
   background: #CBC9AA;
   color: #333;
@@ -409,7 +332,7 @@
 }
 
 .refresh-btn:active,
-.edit-btn:active {
+.strike-btn:active {
   border: 2px inset #333;
   transform: translate(2px, 2px);
   box-shadow: 0 0 1px #000;
@@ -449,10 +372,6 @@
 
   .detail-label {
     min-width: auto;
-  }
-
-  .status-buttons {
-    flex-direction: column;
   }
 }
 

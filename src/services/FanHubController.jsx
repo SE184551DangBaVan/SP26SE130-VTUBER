@@ -258,3 +258,29 @@ export const updateFanHub = async (fanHubId, hubData) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Strike a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {string} reason - Reason for striking
+ * @returns {Promise<Object>} Strike result
+ */
+export const strikeFanHub = async (fanHubId, reason) => {
+  try {
+    const res = await axiosInstance.post('/fan-hub-strike/create', {
+      fanHubId,
+      reason
+    });
+
+    console.log("strikeFanHub response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Strike fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

@@ -317,6 +317,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
   padding: 10px 20px;
   font-weight: 600;
   border: 2px solid var(--font-color);
+  box-shadow: 0 0 10px #00000080;
   text-overflow: clip;
   flex-wrap: nowrap;
   transition: all 0.3s ease;
