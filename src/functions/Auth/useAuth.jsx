@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(() => {
     clearAuthData();
+    // TODO call logout api (there is no api for logout yet when im making this commit.)
     router.push("/login");
   }, [clearAuthData, router]);
 

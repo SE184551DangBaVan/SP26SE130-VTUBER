@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
+// const API_BASE_URL = "http://localhost:8080/vhub/api/v1";
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL
   // Don't set default Content-Type here - it will be set in the interceptor

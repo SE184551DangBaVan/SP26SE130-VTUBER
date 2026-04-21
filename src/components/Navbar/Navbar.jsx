@@ -372,6 +372,10 @@ const Navbar = () => {
                                                 <FeedbackOutlined />
                                                 <span>Send Feedbacks</span>
                                             </button>
+                                            <button className="profile-menu-item" onClick={() => router.push('/vtuber-application')}>
+                                                <LiveTvRounded />
+                                                <span>Vtuber Application</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )}

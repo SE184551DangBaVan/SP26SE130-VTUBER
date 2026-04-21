@@ -56,3 +56,28 @@ export const reviewVtuberApplication = async (vTuberApplicationId, status, reaso
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Get current user's VTuber applications
+ * @returns {Promise<Array>} List of user's applications
+ */
+export const getMyVtuberApplications = async () => {
+  try {
+    const res = await axiosInstance.get(`/vtuber-application/my-applications`);
+
+    console.log("getMyVtuberApplications response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch my VTuber applications error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
