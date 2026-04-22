@@ -9,11 +9,11 @@
 }
 
 .my-reports-management-content.sidebar-expanded {
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
 }
 
 .my-reports-management-content.sidebar-retracted {
-  margin-left: 80px;
+  margin-left: var(--sidebar-width-min);
 }
 
 /* Sub Tabs */

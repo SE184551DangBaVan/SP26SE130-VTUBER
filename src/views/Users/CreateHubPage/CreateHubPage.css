@@ -17,7 +17,7 @@ body:has(.create-hub-page-container) {
   align-items: flex-start;
   margin-top: 0;
 
-  padding: 80px 2px 50px 256px;
+  padding: 80px 2px 50px var(--sidebar-width);
   transition: padding 0.2s ease;
 }
 

@@ -86,12 +86,10 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
-  background: #f8d7da;
-  color: #721c24;
 }
 
 .strike-btn:hover {
-  background: #f5c6cb;
+  background: #A3A283;
 }
 
 /* Modal Styles */

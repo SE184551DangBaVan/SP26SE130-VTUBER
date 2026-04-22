@@ -320,3 +320,25 @@ export const getUserDailyMissionStatus = async () => {
     return null;
   }
 };
+
+/**
+ * Logout user and blacklist authentication token
+ * @returns {Promise<Object>} Logout result
+ */
+export const logoutUser = async () => {
+  try {
+    const res = await axiosInstance.post(`/auth/logout`);
+
+    console.log("logoutUser response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Logout error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    // Return success even if API call fails - clear local auth data anyway
+    return { success: true, message: "Logout executed" };
+  }
+};

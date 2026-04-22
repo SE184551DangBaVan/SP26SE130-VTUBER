@@ -42,10 +42,10 @@ export default function AdminHubManagement() {
     }
 
     setSubmitting(true);
-    const result = await strikeFanHub(selectedHub.id, strikeReason.trim());
+    const result = await strikeFanHub(selectedHub.fanHubId, strikeReason.trim());
 
     if (result?.success) {
-      alert('FanHub struck successfully');
+      alert('FanHub striked successfully');
       handleCloseModal();
       fetchHubs();
     } else {
@@ -96,9 +96,9 @@ export default function AdminHubManagement() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedHubs.map((hub) => (
-                  <tr key={hub.id}>
-                    <td>{hub.id}</td>
+                {paginatedHubs.map((hub, i) => (
+                  <tr key={hub.fanHubId}>
+                    <td>{i+1}</td>
                     <td>{hub.hubName}</td>
                     <td>{hub.subdomain}</td>
                     <td>{hub.ownerUsername || 'N/A'}</td>
@@ -168,6 +168,7 @@ export default function AdminHubManagement() {
                     value={strikeReason}
                     onChange={(e) => setStrikeReason(e.target.value)}
                     rows={4}
+                    required
                   />
                 </div>
               </div>

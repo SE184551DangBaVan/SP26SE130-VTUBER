@@ -12,7 +12,7 @@
 }
 
 .settings-page.sidebar-expanded {
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
 }
 
 .settings-page.sidebar-retracted {

@@ -8,11 +8,11 @@
 }
 
 .hub-moderation-page.sidebar-expanded {
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
 }
 
 .hub-moderation-page.sidebar-retracted {
-  margin-left: 80px;
+  margin-left: var(--sidebar-width-min);
 }
 
 /* Hub Title */

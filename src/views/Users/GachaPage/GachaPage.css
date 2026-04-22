@@ -1,8 +1,8 @@
 /* Gacha Page - Main Layout */
 .gacha-page {
-  width: calc(100% - 256px);
+  width: calc(100% - var(--sidebar-width));
   margin-top: 80px;
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
   padding: 1.5rem;
   color: #000;
   font-family: 'Inter', sans-serif;
@@ -14,13 +14,13 @@
 }
 
 .gacha-page.sidebar-expanded {
-  width: calc(100% - 256px);
-  margin-left: 256px;
+  width: calc(100% - var(--sidebar-width));
+  margin-left: var(--sidebar-width);
 }
 
 .gacha-page.sidebar-retracted {
-  width: calc(100% - 80px);
-  margin-left: 80px;
+  width: calc(100% - var(--sidebar-width-min));
+  margin-left: var(--sidebar-width-min);
 }
 
 /* Loading */
