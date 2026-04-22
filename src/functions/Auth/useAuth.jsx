@@ -2,8 +2,17 @@
 
 import axios from "axios";
 import { useState, useContext, createContext, useEffect, useMemo, useCallback, useRef } from "react";
-import { checkToken, getAuthToken, getCurrentUserProfile, getUserById, API_BASE_URL } from "@/services/UserController";
+import { checkToken, getAuthToken, getCurrentUserProfile, getUserById, API_BASE_URL, logoutUser } from "@/services/UserController";
 import { usePathname, useRouter } from "next/navigation";
+
+import LoadingImg1 from '../../assets/Decor/Loading-1.gif'
+import LoadingImg2 from '../../assets/Decor/Loading-2.gif'
+import LoadingImg3 from '../../assets/Decor/loading-3.gif'
+import LoadingImg4 from '../../assets/Decor/loading-4.gif'
+import LoadingImg5 from '../../assets/Decor/Loading-5.gif'
+import LoadingImg6 from '../../assets/Decor/loading-6.gif'
+
+const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
 
 const AuthContext = createContext(null);
 
@@ -21,6 +30,12 @@ export const AuthProvider = ({ children }) => {
   const [userAuth, setUserAuth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
+  const [randomLoadingImage, setRandomLoadingImage] = useState(null);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * loadingImages.length);
+    setRandomLoadingImage(loadingImages[randomIndex]);
+  }, []);
   
   const [profile, setProfile] = useState({
     displayName: "",
@@ -52,21 +67,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    const token = getAuthToken();
     clearAuthData();
-    
-    if (token) {
-      try {
-        await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-      } catch (error) {
-        console.error("Auth: Logout API call failed", error);
-      }
+    try {
+      // Call logout API to blacklist token on server
+      await logoutUser();
+    } catch (error) {
+      console.error("Logout API error:", error);
+      // Continue with local logout even if API fails
     }
-    
     router.push("/login");
   }, [clearAuthData, router]);
 
@@ -183,7 +191,9 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("Auth: Initialization error", error);
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
       }
     };
 
@@ -247,7 +257,24 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <div className="loader" /> : children}
+      {loading ? 
+        <><div className="loading-overlay">
+          <div className='global-loading'>
+          {randomLoadingImage && (
+            <img
+              className='loading-animation'
+              src={randomLoadingImage.src}
+              alt=""
+              onError={(e) => {
+                e.target.src = "/picture-not-available-photo.jpg";
+              }}
+            />
+          )}
+        </div>
+        </div>
+          {children}
+        </> : 
+      children}
       
       {showSessionExpired && (
         <div className="session-expired-overlay">

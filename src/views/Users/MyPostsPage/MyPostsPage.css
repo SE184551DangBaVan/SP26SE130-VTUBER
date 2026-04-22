@@ -10,11 +10,11 @@
 
 /* this should be the same as var(--sidebar-width), but for some reasons i cant use it*/
 .user-posts-page.sidebar-expanded {
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
 }
 
 .user-posts-page.sidebar-retracted {
-  margin-left: 80px;
+  margin-left: var(--sidebar-width-min);
 }
 
 /* Header */

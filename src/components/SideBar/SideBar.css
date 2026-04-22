@@ -253,10 +253,11 @@ label[for=side-bar-toggle] {
   color: var(--sidebar-light-secondary);
   direction: ltr;
   cursor: pointer;
-  border-radius: 8px 0 0 8px;
+  margin-right: 24px;
+  border-radius: 8px;
   opacity: 1;
   z-index: 1;
-  transition: color 0.5s ease, opacity 0.4s ease, margin 0.3s ease, padding 0.3s ease;
+  transition: color 0.5s ease, opacity 0.4s ease, margin 0.3s ease, padding 0.3s ease, background 0.3s ease;
 }
 .side-bar-button span {
   font-family: "Monda", sans-serif;
@@ -268,7 +269,7 @@ label[for=side-bar-toggle] {
 }
 
 .side-bar-button:hover {
-  color: rgb(0, 180, 240);
+  background: var(--secondary-background);
 }
 .side-bar-button.home {pointer-events: none; padding-left: 20px;}
 .side-bar-button.home ~ #side-bar-content-highlight {
@@ -290,25 +291,35 @@ label[for=side-bar-toggle] {
   top: 178px;
 }
 
-.side-bar-button.createHub {pointer-events: none; opacity: 0.2;}
+.side-bar-button.createHub {pointer-events: none; opacity: 0.6;}
 .side-bar-button.createHub ~ #side-bar-content-highlight {
   /* top: 178px; */
   top: -100%;
 }
 
-.side-bar-button.myHub {pointer-events: none; opacity: 0.2;}
+.side-bar-button.myHub {pointer-events: none; opacity: 0.6;}
 .side-bar-button.myHub ~ #side-bar-content-highlight {
   /* top: 178px; */
   top: 232px;
 }
 
-.side-bar-button.gacha {pointer-events: none; opacity: 0.2;}
+.side-bar-button.gacha {pointer-events: none; opacity: 0.6;}
 .side-bar-button.gacha ~ #side-bar-content-highlight {
+  top: calc(236px + var(--joined-hubs-height, 0px));
+}
+
+.side-bar-button.shop {pointer-events: none; opacity: 0.6;}
+.side-bar-button.shop ~ #side-bar-content-highlight {
   top: calc(290px + var(--joined-hubs-height, 0px));
 }
 
-.side-bar-button.shop {pointer-events: none; opacity: 0.2;}
-.side-bar-button.shop ~ #side-bar-content-highlight {
+.has-hub-management .side-bar-button.gacha {pointer-events: none; opacity: 0.6;}
+.has-hub-management .side-bar-button.gacha ~ #side-bar-content-highlight {
+  top: calc(290px + var(--joined-hubs-height, 0px));
+}
+
+.has-hub-management .side-bar-button.shop {pointer-events: none; opacity: 0.6;}
+.has-hub-management .side-bar-button.shop ~ #side-bar-content-highlight {
   top: calc(344px + var(--joined-hubs-height, 0px));
 }
 

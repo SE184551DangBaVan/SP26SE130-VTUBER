@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import './AdminLogin.css'
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { showSuccess, showError, showLoading, updateToast } from '../../../utils/toastUtils';
 import { adminLogin, useAuth } from '../../../functions/Auth/useAuth';
 import AdminIco from '../../../assets/UI-Elements/admin-logo.svg';
@@ -10,11 +10,19 @@ import AdminIco from '../../../assets/UI-Elements/admin-logo.svg';
 export default function AdminLogin() {
   const router = useRouter();
   const { loginAdmin } = useAuth();
+  const audioRef = useRef(null);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.2;
+      audioRef.current.play().catch(() => {});
+    }
+  }, []);
 
   const handleAdminLogin = async (e) => {
       e.preventDefault();
@@ -43,6 +51,7 @@ export default function AdminLogin() {
 
   return (
     <>
+      <audio ref={audioRef} src="/sfx/windows-95-startup-sound.mp3" />
       <div className="desktop-container-loader">
         <img className='admin-logo' src={AdminIco.src} alt="Admin logo" />
         <div className='desktop-container-loader-watermark'>
