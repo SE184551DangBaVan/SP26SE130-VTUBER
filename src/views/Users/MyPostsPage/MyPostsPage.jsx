@@ -170,19 +170,6 @@ export default function MyPostsPage() {
     }
   };
 
-  const getMediaThumbnail = (post) => {
-    // For VIDEO type, show placeholder
-    if (post.postType?.toUpperCase() === "VIDEO") {
-      return VIDEO_PLACEHOLDER;
-    }
-    // For IMAGE type, show the actual image
-    if (post.media && post.media.length > 0) {
-      return post.media[0].mediaUrl;
-    }
-    // Fallback placeholder
-    return null;
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -266,14 +253,6 @@ export default function MyPostsPage() {
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <div className={`user-posts-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
-        <div className="empty-message">You haven't posted anything yet...</div>
-      </div>
-    );
-  }
-
   // Get sort icon - always shows descending indicator
   const getSortIcon = (field) => {
     if (sortBy !== field) return " ↕";
@@ -301,10 +280,10 @@ export default function MyPostsPage() {
                 Content{getSortIcon("title")}
               </th>
               <th className="sortable" onClick={() => handleSort("status")}>
-                Status{getSortIcon("status")}
+                Approval Status{getSortIcon("status")}
               </th>
               <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>
-                AI Validation{getSortIcon("aiValidationStatus")}
+                Final AI Validation Status{getSortIcon("aiValidationStatus")}
               </th>
               <th className="sortable" onClick={() => handleSort("createdAt")}>
                 Created Date{getSortIcon("createdAt")}
@@ -337,13 +316,6 @@ export default function MyPostsPage() {
                   <span className={`ai-validation-badge ${getAiValidationStatusClass(post.aiValidationStatus)}`}>
                     {post.aiValidationStatus || "UNKNOWN"}
                   </span>
-                  {post.aiValidationComment && (
-                    <div className="ai-validation-comment" title={post.aiValidationComment}>
-                      {post.aiValidationComment.length > 50
-                        ? post.aiValidationComment.substring(0, 50) + "..."
-                        : post.aiValidationComment}
-                    </div>
-                  )}
                 </td>
                 <td className="post-created-date" onClick={(e) => e.stopPropagation()}>
                   <span className="date-display">{formatDate(post.createdAt)}</span>
@@ -390,15 +362,10 @@ export default function MyPostsPage() {
             <div className="modal-body">
               {/* Post Info Section */}
               <div className="post-info-section">
-                <h3>Post Information</h3>
                 <div className="info-grid">
                   <div className="info-item">
                     <span className="info-label">Post ID:</span>
                     <span className="info-value">#{selectedPost.postId}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Title:</span>
-                    <span className="info-value">{selectedPost.title}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Fan Hub:</span>
@@ -413,32 +380,47 @@ export default function MyPostsPage() {
                     <span className="info-value">{getPostTypeLabel(selectedPost.postType)}</span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">Status:</span>
+                    <span className="info-label">Approval Status:</span>
                     <span className={`status-badge ${getStatusClass(selectedPost.status)}`}>
                       {selectedPost.status}
                     </span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">AI Validation:</span>
+                    <span className="info-label">Final AI Validation Status:</span>
                     <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>
                       {selectedPost.aiValidationStatus || "UNKNOWN"}
                     </span>
                   </div>
-                  <div className="info-item full-width">
-                    <span className="info-label">AI Comment:</span>
-                    <span className="info-value ai-comment">{selectedPost.aiValidationComment || "No comment"}</span>
-                  </div>
                   <div className="info-item">
                     <span className="info-label">Created:</span>
                     <span className="info-value">{formatDate(selectedPost.createdAt)}</span>
+                  </div>
+                  <div className="info-item full-width">
+                    <span className="info-label">AI Comment:</span>
+                    <div className="info-value ai-comment">{selectedPost.aiValidationComment || "No comment"}</div>
                   </div>
                 </div>
               </div>
 
               {/* Content Section */}
               <div className="content-section">
-                <h3>Content</h3>
-                <p className="post-content-full">{selectedPost.content || "No content"}</p>
+                <h3>
+                  Content {selectedPost.aiContentValidationStatus && (
+                    <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiContentValidationStatus)}`}>
+                      {selectedPost.aiContentValidationStatus}
+                    </span>
+                  )}
+                </h3>
+                <div className="content-full-wrapper">
+                  <div className="content-title-box">
+                    <span className="content-label">Title:</span>
+                    <p className="content-title-text">{selectedPost.title}</p>
+                  </div>
+                  <div className="content-body-box">
+                    <span className="content-label">Body:</span>
+                    <p className="content-text">{selectedPost.content || "No content"}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Media Section */}

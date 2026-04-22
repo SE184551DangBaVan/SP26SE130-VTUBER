@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import "./SettingsPage.css";
-import { getCurrentUserProfile, updateUserProfile, uploadAvatarFrame } from "@/services/UserController";
+import { getCurrentUserProfile, updateUserProfile, uploadAvatarFrame, changePassword } from "@/services/UserController";
 import { useAuth } from "@/functions/Auth/useAuth";
 import { useRouter } from "next/navigation";
 import { useSideBar } from "@/contexts/SideBarContext";
 import { languageOptions } from "@/constants/languageOptions";
-import { showSuccess, showError } from "@/utils/toastUtils";
+import { showSuccess, showError, showWarning } from "@/utils/toastUtils";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 type SettingsSection = "profile" | "account" | "logout";
 
@@ -24,8 +25,16 @@ export default function SettingsPage() {
   // Account state
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  
+  // Password state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Profile state
   const [displayName, setDisplayName] = useState("");
@@ -224,8 +233,58 @@ export default function SettingsPage() {
     setBio(userData?.bio || "");
     setTranslateLanguage(userData?.translateLanguage || "English");
     setNewEmail(userData?.email || "");
-    setPassword("");
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setIsChangingPassword(false);
     handleRemoveAvatarPreview();
+  };
+
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      showWarning("Please fill in all password fields");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showWarning("New password must be at least 6 characters long");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showWarning("New passwords do not match");
+      return;
+    }
+
+    if (newPassword === oldPassword) {
+      showWarning("New password cannot be the same as the old password");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const result = await changePassword({
+        oldPassword,
+        newPassword,
+        confirmPassword
+      });
+
+      if (result?.success) {
+        showSuccess("Password changed successfully!");
+        setIsChangingPassword(false);
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        // Show the specific error from data if it exists, otherwise fallback to message
+        showError(result?.data || result?.message || "Failed to change password");
+      }
+    } catch (error) {
+      console.error("Password change error:", error);
+      showError("Failed to change password");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const handleLogout = () => {
@@ -357,26 +416,111 @@ export default function SettingsPage() {
                   placeholder="Enter new email"
                 />
               </div>
+
+              <div className="settings-divider"></div>
+
               <div className="settings-field">
-                <label className="field-label" htmlFor="password">Password</label>
-                <div className="password-input-wrapper">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className="field-input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "👁️" : "👁️‍🗨️"}
-                  </button>
-                </div>
+                <label className="field-label">Password</label>
+                {!isChangingPassword ? (
+                  <div className="password-display-row">
+                    <span className="masked-password">••••••••</span>
+                    <button 
+                      className="change-password-trigger-btn"
+                      onClick={() => setIsChangingPassword(true)}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="password-change-fields">
+                    <div className="password-field-group">
+                      <label htmlFor="old-password">Old Password</label>
+                      <div className="password-input-wrapper">
+                        <input
+                          id="old-password"
+                          type={showOldPassword ? "text" : "password"}
+                          className="field-input"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          placeholder="Enter old password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-password-btn"
+                          onClick={() => setShowOldPassword(!showOldPassword)}
+                        >
+                          {showOldPassword ? <VisibilityOff /> : <Visibility />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="password-field-group">
+                      <label htmlFor="new-password">New Password</label>
+                      <div className="password-input-wrapper">
+                        <input
+                          id="new-password"
+                          type={showNewPassword ? "text" : "password"}
+                          className="field-input"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-password-btn"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="password-field-group">
+                      <label htmlFor="confirm-password">Confirm New Password</label>
+                      <div className="password-input-wrapper">
+                        <input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          className="field-input"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-password-btn"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="password-actions">
+                      <button 
+                        className="settings-btn cancel-small"
+                        onClick={() => {
+                          setIsChangingPassword(false);
+                          setOldPassword("");
+                          setNewPassword("");
+                          setConfirmPassword("");
+                        }}
+                        disabled={isUpdatingPassword}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="settings-btn save-small"
+                        onClick={handlePasswordChange}
+                        disabled={isUpdatingPassword}
+                      >
+                        {isUpdatingPassword ? "Updating..." : "Update Password"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="settings-divider"></div>
               <div className="settings-field">
                 <label className="field-label" htmlFor="translate-language">AI Translation Language</label>

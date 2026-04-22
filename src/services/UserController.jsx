@@ -87,42 +87,29 @@ export const getUserById = async (userId) => {
   }
 };
 /**
- * Get user information by ID
- * @param {number} userId - User ID
- * @returns {Promise<Object|null>} User data or null
+ * Set user oshi
+ * @param {string} oshiUsername - Username of the VTuber to set as Oshi
+ * @returns {Promise<Object>} Response data
  */
-export const setUserOshi = async (userName) => {
-    try {
-        const token = getAuthToken();
+export const setUserOshi = async (oshiUsername) => {
+  try {
+    const res = await axiosInstance.put(`/user/set-oshi`, {
+      oshiUsername
+    });
 
-        if (!token) {
-            console.warn("No auth token found");
-            return null;
-        }
-
-        const res = await axios.post(
-            `${API_BASE_URL}/user/${userName}`,
-            {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            }
-        );
-
-
-        if (res.data?.success && res.data?.data) {
-            return res.data.data;
-        }
-
-        return null;
-    } catch (err) {
-        console.error("Fetch user by ID error:", {
-            message: err.message,
-            status: err.response?.status,
-            data: err.response?.data,
-        });
-        return null;
+    if (res.data?.success) {
+      return res.data;
     }
+
+    return res.data || { success: false, message: "Failed to set Oshi" };
+  } catch (err) {
+    console.error("Set user oshi error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
 };
 
 
@@ -340,5 +327,33 @@ export const logoutUser = async () => {
     });
     // Return success even if API call fails - clear local auth data anyway
     return { success: true, message: "Logout executed" };
+  }
+};
+
+/**
+ * Change user password
+ * @param {Object} passwordData - Password data
+ * @param {string} passwordData.oldPassword - Old password
+ * @param {string} passwordData.newPassword - New password
+ * @param {string} passwordData.confirmPassword - New password confirmation
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const changePassword = async (passwordData) => {
+  try {
+    const res = await axiosInstance.put(
+      `/user/change-password`,
+      passwordData
+    );
+
+    console.log("changePassword response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Change password error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
   }
 };

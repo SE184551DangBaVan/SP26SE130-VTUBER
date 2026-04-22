@@ -354,8 +354,8 @@ export default function PostModerationContent({ fanHubId }) {
                 <th>Author</th>
                 <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
                 <th>Content</th>
-                <th className="sortable" onClick={() => handleSort("status")}>Status{getSortIcon("status")}</th>
-                <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
+                <th className="sortable" onClick={() => handleSort("status")}>Approval Status{getSortIcon("status")}</th>
+                <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>Final AI Validation Status{getSortIcon("aiValidationStatus")}</th>
                 <th className="sortable" onClick={() => handleSort("createdAt")}>Created Date{getSortIcon("createdAt")}</th>
               </tr>
             </thead>
@@ -415,15 +415,32 @@ export default function PostModerationContent({ fanHubId }) {
             <div className="pm-modal-body">
               <div className="pm-info-grid">
                 <div className="pm-info-item"><span className="pm-info-label">Post ID:</span><span className="pm-info-value">#{selectedPost.postId}</span></div>
-                <div className="pm-info-item"><span className="pm-info-label">Title:</span><span className="pm-info-value">{selectedPost.title}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
-                <div className="pm-info-item"><span className="pm-info-label">Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
-                <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Approval Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">Final AI Validation Status:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Created:</span><span className="pm-info-value">{formatDate(selectedPost.createdAt)}</span></div>
-                <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><span className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</span></div>
+                <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><div className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</div></div>
               </div>
-              <div className="pm-content-section"><h3>Content</h3><p className="pm-content-full">{selectedPost.content || "No content"}</p></div>
+              <div className="pm-content-section">
+                <h3>
+                  Content {selectedPost.aiContentValidationStatus && (
+                    <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiContentValidationStatus)}`}>
+                      {selectedPost.aiContentValidationStatus}
+                    </span>
+                  )}
+                </h3>
+                <div className="pm-content-full-wrapper">
+                  <div className="pm-content-title-box">
+                    <span className="pm-content-label">Title:</span>
+                    <p className="pm-content-title-text">{selectedPost.title}</p>
+                  </div>
+                  <div className="pm-content-body-box">
+                    <span className="pm-content-label">Body:</span>
+                    <p className="pm-content-text">{selectedPost.content || "No content"}</p>
+                  </div>
+                </div>
+              </div>
               <div className="pm-media-section">
                 <h3>Media ({selectedPost.media?.length || 0})</h3>
                 {selectedPost.media && selectedPost.media.length > 0 ? (
