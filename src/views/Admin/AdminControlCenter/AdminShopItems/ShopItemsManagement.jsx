@@ -167,7 +167,7 @@ export default function ShopItemsManagement() {
                   type='number'
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder='100'
+                  placeholder='10 Pts'
                   min='0'
                 />
               </label>
@@ -177,7 +177,7 @@ export default function ShopItemsManagement() {
                   type='text'
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder='FRAME'
+                  placeholder='FRAME, PET, .etc'
                 />
               </label>
               <label>

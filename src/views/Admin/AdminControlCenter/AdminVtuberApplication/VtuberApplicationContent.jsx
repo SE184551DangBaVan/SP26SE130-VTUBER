@@ -10,6 +10,8 @@ export default function VtuberApplicationContent() {
   const [reviewStatus, setReviewStatus] = useState('');
   const [reviewReason, setReviewReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchApplications();
@@ -17,7 +19,7 @@ export default function VtuberApplicationContent() {
 
   const fetchApplications = async () => {
     setLoading(true);
-    const data = await getVtuberApplications(0, 50, 'createdAt');
+    const data = await getVtuberApplications(0, 100, 'createdAt');
     setApplications(data);
     setLoading(false);
   };
@@ -84,6 +86,8 @@ export default function VtuberApplicationContent() {
     }
   };
 
+  const paginatedApps = applications.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   return (
     <>
       <div className='admin-page-header'>
@@ -99,52 +103,69 @@ export default function VtuberApplicationContent() {
         ) : applications.length === 0 ? (
           <div className='empty-state'>No applications found</div>
         ) : (
-          <table className='applications-table'>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Channel Name</th>
-                <th>Channel Link</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => (
-                <tr key={app.id}>
-                  <td>{app.id}</td>
-                  <td>{app.username}</td>
-                  <td>{app.channelName}</td>
-                  <td>
-                    <a 
-                      href={app.channelLink} 
-                      target='_blank' 
-                      rel='noopener noreferrer'
-                      className='channel-link'
-                    >
-                      {app.channelLink}
-                    </a>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(app.createdAt)}</td>
-                  <td>
-                    <button 
-                      className='edit-btn'
-                      onClick={() => handleEditClick(app)}
-                    >
-                      Edit
-                    </button>
-                  </td>
+          <>
+            <table className='applications-table'>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Channel Name</th>
+                  <th>Channel Link</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedApps.map((app) => (
+                  <tr key={app.id}>
+                    <td>{app.id}</td>
+                    <td>{app.username}</td>
+                    <td>{app.channelName}</td>
+                    <td>
+                      <a 
+                        href={app.channelLink} 
+                        target='_blank' 
+                        rel='noopener noreferrer'
+                        className='channel-link'
+                      >
+                        {app.channelLink}
+                      </a>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td>{formatDate(app.createdAt)}</td>
+                    <td>
+                      <button 
+                        className='edit-btn'
+                        onClick={() => handleEditClick(app)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className='pagination'>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))} 
+                disabled={currentPage === 0}
+              >
+                Previous
+              </button>
+              <span>Page {currentPage + 1} of {Math.ceil(applications.length / itemsPerPage)}</span>
+              <button 
+                onClick={() => setCurrentPage(prev => prev + 1)} 
+                disabled={(currentPage + 1) * itemsPerPage >= applications.length}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
 

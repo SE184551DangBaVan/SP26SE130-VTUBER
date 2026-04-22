@@ -9,7 +9,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 80px 2px 50px 256px;
+  padding: 80px 2px 50px var(--sidebar-width);
   transition: padding 0.2s ease;
   background-color: #f5f5f5;
 }

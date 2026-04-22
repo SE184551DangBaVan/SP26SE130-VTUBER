@@ -47,10 +47,8 @@ export const getShopItems = async (pageNo = 0, pageSize = 100, sortBy = "id") =>
 export const addShopItem = async ({ itemName, description, category, price, imageFile }) => {
   try {
     const formData = new FormData();
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
 
+    // Add request JSON data as Blob with proper content type
     const requestPayload = {
       itemName,
       description,
@@ -58,17 +56,19 @@ export const addShopItem = async ({ itemName, description, category, price, imag
       price,
     };
 
-    formData.append('request', JSON.stringify(requestPayload));
-
-    const res = await axiosInstance.post(
-      `/shop-items/add`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(requestPayload)], { type: 'application/json' })
     );
+
+    // Add image file if provided
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    // Don't set Content-Type manually - axios interceptor will handle it
+    // The browser will set it with the correct boundary for FormData
+    const res = await axiosInstance.post('/shop-items/add', formData);
 
     console.log("addShopItem response:", res.data);
     return res.data;

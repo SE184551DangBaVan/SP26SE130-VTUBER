@@ -9,11 +9,11 @@
 }
 
 .create-post-page.sidebar-expanded {
-  margin-left: 256px;
+  margin-left: var(--sidebar-width);
 }
 
 .create-post-page.sidebar-retracted {
-  margin-left: 80px;
+  margin-left: var(--sidebar-width-min);
 }
 
 .create-post-container {

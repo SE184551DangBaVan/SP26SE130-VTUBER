@@ -81,7 +81,7 @@ export default function SideBar() {
         <div id="side-bar-header">
           <label htmlFor="side-bar-toggle"><span id="side-bar-toggle-burger"></span></label>
         </div>
-        <div id="side-bar-content">
+        <div id='side-bar-content' className={`${userAuth?.role === 'VTUBER' && 'has-hub-management'}`}>
           <div className={`side-bar-button ${sideBarSelected === 'home' ? 'home' : ''}`} onClick={() => handleNavigation("home", "/home")}><img src={HomeIco.src} alt='' className="fas"/><span>Home</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'explore' ? 'explore' : ''}`} onClick={() => handleNavigation("explore", "/explore")}><img src={ExploreIco.src} alt='' className="fas"/><span>Explore</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'posts' ? 'posts' : ''}`} onClick={() => handleNavigation("posts", "/posts")}><img src={PostsIco.src} alt='' className="fas"/><span>Posts</span></div>
