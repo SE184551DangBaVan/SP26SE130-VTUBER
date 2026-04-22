@@ -51,9 +51,22 @@ export const AuthProvider = ({ children }) => {
     });
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    const token = getAuthToken();
     clearAuthData();
-    // TODO call logout api (there is no api for logout yet when im making this commit.)
+    
+    if (token) {
+      try {
+        await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error("Auth: Logout API call failed", error);
+      }
+    }
+    
     router.push("/login");
   }, [clearAuthData, router]);
 

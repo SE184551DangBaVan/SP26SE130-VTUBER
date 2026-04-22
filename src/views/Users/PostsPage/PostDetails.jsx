@@ -7,6 +7,7 @@ import { checkIsMember } from '@/services/FanHubController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
+import { BASE_URL } from '@/config';
 import CommentSection from './CommentSection';
 import './PostDetails.css';
 import {
@@ -311,6 +312,31 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
       targetId: post.postId,
       targetName: post.title || `Post #${post.postId}`,
     });
+  };
+
+  const handleShare = (e) => {
+    e?.stopPropagation();
+    const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showSteamSuccess('Link copied!', 'Shared');
+      }).catch(() => {
+        showSteamError('Failed to copy link', 'Error');
+      });
+    } else {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSteamSuccess('Link copied!', 'Shared');
+      } catch (err) {
+        showSteamError('Failed to copy link', 'Error');
+      }
+    }
   };
 
   const handleDeletePost = async () => {
@@ -635,7 +661,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                         )}
                         <span className='action-count'>{formatCount(likeCount)}</span>
                       </button>
-                      <button className='action-btn share-btn'>
+                      <button className='action-btn share-btn' onClick={handleShare}>
                         <ShareRounded fontSize='small' />
                         <span>Share</span>
                       </button>

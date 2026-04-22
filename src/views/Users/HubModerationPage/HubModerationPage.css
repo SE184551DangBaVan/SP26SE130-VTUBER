@@ -5,6 +5,7 @@
   color: #000;
   font-family: 'Inter', sans-serif;
   transition: margin-left 0.3s ease;
+  min-height: calc(100vh - 80px);
 }
 
 .hub-moderation-page.sidebar-expanded {

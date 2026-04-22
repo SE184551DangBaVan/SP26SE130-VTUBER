@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import "./ProfilePage.css";
-import { getUserByUsername, selectDisplayBadges, updateUserProfile, uploadAvatarFrame } from "@/services/UserController";
+import { useRouter } from "next/navigation";
+import { getUserByUsername, selectDisplayBadges, updateUserProfile, uploadAvatarFrame, setUserOshi } from "@/services/UserController";
 import { useAuth } from "@/functions/Auth/useAuth";
 import { showSuccess, showError } from "@/utils/toastUtils";
 
 export default function ProfilePage({ username }: { username: string }) {
+  const router = useRouter();
   const auth = useAuth();
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,7 @@ export default function ProfilePage({ username }: { username: string }) {
   const [selectedBadges, setSelectedBadges] = useState<number[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [loggedInUserId, setLoggedInUserId] = useState<number | null>(null);
+  const [isSettingOshi, setIsSettingOshi] = useState(false);
 
   // Inline editing state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -69,8 +72,9 @@ export default function ProfilePage({ username }: { username: string }) {
               hubsJoined: data.totalFanHubs || 0,
             },
             oshi: {
-              name: data.oshiName || "N/A",
-              avatar: data.oshiAvatar || "",
+                username: data.oshi?.username || "",
+              name: data.oshi?.displayName || "N/A",
+              avatar: data.oshi?.avatarUrl || "",
             },
             memberSince: data.createdAt
               ? new Date(data.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -217,6 +221,27 @@ export default function ProfilePage({ username }: { username: string }) {
       showSuccess("Bio updated successfully!");
     } else {
       showError(result?.message || "Failed to update bio");
+    }
+  };
+
+  const handleSetOshi = async () => {
+    if (!userData?.username) return;
+    
+    setIsSettingOshi(true);
+    try {
+      const result = await setUserOshi(userData.username);
+      if (result?.success) {
+        showSuccess(`Set ${userData.displayName} as your Oshi!`);
+        // We might want to refresh the logged in user's data here if they are viewing their own profile elsewhere
+        // but since they are viewing someone else's profile, we just show success.
+      } else {
+        showError(result?.message || "Failed to set Oshi");
+      }
+    } catch (error) {
+      console.error("Set Oshi error:", error);
+      showError("Failed to set Oshi");
+    } finally {
+      setIsSettingOshi(false);
     }
   };
 
@@ -414,13 +439,24 @@ export default function ProfilePage({ username }: { username: string }) {
             ) : (
               <>
                 <h1 className="display-name">{userData.displayName}</h1>
-                {isCurrentUser && (
+                {isCurrentUser ? (
                   <button className="edit-icon-btn" onClick={handleStartEditName} title="Edit display name">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                   </button>
+                ) : (
+                  userData.role === "VTUBER" && (
+                    <button 
+                      className="set-oshi-btn" 
+                      onClick={handleSetOshi} 
+                      disabled={isSettingOshi}
+                      title="Set as Oshi"
+                    >
+                      {isSettingOshi ? "..." : "❤ Set as Oshi"}
+                    </button>
+                  )
                 )}
               </>
             )}
@@ -454,7 +490,10 @@ export default function ProfilePage({ username }: { username: string }) {
         {userData.oshi.name !== "N/A" && userData.oshi.avatar && (
           <div className="oshi-display">
             <p className="oshi-label">Most Favorite:</p>
-            <div className="oshi-info">
+            <div 
+              className="oshi-info" 
+              onClick={() => router.push(`/user/${userData.oshi.username}`)}
+            >
               <img src={userData.oshi.avatar} alt={userData.oshi.name} className="oshi-avatar" />
               <p className="oshi-name">{userData.oshi.name}</p>
             </div>
