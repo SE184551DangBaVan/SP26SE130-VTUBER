@@ -270,6 +270,7 @@ export const AuthProvider = ({ children }) => {
               }}
             />
           )}
+          <div className='loading-bar'></div>
         </div>
         </div>
           {children}

@@ -7,6 +7,7 @@ import { getFanHubs, getTopFanHubs } from '@/services/FanHubController';
 import { GroupRounded } from '@mui/icons-material';
 
 import NothingHere from '../../../assets/Decor/loading-9.gif'
+import RetroWindow from '@/components/RetroWindow/RetroWindow';
 
 const CATEGORIES = ["Game", "Just Chatting", "Music", "ASMR", "Cooking", "Art"];
 const ITEMS_PER_SECTION = 6;
@@ -87,7 +88,7 @@ export default function ExplorePage() {
     };
 
     fetchTop();
-  }, [selecetedCategory]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -151,7 +152,7 @@ export default function ExplorePage() {
     const hasMore = hubs.length > visibleCount;
 
     return (
-      <div className="explore-section simplified">
+      <div className={`explore-section simplified ${selecetedCategory && 'focus'}`}>
         <div className="explore-section-header">
           <h3>Recommended <span>{category}</span> FanHubs</h3>
         </div>
@@ -192,7 +193,9 @@ export default function ExplorePage() {
                         {hub?.memberCount ?? "N/A"} members
                       </span>
                     </div>
-                    <button className="simplified-join-btn">Visit</button>
+                    <button className="simplified-join-btn stylised-btn">
+                      <span className="stylised-text">Visit</span>
+                    </button>
                   </div>
                   <p className="simplified-card-description">
                     {hub.description || `Join the ${hub.hubName} community and connect with other fans!`}
@@ -298,6 +301,7 @@ export default function ExplorePage() {
 
   return (
     <div className='explore-page-container'>
+      <div className='explore-background-grid'></div>
       <div className='explore-page-content'>
         <div className='explore-category-controls'>
           <div className="category-search-bar">
@@ -354,82 +358,98 @@ export default function ExplorePage() {
         ))}
         </div>
 
-        <div className="explore-section top-hubs">
-          <h3>🔥 Top {selecetedCategory} FanHub</h3>
-          <div className="explore-banner"
-            style={{
-              backgroundColor: '#555',
-              backgroundImage: topHub?.bannerUrl
-                ? `url(${topHub.bannerUrl})`
-                : "#999",
-              color: topHub?.themeColor || "#fff",
-              border: `3px solid ${topHub?.themeColor || "#fff"} `
-            }}
-          >
-            <div className="explore-banner-left">
-              <div className="hub-info">
-                <div className="hub-owner-info">
-                  <img
-                    className="hub-owner-pfp"
-                    src={topHub?.avatarUrl || "/profile-pic-undefined.jpg"}
-                    alt=""
-                    onError={(e) => {
-                      e.target.src = "/profile-pic-undefined.jpg";
-                    }}
-                  />
-
-                  <div className="hub-owner-info-display">
-                    <div className="hub-owner-display-name">
-                      <span>Owned by:</span>
-                      <span>{topHub?.ownerDisplayName || "Unknown"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <h2 style={{ color: topHub?.themeColor || "#fff" }}>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
-              </div>
-
-              <button 
-                className="explore-visit-btn"
-                onClick={() => handleVisitHub(topHub)}
-                disabled={!topHub?.fanHubId}
-                style={{background: topHub?.themeColor}}
+        <RetroWindow
+          windowWidth="100%" 
+          windowHeight="fit-content"
+          windowColor="yellow" //there is only red, blue, yellow
+          windowTitle="Top FanHub"
+          windowContent={(
+            <div className="explore-section top-hubs" >
+              <h3>Most Popular FanHubs:</h3>
+              <div className='explore-banner-list'>
+                <div className="explore-banner"
+                style={{
+                  backgroundColor: '#555',
+                  backgroundImage: topHub?.bannerUrl
+                    ? `url(${topHub.bannerUrl})`
+                    : "#999",
+                  color: topHub?.themeColor || "#fff",
+                  border: `3px solid ${topHub?.themeColor || "#fff"} `
+                }}
               >
-                <div className="hub-info-member-count">
-                  <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
-                </div>
-                Visit Fanhub <span className="ico">→</span>
-              </button>
-            </div>
+                <div className="explore-banner-left">
+                  <div className="hub-info">
+                    <div className="hub-owner-info">
+                      <img
+                        className="hub-owner-pfp"
+                        src={topHub?.avatarUrl || "/profile-pic-undefined.jpg"}
+                        alt=""
+                        onError={(e) => {
+                          e.target.src = "/profile-pic-undefined.jpg";
+                        }}
+                      />
 
-            <div className="explore-banner-right">
-              {!topLoading ? (
-                [1, 2, 3, 4].map((i) => (
-                  <img
-                    key={i}
-                    src={`${topHub?.highlightImgUrls[i-1]}`}
-                    alt=""
-                    onError={(e) => {
-                      e.target.src = "/picture-not-available-photo.jpg";
-                    }}
-                  />
-                ))
-              ) : (
-                [1, 2, 3, 4].map((i) => (
-                  <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
-                    <Skeleton />
-                  </SkeletonTheme>
-                ))
-              )}
+                      <div className="hub-owner-info-display">
+                        <div className="hub-owner-display-name">
+                          <span>Owned by:</span>
+                          <span>{topHub?.ownerDisplayName || "Unknown"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h2 style={{ color: topHub?.themeColor || "#fff" }}>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
+                  </div>
+
+                  <button 
+                    className="explore-visit-btn"
+                    onClick={() => handleVisitHub(topHub)}
+                    disabled={!topHub?.fanHubId}
+                    style={{background: topHub?.themeColor}}
+                  >
+                    <div className="hub-info-member-count">
+                      <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
+                    </div>
+                    Visit Fanhub <span className="ico">→</span>
+                  </button>
+                </div>
+
+                <div className="explore-banner-right">
+                  {!topLoading ? (
+                    [1, 2, 3, 4].map((i) => (
+                      <img
+                        key={i}
+                        src={`${topHub?.highlightImgUrls[i-1]}`}
+                        alt=""
+                        onError={(e) => {
+                          e.target.src = "/picture-not-available-photo.jpg";
+                        }}
+                      />
+                    ))
+                  ) : (
+                    [1, 2, 3, 4].map((i) => (
+                      <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
+                        <Skeleton />
+                      </SkeletonTheme>
+                    ))
+                  )}
+                </div>
+              </div>
+              </div>
+              <a href="https://landfall.se/peak" target="_blank" rel="noopener noreferrer" className='art-credits'>Art by: Landfall</a>
             </div>
-          </div>
-          <a href="https://landfall.se/peak" target="_blank" rel="noopener noreferrer" className='art-credits'>Art by: Landfall</a>
-        </div>
+          )}
+        />
 
         {Object.keys(groupedHubs).length === 0 ? (
           <> </>
         ) : (
-          typeof window !== 'undefined' && localStorage.getItem('username') || sessionStorage.getItem('username') ? (
+          <RetroWindow
+          windowWidth="fit-content" 
+          windowHeight="fit-content"
+          windowColor="blue" //there is only red, blue, yellow
+          windowTitle="Recommended Categories"
+          windowContent={(
+            typeof window !== 'undefined' && localStorage.getItem('username') || sessionStorage.getItem('username') ? (
             CATEGORIES.map((category) => (
               <SimplifiedSection
                 key={category}
@@ -437,7 +457,8 @@ export default function ExplorePage() {
                 hubs={groupedHubs[category] || []}
               />
             ))
-          ) : null
+          ) : null)}
+        />
         )}
 
         <div className="more-divider">
@@ -452,3 +473,10 @@ export default function ExplorePage() {
     </div>
   )
 }
+
+
+
+
+
+
+

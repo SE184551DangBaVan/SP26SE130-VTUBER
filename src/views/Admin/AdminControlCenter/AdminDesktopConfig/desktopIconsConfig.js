@@ -1,5 +1,6 @@
 import VtuberApplicationContent from '../AdminVtuberApplication/VtuberApplicationContent';
 import ShopItemsContent from '../AdminShopItems/ShopItemsManagement';
+import BannerManageContent from '../BannerManagement/BannerManagement';
 import AnalyticsContent from '../AdminAnalytics/AnalyticsContent';
 import AdminFeedback from '../AdminFeedback/AdminFeedback';
 import AdminHubManagement from '../AdminHubManagement/AdminHubManagement';
@@ -40,7 +41,13 @@ export const DESKTOP_ICONS_CONFIG = [
         component: ShopItemsContent,
         windowTitle: 'SHOP_ITEMS_MANAGER.exe'
     },
-    
+    {
+        id: 'banner-management',
+        label: 'Banner Management',
+        icon: <img src={BannerItemIco.src} alt="Banner Management" style={{ width: '42px', height: '42px' }} />,
+        component: BannerManageContent,
+        windowTitle: 'BANNER_MANAGEMENT.exe'
+    },
     {
         id: 'view-feedback',
         label: 'View Feedback',

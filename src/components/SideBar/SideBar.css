@@ -313,6 +313,11 @@ label[for=side-bar-toggle] {
   top: calc(290px + var(--joined-hubs-height, 0px));
 }
 
+.side-bar-button.feedback {pointer-events: none; opacity: 0.6;}
+.side-bar-button.feedback ~ #side-bar-content-highlight {
+  top: calc(344px + var(--joined-hubs-height, 0px));
+}
+
 .has-hub-management .side-bar-button.gacha {pointer-events: none; opacity: 0.6;}
 .has-hub-management .side-bar-button.gacha ~ #side-bar-content-highlight {
   top: calc(290px + var(--joined-hubs-height, 0px));
@@ -321,6 +326,11 @@ label[for=side-bar-toggle] {
 .has-hub-management .side-bar-button.shop {pointer-events: none; opacity: 0.6;}
 .has-hub-management .side-bar-button.shop ~ #side-bar-content-highlight {
   top: calc(344px + var(--joined-hubs-height, 0px));
+}
+
+.has-hub-management .side-bar-button.feedback {pointer-events: none; opacity: 0.6;}
+.has-hub-management .side-bar-button.feedback ~ #side-bar-content-highlight {
+  top: calc(394px + var(--joined-hubs-height, 0px));
 }
 
 #side-bar .fas {
