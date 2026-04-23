@@ -1,7 +1,7 @@
 .explore-page-container {
   position: relative;
-  background-image: linear-gradient(to bottom right, #c5faff, #afdbdf);
-    width: 100%;
+  background: transparent;
+  width: 100%;
     min-height: 100vh;
     padding-left: var(--sidebar-width);
     padding-top: 80px;
@@ -19,8 +19,8 @@
   z-index: 1;
 
   background-image:
-    linear-gradient(rgba(255,255,255,0.8) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(255,255,255,0.8) 2px, transparent 2px);
+    linear-gradient(rgba(160, 160, 160, 0.8) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(160, 160, 160, 0.8) 2px, transparent 2px);
 
   background-size: 48px 48px;
   opacity: 0.75;
@@ -594,7 +594,7 @@ body:has(#side-bar.rebound-animation) .explore-page-container {
 }
 
 .retro-window-container:has(.explore-section.simplified.focus) {
-  transform: translateY(-500px);
+  transform: translateY(-550px);
   transition: transform 0.8s ease;
 }
 
