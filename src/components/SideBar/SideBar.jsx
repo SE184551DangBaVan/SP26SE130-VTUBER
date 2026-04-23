@@ -8,6 +8,7 @@ import GachaIco from '../../assets/UI-Elements/gacha.svg'
 import NewsIco from '../../assets/UI-Elements/news.svg'
 import HubIco from '../../assets/UI-Elements/my-hub-center.svg'
 import ShopIco from '../../assets/UI-Elements/shop.svg'
+import FeedbackIco from '../../assets/UI-Elements/feedback-submit.svg'
 import './SideBar.css'
 import JoinedHubsContainer from './JoinedHubsContainer'
 import { useEffect, useState } from "react"
@@ -56,6 +57,7 @@ export default function SideBar() {
       '/create-hub': 'create-hub',
       '/gacha': 'gacha',
       '/shop': 'shop',
+      '/feedback': 'feedback',
     };
 
     // Check if current route matches VTuber hub
@@ -112,7 +114,7 @@ export default function SideBar() {
           <hr/>
           <div className={`side-bar-button ${sideBarSelected === 'gacha' ? 'gacha' : ''}`} onClick={() => handleNavigation("gacha", "/gacha")}><img src={GachaIco.src} alt='' className="fas"/><span>Gacha</span></div>
           <div className={`side-bar-button ${sideBarSelected === 'shop' ? 'shop' : ''}`} onClick={() => handleNavigation("shop", "/shop")}><img src={ShopIco.src} alt='' className="fas"/><span>Shop</span></div>
-
+          <div className={`side-bar-button ${sideBarSelected === 'feedback' ? 'feedback' : ''}`} onClick={() => handleNavigation("feedback", "/feedback")}><img src={FeedbackIco.src} alt='' className="fas"/><span>Feedback</span></div>
           <div id="side-bar-content-highlight"></div>
         </div>
       </div>

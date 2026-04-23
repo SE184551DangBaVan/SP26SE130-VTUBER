@@ -75,7 +75,7 @@
 }
 
 .applications-table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: #fbedb5;
 }
 
 .strike-btn {
@@ -90,6 +90,27 @@
 
 .strike-btn:hover {
   background: #A3A283;
+}
+
+.deactivate-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 8px;
+}
+
+.deactivate-btn:hover {
+  background: #A3A283;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* Modal Styles */
@@ -180,6 +201,18 @@
   color: #333;
   margin-bottom: 16px;
   text-align: center;
+}
+
+.window .deactivate-confirmation p {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.5;
+  text-align: center;
+  padding: 16px;
+  background: #CBC9AA;
+  border-radius: 8px;
+  border: 2px solid #CBC9AA;
 }
 
 .window .hub-details {
@@ -318,6 +351,7 @@
 
 .refresh-btn,
 .strike-btn,
+.deactivate-btn,
 .confirm-btn,
 .cancel-btn {
   background: #CBC9AA;
@@ -330,7 +364,8 @@
 }
 
 .refresh-btn:active,
-.strike-btn:active {
+.strike-btn:active,
+.deactivate-btn:active {
   border: 2px inset #333;
   transform: translate(2px, 2px);
   box-shadow: 0 0 1px #000;
@@ -413,3 +448,115 @@
   font-size: 14px;
   color: #555;
 }
+
+/* Reports functionality styles */
+.reports-count {
+  background: none;
+  width: 60%;
+  text-align: center;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  transition: background-color 0.2s;
+}
+
+.reports-count:hover {
+  border: 2px solid #999;
+  background-color: #f0f8ff;
+}
+
+.reports-count.high-reports {
+  color: #dc3545;
+  font-weight: bold;
+}
+.reports-count.mild-reports {
+  color: #dc7835;
+  font-weight: bold;
+}
+.reports-count.first-reports {
+  color: #3272ca;
+  font-weight: bold;
+}
+
+.reports-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.reports-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.report-item {
+  padding: 16px;
+  background: #D7CDA9;
+  border-radius: 8px;
+  border: 2px solid #CBC9AA;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.report-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reporter-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.report-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.report-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.report-status.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.report-status.resolved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.report-status.rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.report-reason,
+.report-resolution,
+.report-resolved-by {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.report-reason strong,
+.report-resolution strong,
+.report-resolved-by strong {
+  color: #333;
+}
+
+

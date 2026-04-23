@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getFanHubs, strikeFanHub } from '@/services/FanHubController';
+import { getFanHubs, strikeFanHub, deactivateFanHub } from '@/services/FanHubController';
+import { getFanHubReportsWithReports } from '@/services/HubReportController';
 import './AdminHubManagement.css';
 
 export default function AdminHubManagement() {
   const [hubs, setHubs] = useState([]);
+  const [hubReports, setHubReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedHub, setSelectedHub] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [selectedHubReports, setSelectedHubReports] = useState([]);
   const [strikeReason, setStrikeReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -18,8 +23,12 @@ export default function AdminHubManagement() {
 
   const fetchHubs = async () => {
     setLoading(true);
-    const data = await getFanHubs(0, 100);
-    setHubs(data);
+    const [hubsData, reportsData] = await Promise.all([
+      getFanHubs(0, 100),
+      getFanHubReportsWithReports(0, 100, 'createdAt')
+    ]);
+    setHubs(hubsData);
+    setHubReports(reportsData);
     setLoading(false);
   };
 
@@ -52,6 +61,48 @@ export default function AdminHubManagement() {
       alert(result?.message || 'Failed to strike FanHub');
     }
     setSubmitting(false);
+  };
+
+  const handleDeactivateClick = (hub) => {
+    setSelectedHub(hub);
+    setShowDeactivateModal(true);
+  };
+
+  const handleCloseDeactivateModal = () => {
+    setShowDeactivateModal(false);
+    setSelectedHub(null);
+  };
+
+  const handleConfirmDeactivate = async () => {
+    setSubmitting(true);
+    const result = await deactivateFanHub(selectedHub.fanHubId);
+
+    if (result?.success) {
+      alert('FanHub deactivated successfully');
+      handleCloseDeactivateModal();
+      fetchHubs();
+    } else {
+      alert(result?.message || 'Failed to deactivate FanHub');
+    }
+    setSubmitting(false);
+  };
+
+  const getReportCount = (fanHubId) => {
+    const hubReport = hubReports.find(report => report.fanHubId === fanHubId);
+    return hubReport ? hubReport.reports.length : 0;
+  };
+
+  const handleReportsClick = (hub) => {
+    const hubReport = hubReports.find(report => report.fanHubId === hub.fanHubId);
+    setSelectedHub(hub);
+    setSelectedHubReports(hubReport ? hubReport.reports : []);
+    setShowReportsModal(true);
+  };
+
+  const handleCloseReportsModal = () => {
+    setShowReportsModal(false);
+    setSelectedHub(null);
+    setSelectedHubReports([]);
   };
 
   const formatDate = (isoString) => {
@@ -92,27 +143,47 @@ export default function AdminHubManagement() {
                   <th>Subdomain</th>
                   <th>Owner Username</th>
                   <th>Created At</th>
+                  <th>Reports</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedHubs.map((hub, i) => (
-                  <tr key={hub.fanHubId}>
-                    <td>{i+1}</td>
-                    <td>{hub.hubName}</td>
-                    <td>{hub.subdomain}</td>
-                    <td>{hub.ownerUsername || 'N/A'}</td>
-                    <td>{formatDate(hub.createdAt)}</td>
-                    <td>
-                      <button 
-                        className='strike-btn'
-                        onClick={() => handleStrikeClick(hub)}
-                      >
-                        Strike
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {paginatedHubs.map((hub, i) => {
+                  const reportCount = getReportCount(hub.fanHubId);
+                  return (
+                    <tr key={hub.fanHubId}>
+                      <td>{i+1}</td>
+                      <td>{hub.hubName}</td>
+                      <td>{hub.subdomain}</td>
+                      <td>{hub.ownerUsername}</td>
+                      <td>{formatDate(hub.createdAt)}</td>
+                      <td>
+                        <button
+                          className={`reports-count ${reportCount === 1 ? 'first-reports' : ''} ${reportCount === 2 ? 'mild-reports' : ''} ${reportCount > 3 ? 'high-reports' : ''}`}
+                          onClick={() => handleReportsClick(hub)}
+                        >
+                          {reportCount}
+                        </button>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className='strike-btn'
+                            onClick={() => handleStrikeClick(hub)}
+                          >
+                            Strike
+                          </button>
+                          <button
+                            className='deactivate-btn'
+                            onClick={() => handleDeactivateClick(hub)}
+                          >
+                            Deactivate
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <div className='pagination'>
@@ -189,6 +260,98 @@ export default function AdminHubManagement() {
           </div>
         </div>
       )}
+
+      {showDeactivateModal && selectedHub && (
+        <div className='modal-overlay' onClick={handleCloseDeactivateModal}>
+          <div className='modal-content' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Deactivate this FanHub?</h2>
+              <button className='modal-close' onClick={handleCloseDeactivateModal}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <div className='deactivate-confirmation'>
+                <p>By confirming you will remove all access to <strong>{selectedHub.hubName}</strong> from every user, including the owner: <strong>{selectedHub.ownerUsername || 'N/A'}</strong></p>
+              </div>
+            </div>
+
+            <div className='modal-footer'>
+              <button className='cancel-btn' onClick={handleCloseDeactivateModal}>
+                Cancel
+              </button>
+              <button
+                className='confirm-btn'
+                onClick={handleConfirmDeactivate}
+                disabled={submitting}
+              >
+                {submitting ? 'Deactivating...' : 'Confirm Deactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReportsModal && selectedHub && (
+        <div className='modal-overlay' onClick={handleCloseReportsModal}>
+          <div className='modal-content' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Reports for {selectedHub.hubName}</h2>
+              <button className='modal-close' onClick={handleCloseReportsModal}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <div className='reports-list'>
+                {selectedHubReports.length === 0 ? (
+                  <p>No reports found for this hub.</p>
+                ) : (
+                  <div className='reports-container'>
+                    {selectedHubReports.map((report) => (
+                      <div key={report.reportId} className='report-item'>
+                        <div className='report-header'>
+                          <div className='report-meta'>
+                            <span className='reporter-name'>
+                              Reported by: {report.reportedByDisplayName || report.reportedByUsername}
+                            </span>
+                            <span className='report-date'>
+                              {formatDate(report.reportCreatedAt)}
+                            </span>
+                          </div>
+                          <div className={`report-status ${report.reportStatus.toLowerCase()}`}>
+                            {report.reportStatus}
+                          </div>
+                        </div>
+                        <div className='report-reason'>
+                          <strong>Reason:</strong> {report.reason}
+                        </div>
+                        {report.resolveMessage && (
+                          <div className='report-resolution'>
+                            <strong>Resolution:</strong> {report.resolveMessage}
+                          </div>
+                        )}
+                        {report.resolvedByDisplayName && (
+                          <div className='report-resolved-by'>
+                            <strong>Resolved by:</strong> {report.resolvedByDisplayName}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className='modal-footer'>
+              <button className='cancel-btn' onClick={handleCloseReportsModal}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
+
+
+

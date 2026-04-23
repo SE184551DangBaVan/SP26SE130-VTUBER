@@ -261,7 +261,7 @@ export default function GachaPage() {
             style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
           >
             {banners.map((banner) => (
-              <div key={banner.bannerId} className="banner-slide">
+              <div key={banner.bannerId} className="banner-slide" style={{background: `url('${banner.bannerImgUrl}')`, backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundSize: 'contain', imageRendering: 'pixelated'}}>
                 <div className="banner-text-overlay">
                   <h1 className="banner-title">{banner.name}</h1>
                   <span className="banner-duration">

@@ -88,11 +88,6 @@ export default function JoinedHubsContainer() {
   const hasMoreHubs = joinedHubs.length > 4;
   const displayHubs = showAll ? joinedHubs : joinedHubs.slice(0, 4);
 
-  // Don't render if no hubs joined
-  if (joinedHubs.length === 0 && !loading) {
-    return null;
-  }
-
   return (
     <div className="joined-hubs-wrapper" ref={wrapperRef}>
       <div className="joined-hubs-header">

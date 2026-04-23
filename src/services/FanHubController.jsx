@@ -218,11 +218,11 @@ export const getMyHubAsOwner = async () => {
 
     return null;
   } catch (err) {
-    console.error("Fetch my hub as owner error:", {
-      message: err.message,
-      status: err.response?.status,
-      data: err.response?.data,
-    });
+    // console.error("Fetch my hub as owner error:", {
+    //   message: err.message,
+    //   status: err.response?.status,
+    //   data: err.response?.data,
+    // });
     return null;
   }
 };
@@ -327,6 +327,28 @@ export const strikeFanHub = async (fanHubId, reason) => {
     return res.data;
   } catch (err) {
     console.error("Strike fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Deactivate a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Deactivation result
+ */
+export const deactivateFanHub = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.put(`/fan-hub/deactivate/${fanHubId}`);
+
+    console.log("deactivateFanHub response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Deactivate fan hub error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,
