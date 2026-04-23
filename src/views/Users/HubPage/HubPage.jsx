@@ -9,6 +9,8 @@ import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberContro
 import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { updateFanHub } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
+import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { BASE_URL } from '@/config';
 import PostDetails from '../PostsPage/PostDetails';
 import PostCard from '../PostsPage/PostCard';
 import './HubPage.css';
@@ -564,6 +566,32 @@ export default function HubPage({ ownedHub }) {
     router.push(`/hub/${hubData.subdomain}?id=${post.postId}`, { scroll: false });
   };
 
+  // Handle share click
+  const handleShareClick = (post) => {
+    const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showSteamSuccess('Link copied!', 'Shared');
+      }).catch(() => {
+        showSteamError('Failed to copy link', 'Error');
+      });
+    } else {
+      // Fallback for browsers that don't support navigator.clipboard
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSteamSuccess('Link copied!', 'Shared');
+      } catch (err) {
+        showSteamError('Failed to copy link', 'Error');
+      }
+    }
+  };
+
   // Show loading if no hub data
   if (!hubData) {
     return (
@@ -623,7 +651,13 @@ export default function HubPage({ ownedHub }) {
                 <p className='hub-subdomain'>{hubData.subdomain}</p>
                 <div className='hub-owner-info'>
                   <span>Owned by </span>
-                  <span className='owner-username'>{hubData.ownerDisplayName || hubData.ownerUsername}</span>
+                  <span 
+                    className='owner-username'
+                    onClick={() => router.push(`/user/${hubData.ownerUsername}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {hubData.ownerDisplayName || hubData.ownerUsername}
+                  </span>
                 </div>
               </div>
             </div>
@@ -752,6 +786,7 @@ export default function HubPage({ ownedHub }) {
                         variant="hub"
                         onClick={() => handlePostClick(post)}
                         onCommentsClick={() => handlePostClick(post)}
+                        onShareClick={() => handleShareClick(post)}
                       />
                     </div>
                   );
@@ -764,6 +799,7 @@ export default function HubPage({ ownedHub }) {
                       variant="hub"
                       onClick={() => handlePostClick(post)}
                       onCommentsClick={() => handlePostClick(post)}
+                      onShareClick={() => handleShareClick(post)}
                     />
                   );
                 }
@@ -876,7 +912,7 @@ export default function HubPage({ ownedHub }) {
       </div>
 
       {/* Post Details Modal - triggered by URL params */}
-      {searchParams.get('id') && (
+      {(searchParams.get('id') || searchParams.get('shareId')) && (
         <PostDetails
           scrollPositionRef={scrollPositionRef}
         />

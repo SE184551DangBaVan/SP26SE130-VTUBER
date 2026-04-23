@@ -80,6 +80,12 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
 
 .hub-owner-info .owner-username {
   font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.hub-owner-info .owner-username:hover {
+  color: #2d8cf0;
+  text-decoration: underline;
 }
 
 .hub-header-actions {

@@ -116,10 +116,6 @@ export default function PostsPage() {
   };
 
   const handleShareClick = (post) => {
-    if (!userAuth) {
-      router.push('/login');
-      return;
-    }
     const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
