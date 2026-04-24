@@ -14,11 +14,10 @@ export const signUp = async ( username, email, password, displayName, translateL
 
       return response.data;
     } catch (error) {
+      console.error("Sign up failed:", error);
       if (error.code === 'ERR_NETWORK') {
         return error.data;
       }
-
-      console.error("Sign up failed:", error);
       throw error;
     }
   };

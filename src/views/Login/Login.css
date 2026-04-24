@@ -10,6 +10,7 @@ body:has(.login-wrapper) {
     --bg-color-alt: #666;
     --main-color: #323232;
 
+    position: relative;
     inset: 0;
     width: 100vw;
     height: 100vh;
@@ -18,6 +19,10 @@ body:has(.login-wrapper) {
     align-items: center;
     overflow: hidden;
     animation: fly-into-view 0.4s ease forwards;
+}
+
+.login-wrapper.exit {
+    animation: fly-out-view 0.4s ease forwards;
 }
 
 @keyframes fly-into-view {
@@ -31,139 +36,81 @@ body:has(.login-wrapper) {
   }
 }
 
-/* switch card */
-.switch {
-    transform: translateY(-200px);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    width: 50px;
-    height: 20px;
-}
-
-.card-side {
-  opacity: 0;
-  animation: fade-into-view 0.4s ease forwards;
-  animation-delay: 0.4s;
-}
-
-.card-side::before {
-    position: absolute;
-    content: 'Log in';
-    left: -70px;
-    top: 0;
-    width: 100px;
-    text-decoration: underline;
-    color: var(--font-color);
-    font-weight: 600;
-}
-
-.card-side::after {
-    position: absolute;
-    content: 'Sign up';
-    left: 70px;
-    top: 0;
-    width: 100px;
-    text-decoration: none;
-    color: var(--font-color);
-    font-weight: 600;
-}
-
-.toggle {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    box-sizing: border-box;
-    border-radius: 5px;
-    border: 2px solid var(--main-color);
-    box-shadow: 4px 4px var(--main-color);
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--bg-colorcolor);
-    transition: 0.3s;
-    opacity: 0;
-    animation: fade-into-view 0.4s ease forwards;
-    animation-delay: 0.4s;
-}
-
-@keyframes fade-into-view {
-  to {
+@keyframes fly-out-view {
+  0% {
     opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px);
+  }
+}
+.background-grid-vfx {
+  position: fixed;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+
+  z-index: 1;
+
+  background-image:
+    linear-gradient(rgba(160, 160, 160, 0.3) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(160, 160, 160, 0.3) 2px, transparent 2px);
+
+  background-size: 48px 48px;
+  opacity: 0.75;
+
+  transform: perspective(1000px) rotateX(65deg) scale(1.8);
+  transform-origin: center bottom;
+
+  animation: retroGridSlide 1s linear infinite;
+}
+
+@keyframes retroGridSlide {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 80px, 0 0;
   }
 }
 
-
-.slider:before {
-    box-sizing: border-box;
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    border: 2px solid var(--main-color);
-    border-radius: 5px;
-    left: -2px;
-    bottom: 2px;
-    background-color: var(--bg-color);
-    box-shadow: 0 3px 0 var(--main-color);
-    transition: 0.3s;
+.background-grid-vfx.login {
+  top: 40px;
+  transition: all 0.8s ease;
 }
 
-.toggle:checked+.slider {
-    background-color: var(--input-focus);
-}
-
-.toggle:checked+.slider:before {
-    transform: translateX(30px);
-}
-
-.toggle:checked~.card-side:before {
-    text-decoration: none;
-}
-
-.toggle:checked~.card-side:after {
-    text-decoration: underline;
+.card-switch {
+  position: relative;
+  z-index: 2;
+  width: 300px;
+  height: 440px;
+  perspective: 1000px;
 }
 
 /* card */
 
 .flip-card__inner {
-    width: 300px;
-    height: 350px;
+    width: 100%;
+    height: 100%;
     position: relative;
     background-color: transparent;
     perspective: 1000px;
-    /* width: 100%;
-      height: 100%; */
     text-align: center;
-    transition: transform 0.8s;
     transform-style: preserve-3d;
 }
 
-.toggle:checked~.flip-card__inner {
-    transform: rotateY(180deg);
-}
-
-.toggle:checked~.flip-card__front {
-    box-shadow: none;
-}
-
-.flip-card__front,
-.flip-card__back {
-    padding: 20px;
+.flip-card__front {
     position: absolute;
+    left: -180px;
+    top: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
+    height: 100%;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     background: lightgrey;
@@ -173,9 +120,54 @@ body:has(.login-wrapper) {
     box-shadow: 4px 4px var(--main-color);
 }
 
-.flip-card__back {
-    width: 100%;
-    transform: rotateY(180deg);
+.flip-card__front-left {
+  padding: 20px;
+  overflow: hidden;
+}
+
+.flip-card__front-right {
+  position: relative;
+  width: 400px;
+  background-color: #fff;
+}
+
+.flip-card__front-right-bg {
+  position: absolute;
+  background-image: url(../../assets/Decor/social-media-visualisation.png);
+  background-size: 90%;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+}
+
+.flip-card__front-right-welcome-text {
+  position: relative;
+  padding: 15px 40px;
+  color: var(--font-color);
+  font-size: 40px;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-family: 'Jersey 20', sans-serif;
+  font-weight: 800;
+}
+
+.flip-card__front-right-welcome-text-bottom {
+  position: relative;
+  top: 70%;
+  padding: 0 40px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-color-sub);
+}
+
+.flip-card__front-right-welcome-text-logo img {
+  width: 120px;
+  transform: translateY(10px);
 }
 
 .flip-card__form {
@@ -249,6 +241,11 @@ body:has(.login-wrapper) {
     font-weight: 600;
     color: var(--font-color);
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flip-card__btn:hover {
+    transform: translate(-1px, -1px);
 }
 
 .remember-me-box {
@@ -264,273 +261,39 @@ body:has(.login-wrapper) {
     font-weight: 600;
 }
 
-.login-wrapper .retro-window-container:has(.signIn-OTP) {
-  position: absolute;
-  bottom: 20px;
-  left: 10px;
-  animation: pop-out-left 0.3s ease forwards;
+.auth-link {
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    color: var(--font-color);
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 0 0 0;
+.auth-link .link-text {
+    text-decoration: underline;
+    color: var(--font-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 700;
 }
 
-.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP p {
-  position: absolute;
-  left: 30px;
-  transform: translateY(35px);
-  font-size: 12px;
-  font-weight: 600;
+.auth-link .link-text:hover {
+    color: rgb(0, 0, 140);
+    transform: scale(1.05);
 }
 
-.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .signIn-OTP-themed-btn {
-  --bg-color: #fff;
-  --main-color: #323232;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  margin-left: 10px;
-  background-color: var(--bg-color);
-  border-radius: 100%;
-  border: 2px solid var(--main-color);
-  box-shadow: 4px 4px var(--main-color);
-}
-
-.signIn-OTP-themed-input {
-  cursor: pointer;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  opacity: 0;
-}
-
-.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .icon {
-  position: absolute;
-  top: calc(50% -13px);
-  left: calc(50% -13px);
-  width: 26px;
-  height: 26px;
-}
-
-.login-wrapper .retro-window-container:has(.signIn-OTP) .signIn-OTP .signIn-OTP-themed-btn:active {
-  box-shadow: 0px 0px var(--main-color);
-  transform: translate(3px, 3px);
-}
-
-.login-wrapper .retro-window-container:has(.signIn-Info) {
-  position: absolute;
-  top: 26%;
-  left: calc(50% - 180px);
-  animation: pop-up 0.3s ease forwards;
-}
-
-@keyframes pop-up {
-  0% {
-    transform: scale(0);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes pop-out-left {
-  0% {
-    transform: translateX(-50%);
-  }
-  100% {
-    transform: translateX(0%);
-  }
-}
-
-.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info .signIn-Info-ico {
-  position: absolute;
-  top: 60px;
-  left: 60px;
-  height: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: swing 5s ease infinite;
-}
-
-@keyframes swing {
-  0% {
-    transform: rotate(-10deg);
-  }
-  50% {
-    transform: rotate(15deg)
-  }
-  100% {
-    transform: rotate(-10deg);
-  }
-}
-
-.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info-ico img {
-  width: 80px;
-  margin-top: 100%;
-}
-
-.login-wrapper .retro-window-container:has(.signIn-Info) .signIn-Info {
-  padding: 40px 50px;
-}
-
-.input-field:has(.select) {
-  width: 100%;
-  height: 40px;
-  z-index: 1;
-  display: flex;
-  align-items: first baseline;
-}
-
-.input-field .select {
-  width: 100px;
-  height: 45px;
-  cursor: pointer;
-  position: absolute;
-  transition: 300ms;
-  color: var(--font-color-sub);
-  overflow: hidden;
-  padding: 0 5px 8px 0;
-}
-
-.input-field .select:hover {
-  height: unset;
-}
-
-.input-field .selected {
-  height: 40px;
-  border: 2px solid var(--main-color);
-  background-color: var(--bg-color);
-  box-shadow: 4px 4px var(--main-color);
-  padding: 5px;
-  margin-bottom: 3px;
-  border-radius: 5px;
-  position: relative;
-  z-index: 100000;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.input-field .arrow {
-  position: relative;
-  right: 0px;
-  height: 10px;
-  transform: rotate(-90deg);
-  width: 25px;
-  fill: var(--main-color);
-  z-index: 1;
-  transition: 300ms;
-}
-
-.input-field .options {
-  display: flex;
-  flex-direction: column;
-  border-radius: 5px;
-  padding: 5px;
-  background-color: #FFFFFF;
-  border: 3px solid #000000;
-  box-shadow: 5px 5px 0 0 #000000;
-  position: relative;
-  top: -100px;
-  opacity: 0;
-  transition: 300ms;
-}
-
-.input-field .select:hover > .options {
-  opacity: 1;
-  top: 3px;
-}
-
-.input-field .select:hover > .selected .arrow {
-  transform: rotate(0deg);
-}
-
-.input-field .option {
-  border-radius: 5px;
-  padding: 5px;
-  transition: 300ms;
-  background-color: var(--bg-color);
-  width: 100%;
-  font-size: 15px;
-}
-
-.input-field .options input[type="radio"] {
-  display: none;
-}
-
-.input-field .options label {
-  display: inline-block;
-}
-.input-field .options label::before {
-  content: attr(data-txt);
-}
-
-.input-field .options input[type="radio"]:checked + label {
-  display: none;
-}
-
-.input-field .options input[type="radio"]#en:checked + label {
-  display: none;
-}
-
-.input-field .select:has(.options input[type="radio"]#en:checked) .selected::before {
-  content: attr(data-default);
-}
-.input-field .select:has(.options input[type="radio"]#vn:checked) .selected::before {
-  content: attr(data-one);
-}
-.input-field .select:has(.options input[type="radio"]#cn:checked) .selected::before {
-  content: attr(data-two);
-}
-.input-field .select:has(.options input[type="radio"]#jp:checked) .selected::before {
-  content: attr(data-three);
-}
-
-.input-field .select .options div:has(input[type="radio"]#en) .option:hover {
-  color: var(--bg-color);
-  background-color: rgb(30, 118, 205);
-}
-.input-field .select .options div:has(input[type="radio"]#vn) .option:hover {
-  color: rgb(255, 242, 0);
-  background-color: rgb(170, 0, 0);
-}
-.input-field .select .options div:has(input[type="radio"]#cn) .option:hover {
-  color: rgb(255, 244, 40);
-  background-color: rgb(200, 0, 0);
-}
-.input-field .select .options div:has(input[type="radio"]#jp) .option:hover {
-  color: rgb(220, 0, 0);
-  background-color: #ffffff;
-  outline: 0.1px solid #000000;
-}
-
-.input-field:has(textarea.text-big) {
-  height: 40px;
-}
-
-.input-field textarea.text-big:focus {
-  position: absolute;
-  transform: translate(120px, 60px);
-  height: 160px;
+.auth-link .link-text:active {
+    transform: scale(0.98);
 }
 
 .login-error-message {
   color: red;
   font-weight: 800;
   position: absolute;
+  z-index: 1;
   left: 0;
-  top: 15px;
+  top: 10px;
   width: 100%;
   background-color: #aaaaaa;
   overflow: hidden;
