@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { showLoading, updateToast } from '../../utils/toastUtils';
 import IDBadgeIcon from '../../assets/UI-Elements/id-badge-identity-card-svgrepo-com.svg'
+import PasswordStrengthBar from 'react-password-strength-bar'
 
 export default function Register() {
   const router = useRouter();
@@ -21,12 +22,41 @@ export default function Register() {
   const [userInput, setUserInput] = useState("");
   const [confirmUserInput, setConfirmUserInput] = useState("");
   const [error, setError] = useState(null);
+  const [emailError, setEmailError] = useState("");
+  const [passwordStrengthError, setPasswordStrengthError] = useState("");
+  const [passwordStrengthScore, setPasswordStrengthScore] = useState(0);
 
   const [isOTPVerified, setIsOTPVerified] = useState(false);
   const [showExitAnimation, setShowExitAnimation] = useState(false);
 
+  // Email validation regex pattern
+  const emailRegex = /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  const validateEmail = (emailValue) => {
+    if (!emailValue) {
+      setEmailError("");
+      return false;
+    }
+    if (emailRegex.test(emailValue)) {
+      setEmailError("");
+      return true;
+    } else {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const emailValue = e.target.value;
+    setEmail(emailValue);
+    validateEmail(emailValue);
+  };
+
   const handleVerifyEmail = async (e) => {
     e.preventDefault();
+    if (!validateEmail(email)) {
+      return;
+    }
     const toastId = showLoading("Verify Email...");
     try {
       setError("");
@@ -51,9 +81,21 @@ export default function Register() {
   const handleSignup = async (e) => {
     e.preventDefault();
     const toastId = showLoading("Creating account...");
-    
+
     if (userInput !== otp) {
       updateToast(toastId, "warning", "Invalid OTP");
+      return;
+    }
+
+    if (!registerUsername || !emailEntered || !registerPassword || !displayName) {
+        setError("All the * fields are required.");
+        updateToast(toastId, "warning", "Please fill in all required fields.");
+        return;
+    }
+
+    if (passwordStrengthScore < 2) {
+      setPasswordStrengthError("The password needs to be more secure.");
+      updateToast(toastId, "warning", "The password needs to be more secure.");
       return;
     }
 
@@ -70,8 +112,8 @@ export default function Register() {
       );
 
       if (response.data === "Email is already in use") {
-        updateToast(toastId, "warning", response.response.data);
-        setError("Warning: Email is already in use");
+        updateToast(toastId, "warning", "Please use a different email.");
+        setError(response.data);
         return;
       }
       if (response.message === "Success") {
@@ -123,13 +165,19 @@ export default function Register() {
                   <div className='input-field'>
                     <input className="flip-card__input" name="username" placeholder="Username" type="text" 
                     value={registerUsername} onChange={(e) => setRegisterUsername(e.target.value)} required/>
+                    <span className='required-field'>*</span>
                   </div>
                   <div className='input-field'>
                     <input className="flip-card__input" name="displayName" placeholder="Display Name" type="text"
                     value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+                    <span className='required-field'>*</span>
                   </div>
-                  <input className="flip-card__input" name="email" placeholder="Email" type="email" 
-                    value={email} onChange={(e) => setEmail(e.target.value)} required/>
+                  <div className='input-field'>
+                    <input className="flip-card__input" name="email" placeholder="Email" type="email" 
+                    value={email} onChange={handleEmailChange} required/>
+                    <span className='required-field'>*</span>
+                  </div>
+                  {emailError && <p className='email-validation-error'>{emailError}</p>}
                     <div className='flip-card__input-block'>
                       <div className='input-field'>
                         <input className="flip-card__input" name="otp" placeholder="Enter OTP" type="text"
@@ -139,11 +187,29 @@ export default function Register() {
                       {confirmUserInput && confirmUserInput != otp && (
                         <p className='incorrect-otp'>OTP does not match</p>
                       )}
+                      <span className='required-field'>*</span>
                     </div>
                   <div className='input-field'>
                     <input className="flip-card__input" name="password" placeholder="Password" type="password" 
                     value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} required minLength="6"/>
+                    <span className='required-field'>*</span>
                   </div>
+                  {registerPassword && (
+                    <div className='password-strength-container'>
+                      <PasswordStrengthBar 
+                        password={registerPassword}
+                        onChangeScore={(score) => {
+                          setPasswordStrengthScore(score);
+                          if (score >= 2) {
+                            setPasswordStrengthError("");
+                          }
+                        }}
+                        barClasses="password-strength-bar"
+                        scoreWords={["Weak", "Fair", "Good", "Strong", "Very Strong"]}
+                      />
+                    </div>
+                  )}
+                  {passwordStrengthError && <p className='password-strength-error'>{passwordStrengthError}</p>}
                   <div className='auth-link'>
                     Already have an account? <span className='link-text' onClick={handleNavigateToLogin}>Log in</span>
                   </div>

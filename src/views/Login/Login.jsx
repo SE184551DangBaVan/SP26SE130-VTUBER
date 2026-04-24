@@ -41,8 +41,8 @@ export default function Login() {
 
     } catch (error) {
       console.error("Login error:", error);
-      updateToast(toastId, "error", error.response?.data?.data ||"Login Failed. Please try again.");
-      setLoginError("Login Failed. Please try again.");
+      updateToast(toastId, "error", "Login Failed. Please try again.");
+      setLoginError(error.response?.data?.data ||"Login Failed. Please try again.");
     }
   };
 
@@ -64,10 +64,12 @@ export default function Login() {
                 {loginError && <p className="login-error-message">{loginError}</p>}
                 <form onSubmit={handleLogin} className="flip-card__form" >
                   <div className='input-field'><input className="flip-card__input" name="username" placeholder="Username" type="text" 
-                  value={username} onChange={(e) => setUsername(e.target.value)} required /></div>
+                  value={username} onChange={(e) => setUsername(e.target.value)} required />
+                  <span className='required-field'>*</span></div>
                   <div className='input-field'><input className="flip-card__input" name="password" placeholder="Password" type={showPassword ? "text" : "password"}
                   value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" />
-                  <div className='toggle-icon' onChange={() => setShowPassword(prev => !prev)}><ToggleVisibility/></div></div>
+                  <div className='toggle-icon' onChange={() => setShowPassword(prev => !prev)}><ToggleVisibility/></div>
+                  <span className='required-field'>*</span></div>
                   <div className='remember-me-box' onChange={() => setRememberMe(prev => !prev)}>Remember Me <CheckBox/></div>
                   <div className='auth-link'>
                     Don't have an account? <span className='link-text' onClick={handleNavigateToRegister}>Sign up</span>
