@@ -382,9 +382,14 @@ const Navbar = () => {
                             </div>
                         </>
                     ) : (
-                        <button className="login-btn" onClick={() => router.push('/login')}>
-                            Login
-                        </button>
+                        <div className="navbar-guest-actions">
+                            <button className="login-btn" onClick={() => router.push('/login')}>
+                                Login
+                            </button>
+                            <button className="login-btn" onClick={() => router.push('/register')}>
+                                Register
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

@@ -752,6 +752,10 @@ body:has(.page-main-content) .nav-container .button-primary {
   cursor: pointer;
 }
 
+.navbar-guest-actions .login-btn:first-child {
+  margin-right: 10px;
+}
+
 .login-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 5px 5px var(--main-color);
