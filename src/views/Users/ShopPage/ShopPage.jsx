@@ -441,73 +441,59 @@ export default function ShopPage() {
 
   return (
     <div className={`shop-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
-      <div className="shop-header">
-        <h1 className="shop-title">💎Shop</h1>
-        <div className="shop-search-container">
-          <Search className="shop-search-icon" />
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="shop-search-input"
-          />
+      <div className="shop-page-overlay">
+        <div className="shop-header">
+          <h1 className="shop-title">💎Shop</h1>
+          <div className="shop-search-container">
+            <Search className="shop-search-icon" />
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="shop-search-input"
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="shop-points-display">
-        <img className="points-icon" src={PointsIco.src} alt="Points" />
-        <span className={`points-value ${pointsBlink ? 'points-value-blink' : ''}`}>
-          {userPoints}
-        </span>
-        <InsufficientToast visible={showInsufficientToast} />
-        {deductionAmount !== null && (
-          <PointsDeductionAnim amount={deductionAmount} onFinish={handleDeductionDone} />
-        )}
-      </div>
-
-      {/* Search Results Block */}
-      {searchQuery.trim() && (
-        <div className="search-results-section">
-          <h2 className="search-results-title">
-            Search Results ({searchResults.length})
-          </h2>
-          {searchResults.length === 0 ? (
-            <div className="shop-empty-message">No items match your search.</div>
-          ) : (
-            <div className="search-results-grid">
-              {searchResults.map((item) => (
-                <ShopItemCard
-                  key={item.shopItemId}
-                  item={item}
-                  userPoints={userPoints}
-                  purchasedItemIds={purchasedItemIds}
-                  onItemSelect={handleItemSelect}
-                />
-              ))}
-            </div>
+        <div className="shop-points-display">
+          <img className="points-icon" src={PointsIco.src} alt="Points" />
+          <span className={`points-value ${pointsBlink ? 'points-value-blink' : ''}`}>
+            {userPoints}
+          </span>
+          <InsufficientToast visible={showInsufficientToast} />
+          {deductionAmount !== null && (
+            <PointsDeductionAnim amount={deductionAmount} onFinish={handleDeductionDone} />
           )}
         </div>
-      )}
 
-      {/* Category Carousels */}
-      {!searchQuery.trim() &&
-        orderedCategories.map((category) => (
-          <CategoryCarousel
-            key={category}
-            category={category}
-            items={categoriesMap[category]}
-            userPoints={userPoints}
-            purchasedItemIds={purchasedItemIds}
-            onItemSelect={handleItemSelect}
-          />
-        ))}
+        {/* Search Results Block */}
+        {searchQuery.trim() && (
+          <div className="search-results-section">
+            <h2 className="search-results-title">
+              Search Results ({searchResults.length})
+            </h2>
+            {searchResults.length === 0 ? (
+              <div className="shop-empty-message">No items match your search.</div>
+            ) : (
+              <div className="search-results-grid">
+                {searchResults.map((item) => (
+                  <ShopItemCard
+                    key={item.shopItemId}
+                    item={item}
+                    userPoints={userPoints}
+                    purchasedItemIds={purchasedItemIds}
+                    onItemSelect={handleItemSelect}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* When searching, still show categories below */}
-      {searchQuery.trim() && searchResults.length > 0 && orderedCategories.length > 0 && (
-        <>
-          <h2 className="section-divider-title">All Categories</h2>
-          {orderedCategories.map((category) => (
+        {/* Category Carousels */}
+        {!searchQuery.trim() &&
+          orderedCategories.map((category) => (
             <CategoryCarousel
               key={category}
               category={category}
@@ -517,8 +503,24 @@ export default function ShopPage() {
               onItemSelect={handleItemSelect}
             />
           ))}
-        </>
-      )}
+
+        {/* When searching, still show categories below */}
+        {searchQuery.trim() && searchResults.length > 0 && orderedCategories.length > 0 && (
+          <>
+            <h2 className="section-divider-title">All Categories</h2>
+            {orderedCategories.map((category) => (
+              <CategoryCarousel
+                key={category}
+                category={category}
+                items={categoriesMap[category]}
+                userPoints={userPoints}
+                purchasedItemIds={purchasedItemIds}
+                onItemSelect={handleItemSelect}
+              />
+            ))}
+          </>
+        )}
+      </div>
 
       {/* Purchase Confirmation Modal */}
       {showModal && selectedItem && (

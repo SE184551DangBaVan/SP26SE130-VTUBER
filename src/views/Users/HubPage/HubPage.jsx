@@ -288,8 +288,8 @@ export default function HubPage({ ownedHub }) {
 
   // Handle promote member to moderator
   const handlePromoteClick = (member) => {
-    setSelectedMember(member);
-    setShowPromoteModal(true);
+     setSelectedMember(member);
+     setShowPromoteModal(true);
   };
 
   const handlePromoteConfirm = async () => {
@@ -900,6 +900,16 @@ export default function HubPage({ ownedHub }) {
                               <span>Promote</span>
                             </button>
                           )}
+                          <div className='member-tooltip'>
+                            <div><strong>Score:</strong> {member.fanHubScore}</div>
+                            <div><strong>Joined:</strong> {new Date(member.joinedAt).toLocaleDateString('en-GB', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric'
+                                                          })}
+                            </div>
+                            <div><strong>Status:</strong> {member.status}</div>
+                          </div>
                         </div>
                       );
                     })}
@@ -1061,28 +1071,24 @@ export default function HubPage({ ownedHub }) {
                       ))}
                     </div>
                   </div>
-
                   <div className='form-group checkbox-group'>
-                    <label className='checkbox-label'>
-                      <input
-                        type='checkbox'
-                        checked={editIsPrivate}
-                        onChange={(e) => setEditIsPrivate(e.target.checked)}
-                      />
-                      <span>Private Hub</span>
-                    </label>
-                  </div>
-
-                  <div className='form-group checkbox-group'>
-                    <label className='checkbox-label'>
-                      <input
-                        type='checkbox'
-                        checked={editRequiresApproval}
-                        onChange={(e) => setEditRequiresApproval(e.target.checked)}
-                      />
-                      <span>Requires Approval</span>
-                    </label>
-                  </div>
+                      <label className='checkbox-label'>
+                        <input
+                          type='checkbox'
+                          checked={editIsPrivate}
+                          onChange={(e) => setEditIsPrivate(e.target.checked)}
+                        />
+                        <span>Private Hub</span>
+                      </label>
+                      <label className='checkbox-label'>
+                        <input
+                          type='checkbox'
+                          checked={editRequiresApproval}
+                          onChange={(e) => setEditRequiresApproval(e.target.checked)}
+                        />
+                        <span>Requires Approval</span>
+                      </label>
+                    </div>
                 </div>
 
                 {/* Images Section */}

@@ -2,7 +2,7 @@
   width: 100%;
   padding: 0;
   margin-top: 50px;
-  padding-left: 252px;
+  padding-left: var(--sidebar-width);
   transition: all 0.2s ease;
 }
 
@@ -838,6 +838,43 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   border-radius: 4px;
 }
 
+.member-tooltip {
+  position: absolute;
+  transform: translateX(60%) scale(0.95);
+  
+  width: 200px;
+  padding: 10px;
+
+  background: #fff;
+  color: #333;
+  border: 1px solid #00000022;
+  border-radius: 8px;
+  font-size: 13px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+
+  z-index: 10;
+}
+
+.member-tooltip::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgba(20, 20, 20, 0.95);
+}
+
+.member-item:hover .member-tooltip {
+  opacity: 1;
+  transform: translateX(-115%) scale(1);
+}
+
 body:has(.hub-page-container) .post-card {
   background: #e8f4f8;
   border-radius: 12px;
@@ -1320,7 +1357,12 @@ body:has(.hub-page-container) .post-card {
 }
 
 .checkbox-group {
-  margin-top: 4px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  padding: 20px 0  0 60px;
+  gap: 20%;
+  border-top: 1px solid #c3cad0;
 }
 
 .checkbox-label {

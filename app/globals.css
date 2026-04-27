@@ -62,9 +62,9 @@
   --bg-color: #ffffff;
   --font-color: #222222;
 
-  --background: linear-gradient(to bottom right, #EEFEFF, #DDFCFF);
+  --background: linear-gradient(to bottom right, #EEFEFF, #ffffff);
   --secondary-background: #CDCDCD;
-  --sidebar-width: 256px;
+  --sidebar-width: 180px;
   --sidebar-width-min: 80px;
   --sidebar-dark-primary: #ffff;
   --sidebar-dark-secondary: rgba(0, 0, 0, 0.25);
@@ -451,8 +451,7 @@ body {
   inset: 4px;
   border-radius: inherit;
 
-  background: 
-    linear-gradient(180deg, #d9d9d9, #ffffff);
+  background: #ffffff;
 
   box-shadow:
     inset 0 2px 4px rgba(0,0,0,0.9),

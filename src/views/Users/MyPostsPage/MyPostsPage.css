@@ -1,8 +1,8 @@
 .user-posts-page {
   max-width: 90%;
-  margin-top: 80px;
+  margin-top: 60px;
   padding: 1.5rem;
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 60px);
   color: #000;
   font-family: 'Inter', sans-serif;
   transition: margin-left 0.3s ease;

@@ -1,14 +1,14 @@
 /* Gacha Page - Main Layout */
 .gacha-page {
   width: calc(100% - var(--sidebar-width));
-  margin-top: 80px;
+  margin-top: 60px;
   margin-left: var(--sidebar-width);
   padding: 1.5rem;
   color: #000;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
   min-height: calc(100vh - 75px);
-  background: #e0f2f7;
+  background: #cdd3d4;
   display: flex;
   gap: 16px;
 }
@@ -114,7 +114,7 @@
 .gacha-banner-area {
   flex: 1;
   position: relative;
-  background: #d4eff5;
+  background: #ffffffa0;
   border-radius: 8px;
   overflow: hidden;
   min-height: calc(100vh - 110px);
@@ -131,8 +131,8 @@
   align-items: center;
   gap: 8px;
   padding: 4px 20px;
-  background: #d4eff5;
-  border: 2px solid #5a8a9a;
+  background: #d4eff55c;
+  border: 2px solid #555;
   border-radius: 24px;
   z-index: 20;
 }
@@ -232,7 +232,13 @@
 
 /* Banner Text Overlay */
 .banner-text-overlay {
+  width: 60%;
   margin-top: 20px;
+  padding: 20px;
+  background-color: #ffffff5b;
+  border: 1px solid #5a8a9a;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
 }
 
 .banner-title {
@@ -247,9 +253,8 @@
   display: inline-block;
   font-size: 18px;
   font-weight: 500;
-  color: #000;
-  background: rgba(212, 239, 245, 0.8);
-  border: 1px solid #5a8a9a;
+  background-color: #ccc;
+  border-radius: 24px;
   padding: 6px 24px;
   margin-bottom: 16px;
 }
@@ -268,6 +273,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 40px;
   transform: translateY(-80px);
 }
 

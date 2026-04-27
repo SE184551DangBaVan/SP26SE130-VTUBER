@@ -4,7 +4,7 @@
   width: 100%;
     min-height: 100vh;
     padding-left: var(--sidebar-width);
-    padding-top: 80px;
+    padding-top: 60px;
     transition: padding 0.2s ease;
 }
 
