@@ -66,7 +66,6 @@ export default function AdminFeedback() {
                   <th>Category</th>
                   <th>Content</th>
                   <th>Created At</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,11 +87,6 @@ export default function AdminFeedback() {
                       <span title={feedback.content}>{truncateContent(feedback.content)}</span>
                     </td>
                     <td>{formatDate(feedback.createdAt)}</td>
-                    <td>
-                      <span className={`status-badge ${getReadStatusBadgeClass(feedback.isRead)}`}>
-                        {feedback.isRead ? 'Read' : 'Unread'}
-                      </span>
-                    </td>
                   </tr>
                 ))}
               </tbody>

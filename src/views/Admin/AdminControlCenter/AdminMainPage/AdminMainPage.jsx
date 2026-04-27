@@ -49,7 +49,7 @@ export default function AdminMainPage() {
           <div 
             key={iconConfig.id}
             className="desktop-icon"
-            onDoubleClick={() => handleDesktopIconClick(iconConfig.id)}
+            onClick={() => handleDesktopIconClick(iconConfig.id)}
           >
             <div className="icon-image">{iconConfig.icon}</div>
             <div className="icon-label">{iconConfig.label}</div>
