@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services/ModeratorController.jsx";
-import { getPostsByFanHub, getAllPostsByFanHub, retryAiValidation, approveAllAiSafePosts, rejectAllAiUnsafePosts } from "@/services/PostController.jsx";
+import { getPostsByFanHub, getRejectedPostsByFanHub, retryAiValidation, approveAllAiSafePosts, rejectAllAiUnsafePosts } from "@/services/PostController.jsx";
+import { getPostsWithReports, bulkResolveReports } from "@/services/ReportController";
+import PostReportsTable from "./PostReportsTable";
 import "./PostModerationContent.css";
 
 const VIDEO_PLACEHOLDER = "/video-placeholder.png";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "PENDING", label: "Pending" },
-  { value: "ALL", label: "All" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "REPORTS", label: "Reports" },
 ];
 
 const STATUS_OPTIONS = [
@@ -20,18 +25,19 @@ const STATUS_OPTIONS = [
 
 const PAGE_SIZE = 10;
 
-export default function PostModerationContent({ fanHubId }) {
+export default function PostModerationContent({ fanHubId, isOwner, initialStatus = "PENDING", hideTabs = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("createdAt");
-  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
 
   const [selectedPostIds, setSelectedPostIds] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTakeDownModalOpen, setIsTakeDownModalOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
@@ -41,6 +47,8 @@ export default function PostModerationContent({ fanHubId }) {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchPosts = useCallback(async (reset = false) => {
+    if (statusFilter === "REPORTS") return; // PostReportsTable handles its own fetching
+    
     if (reset) {
       setLoading(true);
       setPosts([]);
@@ -56,8 +64,8 @@ export default function PostModerationContent({ fanHubId }) {
       let data;
       if (statusFilter === "PENDING") {
         data = await getPendingPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
-      } else if (statusFilter === "ALL") {
-        data = await getAllPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      } else if (statusFilter === "REJECTED") {
+        data = await getRejectedPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
       } else {
         data = await getPostsByFanHub(fanHubId, pageNo, PAGE_SIZE, sortBy);
       }
@@ -292,6 +300,28 @@ export default function PostModerationContent({ fanHubId }) {
     }
   };
 
+  const handleTakeDown = () => {
+    setIsTakeDownModalOpen(true);
+  };
+
+  const confirmTakeDown = async () => {
+    if (!selectedPost) return;
+    try {
+      const result = await reviewPost(selectedPost.postId, "REJECTED");
+      if (result?.success) {
+        showToast("Post taken down successfully!", "success");
+        setPosts(prev => prev.filter(p => p.postId !== selectedPost.postId));
+        setSelectedPost(prev => ({ ...prev, status: "REJECTED" }));
+        setIsTakeDownModalOpen(false);
+      } else {
+        showToast("Failed to take down post", "error");
+      }
+    } catch (err) {
+      console.error("Take down error:", err);
+      showToast("Error taking down post", "error");
+    }
+  };
+
   const handlePostClick = (post) => { setSelectedPost(post); setIsModalOpen(true); };
   const closeModal = () => { setIsModalOpen(false); setSelectedPost(null); };
 
@@ -306,102 +336,131 @@ export default function PostModerationContent({ fanHubId }) {
 
   const getSortIcon = (field) => sortBy === field ? " ↑" : " ↕";
 
-  if (loading) return <div className="loading">Loading posts for moderation...</div>;
+  if (loading && statusFilter !== "REPORTS") return <div className="loading">Loading posts for moderation...</div>;
 
   return (
     <div className="post-moderation-content">
-      <div className="content-toolbar">
-        <div className="status-filter-container">
-          <label htmlFor="status-filter">Filter:</label>
-          <select id="status-filter" className="status-filter-dropdown" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); }}>
-            {STATUS_FILTER_OPTIONS.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}
-          </select>
+      {!hideTabs && (
+        <div className="moderation-sub-nav">
+          <button 
+            className={`sub-nav-btn ${statusFilter === "PENDING" ? "active" : ""}`}
+            onClick={() => setStatusFilter("PENDING")}
+          >
+            Needs Review
+          </button>
+          <button 
+            className={`sub-nav-btn ${statusFilter === "REJECTED" ? "active" : ""}`}
+            onClick={() => setStatusFilter("REJECTED")}
+          >
+            Rejected Posts
+          </button>
+          <button 
+            className={`sub-nav-btn ${statusFilter === "REPORTS" ? "active" : ""}`}
+            onClick={() => setStatusFilter("REPORTS")}
+          >
+            Post Reports
+          </button>
         </div>
-        <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh posts">
-          {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
-        </button>
-        <div className="ai-validation-actions">
-          <button className="ai-action-btn approve-safe-btn" onClick={handleApproveAllAiSafe}>✓ Approve all AI_SAFE</button>
-          <button className="ai-action-btn reject-unsafe-btn" onClick={handleRejectAllAiUnsafe}>✕ Reject all AI_UNSAFE</button>
-        </div>
-        {selectedPostIds.length > 0 && (
-          <div className="bulk-actions">
-            <span className="selected-count">{selectedPostIds.length} selected</span>
-            <button className="bulk-btn approve-bulk-btn" onClick={handleBulkApprove}>✓ Approve</button>
-            <button className="bulk-btn reject-bulk-btn" onClick={handleBulkReject}>✕ Reject</button>
-          </div>
-        )}
-      </div>
+      )}
 
-      {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
-
-      {posts.length === 0 ? (
-        <div className="empty-message">No posts found with status: {statusFilter}</div>
+      {statusFilter === "REPORTS" ? (
+        <PostReportsTable fanHubId={fanHubId} isOwner={isOwner} />
       ) : (
-        <div className="moderation-table-container">
-          <table className="moderation-table">
-            <thead>
-              <tr>
-                <th className="select-column">
-                  <input
-                    type="checkbox"
-                    checked={posts.length > 0 && posts.every(post => selectedPostIds.includes(post.postId))}
-                    onChange={handleSelectAllOnPage}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </th>
-                <th className="sortable" onClick={() => handleSort("id")}>Post ID{getSortIcon("id")}</th>
-                <th>Author</th>
-                <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
-                <th>Content</th>
-                <th className="sortable" onClick={() => handleSort("status")}>Approval Status{getSortIcon("status")}</th>
-                <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>Final AI Validation Status{getSortIcon("aiValidationStatus")}</th>
-                <th className="sortable" onClick={() => handleSort("createdAt")}>Created Date{getSortIcon("createdAt")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map((post, index) => (
-                <tr key={post.postId} className={`post-row ${openDropdownId === post.postId ? 'has-open-dropdown' : ''} ${index === posts.length - 1 ? 'last-row' : ''}`} onClick={() => handlePostClick(post)} style={{ cursor: 'pointer' }}>
-                  <td className="select-cell" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={selectedPostIds.includes(post.postId)}
-                      onChange={() => handleSelectPost(post.postId)}
-                    />
-                  </td>
-                  <td className="post-id">#{post.postId}</td>
-                  <td className="author-display-name">{post.authorDisplayName}</td>
-                  <td className="post-type"><span className="post-type-badge">{getPostTypeLabel(post.postType)}</span></td>
-                  <td className="post-content">
-                    <div className="post-title" title={post.title}>{post.title}</div>
-                    <span className="content-preview">{post.content}</span>
-                  </td>
-                  <td className="post-action" onClick={(e) => e.stopPropagation()}>
-                    <StatusDropdown postId={post.postId} currentStatus={post.status} isOpen={openDropdownId === post.postId} onOpenChange={setOpenDropdownId} onStatusChange={(newStatus) => handleStatusChange(post.postId, newStatus, post.status)} />
-                  </td>
-                  <td className="post-ai-validation"><span className={`ai-validation-badge ${getAiValidationStatusClass(post.aiValidationStatus)}`}>{post.aiValidationStatus || "UNKNOWN"}</span></td>
-                  <td className="post-created-date"><span className="date-display">{formatDate(post.createdAt || post.createdDate || post.dateCreated)}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Load More button */}
-          {hasMore && (
-            <div className="load-more-container">
-              <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
-                {loadingMore ? (
-                  <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
-                ) : (
-                  "Load more"
-                )}
+        <>
+          <div className="content-toolbar">
+            <div className="toolbar-left">
+              <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh posts">
+                {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
               </button>
             </div>
+            
+            {statusFilter === "PENDING" && (
+              <div className="ai-validation-actions">
+                <button className="ai-action-btn approve-safe-btn" onClick={handleApproveAllAiSafe}>✓ Approve all AI_SAFE</button>
+                <button className="ai-action-btn reject-unsafe-btn" onClick={handleRejectAllAiUnsafe}>✕ Reject all AI_UNSAFE</button>
+              </div>
+            )}
+            
+            {selectedPostIds.length > 0 && (
+              <div className="bulk-actions">
+                <span className="selected-count">{selectedPostIds.length} selected</span>
+                <button className="bulk-btn approve-bulk-btn" onClick={handleBulkApprove}>✓ Approve</button>
+                <button className="bulk-btn reject-bulk-btn" onClick={handleBulkReject}>✕ Reject</button>
+              </div>
+            )}
+          </div>
+
+          {toast.show && <div className={`toast-notification ${toast.type}`}>{toast.message}</div>}
+
+          {posts.length === 0 ? (
+            <div className="empty-message">No posts found with status: {statusFilter}</div>
+          ) : (
+            <div className="moderation-table-container">
+              <table className="moderation-table">
+                <thead>
+                  <tr>
+                    <th className="select-column">
+                      <input
+                        type="checkbox"
+                        checked={posts.length > 0 && posts.every(post => selectedPostIds.includes(post.postId))}
+                        onChange={handleSelectAllOnPage}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </th>
+                    <th className="sortable" onClick={() => handleSort("id")}>Post ID{getSortIcon("id")}</th>
+                    <th>Author</th>
+                    <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
+                    <th>Content</th>
+                    <th className="sortable" onClick={() => handleSort("status")}>Approval Status{getSortIcon("status")}</th>
+                    <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
+                    <th className="sortable" onClick={() => handleSort("createdAt")}>Created Date{getSortIcon("createdAt")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {posts.map((post, index) => (
+                    <tr key={post.postId} className={`post-row ${openDropdownId === post.postId ? 'has-open-dropdown' : ''} ${index === posts.length - 1 ? 'last-row' : ''}`} onClick={() => handlePostClick(post)} style={{ cursor: 'pointer' }}>
+                      <td className="select-cell" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPostIds.includes(post.postId)}
+                          onChange={() => handleSelectPost(post.postId)}
+                        />
+                      </td>
+                      <td className="post-id">#{post.postId}</td>
+                      <td className="author-display-name">{post.authorDisplayName}</td>
+                      <td className="post-type"><span className="post-type-badge">{getPostTypeLabel(post.postType)}</span></td>
+                      <td className="post-content">
+                        <div className="post-title" title={post.title}>{post.title}</div>
+                        <span className="content-preview">{post.content}</span>
+                      </td>
+                      <td className="post-action" onClick={(e) => e.stopPropagation()}>
+                        <StatusDropdown postId={post.postId} currentStatus={post.status} isOpen={openDropdownId === post.postId} onOpenChange={setOpenDropdownId} onStatusChange={(newStatus) => handleStatusChange(post.postId, newStatus, post.status)} />
+                      </td>
+                      <td className="post-ai-validation"><span className={`ai-validation-badge ${getAiValidationStatusClass(post.aiValidationStatus)}`}>{post.aiValidationStatus || "UNKNOWN"}</span></td>
+                      <td className="post-created-date"><span className="date-display">{formatDate(post.createdAt || post.createdDate || post.dateCreated)}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Load More button */}
+              {hasMore && (
+                <div className="load-more-container">
+                  <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+                    {loadingMore ? (
+                      <span className="load-more-loading"><span className="loading-spinner">⟳</span> Loading...</span>
+                    ) : (
+                      "Load more"
+                    )}
+                  </button>
+                </div>
+              )}
+              {!hasMore && posts.length > 0 && (
+                <div className="no-more-data">No more posts to load</div>
+              )}
+            </div>
           )}
-          {!hasMore && posts.length > 0 && (
-            <div className="no-more-data">No more posts to load</div>
-          )}
-        </div>
+        </>
       )}
 
       {/* Post Details Modal */}
@@ -418,7 +477,7 @@ export default function PostModerationContent({ fanHubId }) {
                 <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Approval Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
-                <div className="pm-info-item"><span className="pm-info-label">Final AI Validation Status:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
+                <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Created:</span><span className="pm-info-value">{formatDate(selectedPost.createdAt)}</span></div>
                 <div className="pm-info-item full-width"><span className="pm-info-label">AI Comment:</span><div className="pm-info-value pm-ai-comment">{selectedPost.aiValidationComment || "No comment"}</div></div>
               </div>
@@ -464,13 +523,36 @@ export default function PostModerationContent({ fanHubId }) {
               <div className="pm-modal-footer-content">
                 <div className="pm-moderation-actions">
                   <button className="pm-modal-action-btn pm-approve-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "APPROVED", selectedPost.status); closeModal(); }}>✓ Approve Post</button>
-                  <button className="pm-modal-action-btn pm-reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
-                  <button className={`pm-modal-action-btn pm-retry-ai-btn ${aiCooldown ? "pm-cooldown" : ""} ${aiRetrying ? "pm-loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>
-                    {aiRetrying ? (<>&#x27F3; Sending...</>) : aiCooldown ? (<>&#x21BB; Retry AI ({aiCooldown.cooldownText})</>) : (<>&#x21BB; Retry AI Validation</>)}
+                  {selectedPost.status === "APPROVED" ? (
+                    <button className="pm-modal-action-btn pm-reject-btn" onClick={handleTakeDown}>Take Down</button>
+                  ) : (
+                    <button className="pm-modal-action-btn pm-reject-btn" onClick={async () => { await handleStatusChange(selectedPost.postId, "REJECTED", selectedPost.status); closeModal(); }}>✕ Reject Post</button>
+                  )}
+                  <button className={`pm-modal-action-btn pm-retry-ai-btn ${aiCooldown ? "pm-cooldown" : ""} ${aiRetrying ? "pm-loading" : ""}`} onClick={() => handleAiValidationRetry(selectedPost.postId)} disabled={!!aiCooldown || aiRetrying}>                    {aiRetrying ? (<>&#x27F3; Sending...</>) : aiCooldown ? (<>&#x21BB; Retry AI ({aiCooldown.cooldownText})</>) : (<>&#x21BB; Retry AI Validation</>)}
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Nested Take Down Confirmation Modal */}
+            {isTakeDownModalOpen && (
+              <div className="pm-modal-overlay pm-nested-modal" onClick={() => setIsTakeDownModalOpen(false)}>
+                <div className="pm-modal-content pm-confirm-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="pm-modal-header">
+                    <h2>Confirm Take Down</h2>
+                    <button className="pm-modal-close" onClick={() => setIsTakeDownModalOpen(false)}>×</button>
+                  </div>
+                  <div className="pm-modal-body">
+                    <p>Are you sure you want to take down post <strong>#{selectedPost.postId}</strong>?</p>
+                    <p className="pm-warning-text">This will reject the post and hide it from public view. This action can be undone by manually approving the post again.</p>
+                  </div>
+                  <div className="pm-modal-footer">
+                    <button className="pm-modal-cancel-btn" onClick={() => setIsTakeDownModalOpen(false)}>Cancel</button>
+                    <button className="pm-modal-action-btn pm-reject-btn" onClick={confirmTakeDown}>Confirm Take Down</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

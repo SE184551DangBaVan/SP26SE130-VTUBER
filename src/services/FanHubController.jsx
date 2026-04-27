@@ -356,3 +356,23 @@ export const deactivateFanHub = async (fanHubId) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Delete a fan hub (irreversible)
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Result
+ */
+export const deleteFanHub = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.delete(`/fan-hub/delete/${fanHubId}`);
+    console.log("deleteFanHub response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Delete fan hub error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

@@ -668,8 +668,7 @@ export default function HubPage({ ownedHub }) {
                   onClick={handleModerationClick}
                   title='Moderation Hub'
                 >
-                  <Shield fontSize='small' />
-                  <span>Moderation</span>
+                  <span>Mod Tools</span>
                 </button>
               )}
               <button

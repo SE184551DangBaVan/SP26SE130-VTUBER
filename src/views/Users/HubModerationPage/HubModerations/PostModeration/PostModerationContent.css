@@ -1,18 +1,36 @@
-.post-moderation-page {
-  max-width: 90%;
-    margin-top: 80px;
-  padding: 1.5rem;
-  color: #000;
-  font-family: 'Inter', sans-serif;
-  transition: margin-left 0.3s ease;
+.post-moderation-content {
+  width: 100%;
 }
 
-.post-moderation-page.sidebar-expanded {
-    margin-left: var(--sidebar-width);
+/* Sub Navigation Tabs */
+.moderation-sub-nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(45, 140, 240, 0.2);
+  padding-bottom: 0.5rem;
 }
 
-.post-moderation-page.sidebar-retracted {
-    margin-left: var(--sidebar-width-min);
+.sub-nav-btn {
+  padding: 0.5rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #4a6b8a;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -0.65rem;
+}
+
+.sub-nav-btn:hover {
+  color: #2d8cf0;
+}
+
+.sub-nav-btn.active {
+  color: #2d8cf0;
+  border-bottom-color: #2d8cf0;
 }
 
 /* Content toolbar */
@@ -20,9 +38,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 /* Refresh Button */
@@ -739,6 +763,13 @@
   animation: pmFadeIn 0.2s ease;
 }
 
+.pm-modal-overlay.pm-nested-modal {
+  z-index: 11000;
+  background: rgba(0, 0, 0, 0.6);
+  position: absolute;
+  border-radius: 1rem;
+}
+
 @keyframes pmFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1125,6 +1156,38 @@
   opacity: 0.6;
   cursor: not-allowed;
   background: linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%);
+}
+
+.pm-confirm-modal {
+  max-width: 450px;
+}
+
+.pm-warning-text {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  padding: 1rem;
+  color: #92400e;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  margin-top: 1rem;
+}
+
+.pm-modal-cancel-btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+}
+
+.pm-modal-cancel-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
 }
 
 .pm-modal-body .pm-action-btn.pm-reject-btn:hover {

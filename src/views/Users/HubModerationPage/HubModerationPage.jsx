@@ -2,25 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useSideBar } from "@/contexts/SideBarContext.tsx";
 import { getFanHubBySubdomain } from "@/services/FanHubController";
 import PostModerationContent from "./HubModerations/PostModeration/PostModerationContent.jsx";
 import MemberModerationContent from "./HubModerations/MemberModeration/MemberModerationContent.jsx";
 import BansManagementContent from "./HubModerations/BansManagement/BansManagementContent.jsx";
-import ReportsManagementContent from "./HubModerations/ReportsManagement/ReportsManagementContent.jsx";
+import DeleteFanhubContent from "./HubModerations/DeleteFanhub/DeleteFanhubContent.jsx";
+import ModQueueContent from "./HubModerations/ModQueue/ModQueueContent.jsx";
 import "./HubModerationPage.css";
 
 export default function HubModerationPage() {
   const params = useParams();
   const { sideBarRetractor } = useSideBar();
-  const [activeTab, setActiveTab] = useState("posts");
+  const [activeTab, setActiveTab] = useState("modQueue");
   const [fanHubId, setFanHubId] = useState(null);
   const [hubData, setHubData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const subdomain = params?.subdomain;
 
-  // Fetch hub by subdomain to get the fanHubId
+  // Get current user ID from storage
+  const currentUserId = parseInt(
+    sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
+  );
+
+  const isOwner = hubData && hubData.ownerUserId === currentUserId;
+
   useEffect(() => {
     const fetchHub = async () => {
       if (!subdomain) {
@@ -67,48 +75,74 @@ export default function HubModerationPage() {
 
   return (
     <div className={`hub-moderation-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
-      {/* Hub Title */}
-      <div className="hub-title">
-        <h1>Moderate: {hubData.hubName}</h1>
-      </div>
+      <div className="moderation-layout-container">
+        {/* Sidebar */}
+        <aside className="moderation-sidebar">
+          <Link href={`/hub/${subdomain}`} className="back-to-hub-link">
+            ← Go back to hub
+          </Link>
+          <div className="hub-title">
+            <img 
+              src={hubData.avatarUrl || '/profile-pic-undefined.jpg'} 
+              alt={hubData.hubName} 
+              className="hub-avatar-mini" 
+              onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+            />
+            <h1>h/{hubData.hubName}</h1>
+          </div>
+          
+          <div className="moderation-sidebar-nav">
+            <button
+              className={`tab-btn ${activeTab === "modQueue" ? "active" : ""}`}
+              onClick={() => setActiveTab("modQueue")}
+            >
+              Mod Queue
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
+              onClick={() => setActiveTab("posts")}
+            >
+              Posts
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "members" ? "active" : ""}`}
+              onClick={() => setActiveTab("members")}
+            >
+              Members & Mods
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}
+              onClick={() => setActiveTab("bans")}
+            >
+              Restricted Users
+            </button>
+            {isOwner && (
+              <button
+                className={`tab-btn ${activeTab === "delete" ? "active" : ""}`}
+                onClick={() => setActiveTab("delete")}
+              >
+                Delete fanhub
+              </button>
+            )}
+          </div>
+        </aside>
 
-      {/* Tabs */}
-      <div className="moderation-tabs">
-        <button
-          className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
-          onClick={() => setActiveTab("posts")}
-        >
-          Posts
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "members" ? "active" : ""}`}
-          onClick={() => setActiveTab("members")}
-        >
-          Members
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}
-          onClick={() => setActiveTab("bans")}
-        >
-          Bans
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "reports" ? "active" : ""}`}
-          onClick={() => setActiveTab("reports")}
-        >
-          Reports
-        </button>
+        {/* Main Content Area */}
+        <main className="moderation-main-content">
+          {activeTab === "modQueue"
+            ? <ModQueueContent fanHubId={fanHubId} isOwner={isOwner} />
+            : activeTab === "posts"
+            ? <PostModerationContent fanHubId={fanHubId} isOwner={isOwner} />
+            : activeTab === "members"
+            ? <MemberModerationContent fanHubId={fanHubId} isOwner={isOwner} />
+            : activeTab === "bans"
+            ? <BansManagementContent fanHubId={fanHubId} />
+            : (isOwner && activeTab === "delete")
+            ? <DeleteFanhubContent fanHubId={fanHubId} hubName={hubData.hubName} />
+            : <ModQueueContent fanHubId={fanHubId} isOwner={isOwner} />
+          }
+        </main>
       </div>
-
-      {/* Tab Content */}
-      {activeTab === "posts"
-        ? <PostModerationContent fanHubId={fanHubId} />
-        : activeTab === "members"
-        ? <MemberModerationContent fanHubId={fanHubId} />
-        : activeTab === "bans"
-        ? <BansManagementContent fanHubId={fanHubId} />
-        : <ReportsManagementContent fanHubId={fanHubId} />
-      }
     </div>
   );
 }

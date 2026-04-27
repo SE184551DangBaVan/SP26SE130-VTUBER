@@ -1,44 +1,16 @@
-import axios from "axios";
-
-export const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
+import axiosInstance from "@/utils/axiosInstance";
 
 export const getAuthToken = () => {
   return sessionStorage.getItem("token") || localStorage.getItem("token");
 };
 
-import axiosInstance from "@/utils/axiosInstance";
-
 /**
  * Validate user authentication token
  * @returns {Promise<Object>} Token validation result with validity, expiration, and user info
  */
-export const checkToken = async (token) => {
+export const checkToken = async () => {
   try {
-    if (!token) {
-      console.warn("No auth token found");
-      return {
-        success: false,
-        message: "No auth token",
-        data: {
-          valid: false,
-          expired: true,
-          userId: null,
-          username: null,
-          role: null,
-          expiresAt: null
-        }
-      };
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/auth/me`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
-    );
-
+    const res = await axiosInstance.get(`/auth/me`);
     return res.data;
   } catch (err) {
     console.error("Validate token error:", {

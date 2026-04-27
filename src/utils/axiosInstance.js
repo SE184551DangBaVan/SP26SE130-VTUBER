@@ -57,6 +57,8 @@ const isAdminUser = () => {
 // Refresh token API call
 const refreshAuthToken = async (refreshToken) => {
   try {
+    // IMPORTANT: Do NOT use axiosInstance here to avoid infinite loops
+    // IMPORTANT: Do NOT send the expired Authorization header
     const response = await axios.post(
       `${API_BASE_URL}/auth/refresh-token`,
       null,
@@ -65,8 +67,8 @@ const refreshAuthToken = async (refreshToken) => {
           "refresh-token": refreshToken
         },
         headers: {
-          "Authorization": `Bearer ${getToken()}`,
           "accept": "*/*"
+          // Authorization header removed because the old token is expired
         }
       }
     );
@@ -78,13 +80,17 @@ const refreshAuthToken = async (refreshToken) => {
       return token;
     }
 
-    throw new Error("Refresh token failed");
+    throw new Error("Refresh token failed: Invalid response structure");
   } catch (error) {
-    console.error("Refresh token error:", error);
-    // Clear tokens if refresh fails
-    sessionStorage.clear();
-    localStorage.clear();
-    window.dispatchEvent(new Event("storage"));
+    console.error("Refresh token error:", error.response?.data || error.message);
+    
+    // Only clear storage if it's a definitive auth failure (401 or 403)
+    if (error.response?.status === 401 || error.response?.status === 403 || error.message.includes("Invalid response structure")) {
+      sessionStorage.clear();
+      localStorage.clear();
+      window.dispatchEvent(new Event("storage"));
+    }
+    
     throw error;
   }
 };
