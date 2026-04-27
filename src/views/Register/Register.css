@@ -734,8 +734,8 @@ body:has(.register-wrapper) {
 .password-strength-error {
   color: red;
   font-weight: 600;
-  font-size: 12px;
-  transform: translate(10px, -25px);
+  font-size: 10px;
+  transform: translate(0, 30px);
   margin: -44px 0 5px 0;
   text-align: left;
   width: 100%;

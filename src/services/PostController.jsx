@@ -586,4 +586,59 @@ export const getRejectedPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 
   }
 };
 
+/**
+ * Search for posts and fan hubs by keyword
+ * @param {string} keyword - Search keyword
+ * @param {string} searchType - Type of search: "Post", "FanHub", or "All"
+ * @param {number} pageNo - Page number (default 0)
+ * @param {number} pageSize - Page size (default 10)
+ * @param {string} sortBy - Sort by field (default "createdAt")
+ * @returns {Promise<Object>} Search results with posts and/or fanHubs
+ */
+export const searchContent = async (keyword, searchType = "All", pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+  try {
+    if (!keyword || keyword.trim() === "") {
+      return { posts: [], fanHubs: [], success: false };
+    }
+
+    const results = { posts: [], fanHubs: [], success: false };
+    const searchTypes = searchType === "All" ? ["Post", "FanHub"] : [searchType];
+
+    // Fetch results for each type
+    const promises = searchTypes.map(type =>
+      axiosInstance.get(
+        `${API_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}&type=${type}`
+      ).catch(err => {
+        console.error(`Search ${type} error:`, err.message);
+        return null;
+      })
+    );
+
+    const responses = await Promise.all(promises);
+
+    let hasResults = false;
+    responses.forEach((response, index) => {
+      if (response?.data?.success) {
+        if (searchTypes[index] === "Post") {
+          results.posts = response.data.data || [];
+          hasResults = true;
+        } else if (searchTypes[index] === "FanHub") {
+          results.fanHubs = response.data.data || [];
+          hasResults = true;
+        }
+      }
+    });
+
+    results.success = hasResults;
+    return results;
+  } catch (err) {
+    console.error("Search content error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return { posts: [], fanHubs: [], success: false };
+  }
+};
+
 

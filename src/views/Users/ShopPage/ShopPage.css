@@ -1,18 +1,33 @@
 .shop-page {
-  min-height: 120vh;
-  margin-top: 70px;
+  min-height: 100vh;
+  margin-top: 60px;
   padding: 20px 0 0 40px;
   background: transparent;
   transition: margin-left 0.3s ease;
   color: #1a1a1a;
+  background: url(../../../assets/Decor/Cozy_Kawaii_Shop.png);
+  background-size: 100% 100%;
+  background-position: top right;
+  background-repeat: no-repeat;
 }
 
 .shop-page.sidebar-retracted {
-  margin-left: 64px;
+  margin-left: var(--sidebar-width-min);
 }
 
 .shop-page.sidebar-expanded {
-  margin-left: 240px;
+  margin-left: var(--sidebar-width);
+}
+
+.shop-page-overlay {
+  width: 97.5%;
+  min-height: 40%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 2px solid #333;
+  padding: 40px;
+  z-index: 0;
 }
 
 .shop-header {
@@ -69,13 +84,13 @@
 
 .shop-points-display {
   position: fixed;
-  top: 86px;
+  top: 20px;
   right: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 4px 20px;
-  background: #e3fefe;
+  background: #ddffff56;
   border: 2px solid #000;
   border-radius: 24px;
   z-index: 101;
@@ -460,7 +475,6 @@ body:has(.purchase-modal-content) .shop-points-display {
   font-size: 28px;
   font-weight: 700;
   color: #555;
-  background-color: #e3fefe;
   padding: 0 10px;
   z-index: 10;
 }
@@ -471,6 +485,7 @@ body:has(.purchase-modal-content) .shop-points-display {
   height: 2px;
   left: 0;
   top: 20px;
+  mask-image: linear-gradient(to right, #000 2.5%, transparent 2.5%, transparent 8%, #000 8%, #000);
   background-color: #555;
 }
 

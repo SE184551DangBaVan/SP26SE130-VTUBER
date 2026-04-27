@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getMyJoinedHubs } from '@/services/FanHubController';
 import { useAuth } from '@/functions/Auth/useAuth';
 import './JoinedHubsContainer.css';
 
 export default function JoinedHubsContainer() {
   const router = useRouter();
+  const pathname = usePathname();
   const { userAuth } = useAuth();
   const [showAll, setShowAll] = useState(false);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedHubSubdomain, setSelectedHubSubdomain] = useState(null);
   const wrapperRef = useRef(null);
 
     const fetchJoinedHubs = async () => {
@@ -53,6 +55,17 @@ export default function JoinedHubsContainer() {
         window.addEventListener('hubsUpdated', handleHubUpdate);
         return () => window.removeEventListener('hubsUpdated', handleHubUpdate);
     }, []);
+
+  // Track selected hub based on pathname
+  useEffect(() => {
+    const hubMatch = pathname.match(/^\/hub\/(.+)$/);
+    if (hubMatch) {
+      const subdomain = hubMatch[0];
+      setSelectedHubSubdomain(subdomain);
+    } else {
+      setSelectedHubSubdomain(null);
+    }
+  }, [pathname]);
 
   // ResizeObserver to report height to parent sidebar
   useEffect(() => {
@@ -104,13 +117,15 @@ export default function JoinedHubsContainer() {
             {displayHubs.map((hub) => (
               <div
                 key={hub.fanHubId}
-                className="joined-hub-item"
+                className={`joined-hub-item ${decodeURIComponent(selectedHubSubdomain) === "/hub/" + hub.subdomain ? 'selected' : ''}`}
                 onClick={() => handleHubClick(hub.subdomain)}
+                title={hub.hubName}
               >
                 <img
                   src={hub.avatarUrl || '/profile-pic-undefined.jpg'}
                   alt={hub.hubName}
                   className="joined-hub-avatar"
+                  style={{border: `2px solid ${hub.themeColor || 'rgb(0, 25, 58)'}`}}
                 />
                 <span className="joined-hub-name">{hub.hubName}</span>
               </div>

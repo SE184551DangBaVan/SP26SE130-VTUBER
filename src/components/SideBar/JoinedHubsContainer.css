@@ -48,12 +48,24 @@
   background-color: rgba(0, 0, 0, 0.08);
 }
 
+.joined-hub-item.selected {
+  background-color: rgba(0, 25, 58, 0.15);
+  border-right: 3px solid rgb(0, 25, 58);
+  padding-left: 20px;
+}
+
 .joined-hub-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+  padding: 2px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+}
+
+.joined-hub-item:hover .joined-hub-avatar {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
 }
 
 .joined-hub-name {
