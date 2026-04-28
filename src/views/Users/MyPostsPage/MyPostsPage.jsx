@@ -283,7 +283,7 @@ export default function MyPostsPage() {
                 Approval Status{getSortIcon("status")}
               </th>
               <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>
-                Final AI Validation Status{getSortIcon("aiValidationStatus")}
+                AI Validation{getSortIcon("aiValidationStatus")}
               </th>
               <th className="sortable" onClick={() => handleSort("createdAt")}>
                 Created Date{getSortIcon("createdAt")}
@@ -386,7 +386,7 @@ export default function MyPostsPage() {
                     </span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">Final AI Validation Status:</span>
+                    <span className="info-label">AI Validation:</span>
                     <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>
                       {selectedPost.aiValidationStatus || "UNKNOWN"}
                     </span>

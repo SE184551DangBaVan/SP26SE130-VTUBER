@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
-import "./MemberModerationContent.css";
 import { banFanHubMember, getHubMembers } from "@/services/MemberController.jsx";
+import MemberReportsTable from "./MemberReportsTable";
+import "./MemberModerationContent.css";
 
 const BAN_TYPE_OPTIONS = [
   { value: "COMMENT", label: "Comment" },
@@ -14,7 +15,45 @@ const BAN_TYPE_OPTIONS = [
 
 const PAGE_SIZE = 10;
 
-export default function MemberModerationContent({ fanHubId }) {
+export default function MemberModerationContent({ fanHubId, isOwner }) {
+  const [activeSubTab, setActiveSubTab] = useState("moderators");
+
+  return (
+    <div className="member-moderation-content">
+      <div className="moderation-sub-nav">
+        <button 
+          className={`sub-nav-btn ${activeSubTab === "moderators" ? "active" : ""}`}
+          onClick={() => setActiveSubTab("moderators")}
+        >
+          Moderators
+        </button>
+        <button 
+          className={`sub-nav-btn ${activeSubTab === "members" ? "active" : ""}`}
+          onClick={() => setActiveSubTab("members")}
+        >
+          Approved Members
+        </button>
+        <button 
+          className={`sub-nav-btn ${activeSubTab === "memberReports" ? "active" : ""}`}
+          onClick={() => setActiveSubTab("memberReports")}
+        >
+          Member Reports
+        </button>
+      </div>
+
+      {activeSubTab === "moderators" ? (
+        <MembersTable fanHubId={fanHubId} roleFilter="MODERATOR" />
+      ) : activeSubTab === "members" ? (
+        <MembersTable fanHubId={fanHubId} roleFilter="MEMBER" />
+      ) : (
+        <MemberReportsTable fanHubId={fanHubId} isOwner={isOwner} />
+      )}
+    </div>
+  );
+}
+
+/* ───────── Members Table ───────── */
+function MembersTable({ fanHubId, roleFilter }) {
   const { userAuth } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +80,7 @@ export default function MemberModerationContent({ fanHubId }) {
 
     try {
       const pageNo = reset ? 0 : currentPage;
-      const data = await getHubMembers(fanHubId, pageNo, PAGE_SIZE, sortBy);
+      const data = await getHubMembers(fanHubId, pageNo, PAGE_SIZE, sortBy, roleFilter);
 
       let items = [];
       if (data && typeof data === "object" && data.content) {
@@ -67,7 +106,7 @@ export default function MemberModerationContent({ fanHubId }) {
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [fanHubId, currentPage, sortBy]);
+  }, [fanHubId, currentPage, sortBy, roleFilter]);
 
   const handleLoadMore = () => {
     fetchMembers(false);
@@ -81,7 +120,7 @@ export default function MemberModerationContent({ fanHubId }) {
   useEffect(() => {
     if (!fanHubId) return;
     fetchMembers(true);
-  }, [fanHubId, sortBy]);
+  }, [fanHubId, sortBy, roleFilter]);
 
   const showToast = (message, type) => {
     setToast({ show: true, message, type });
@@ -164,7 +203,7 @@ export default function MemberModerationContent({ fanHubId }) {
   if (loading) return <div className="loading">Loading members...</div>;
 
   return (
-    <div className="member-moderation-content">
+    <div className="members-table-wrapper">
       <div className="content-toolbar">
         <button className="toolbar-refresh-btn" onClick={handleRefresh} disabled={refreshing} title="Refresh members">
           {refreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
@@ -211,7 +250,6 @@ export default function MemberModerationContent({ fanHubId }) {
             </tbody>
           </table>
 
-          {/* Load More button */}
           {hasMore && (
             <div className="load-more-container">
               <button className="load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>

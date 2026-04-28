@@ -1523,6 +1523,29 @@ body:has(.hub-page-container) .post-card {
   border-radius: 50%;
 }
 
+.explore-banner-preview-wrapper {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
+}
+
+.explore-banner-preview-wrapper .explore-banner-component {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  zoom: 0.8; /* Slightly smaller for the modal */
+}
+
+@media (max-width: 600px) {
+  .explore-banner-preview-wrapper {
+    padding: 8px;
+  }
+  
+  .explore-banner-preview-wrapper .explore-banner-component {
+    zoom: 0.5;
+  }
+}
+
 .edit-images-form {
   display: flex;
   flex-direction: column;
