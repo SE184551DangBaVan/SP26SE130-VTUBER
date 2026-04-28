@@ -8,8 +8,10 @@ import { getFanHubBySubdomain } from "@/services/FanHubController";
 import PostModerationContent from "./HubModerations/PostModeration/PostModerationContent.jsx";
 import MemberModerationContent from "./HubModerations/MemberModeration/MemberModerationContent.jsx";
 import BansManagementContent from "./HubModerations/BansManagement/BansManagementContent.jsx";
+import GeneralSettingsContent from "./HubModerations/GeneralSettings/GeneralSettingsContent.jsx";
 import DeleteFanhubContent from "./HubModerations/DeleteFanhub/DeleteFanhubContent.jsx";
 import ModQueueContent from "./HubModerations/ModQueue/ModQueueContent.jsx";
+import HubCustomizationContent from "./HubModerations/HubCustomization/HubCustomizationContent.jsx";
 import "./HubModerationPage.css";
 
 export default function HubModerationPage() {
@@ -26,8 +28,10 @@ export default function HubModerationPage() {
   const currentUserId = parseInt(
     sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
   );
+  const currentUserRole = sessionStorage.getItem("role") || localStorage.getItem("role") || "";
 
   const isOwner = hubData && hubData.ownerUserId === currentUserId;
+  const isVTuber = currentUserRole === "VTUBER";
 
   useEffect(() => {
     const fetchHub = async () => {
@@ -92,37 +96,58 @@ export default function HubModerationPage() {
           </div>
           
           <div className="moderation-sidebar-nav">
-            <button
-              className={`tab-btn ${activeTab === "modQueue" ? "active" : ""}`}
-              onClick={() => setActiveTab("modQueue")}
-            >
-              Mod Queue
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
-              onClick={() => setActiveTab("posts")}
-            >
-              Posts
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "members" ? "active" : ""}`}
-              onClick={() => setActiveTab("members")}
-            >
-              Members & Mods
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}
-              onClick={() => setActiveTab("bans")}
-            >
-              Restricted Users
-            </button>
-            {isOwner && (
+            <div className="nav-group">
+              <span className="nav-group-label">Moderation</span>
               <button
-                className={`tab-btn ${activeTab === "delete" ? "active" : ""}`}
-                onClick={() => setActiveTab("delete")}
+                className={`tab-btn ${activeTab === "modQueue" ? "active" : ""}`}
+                onClick={() => setActiveTab("modQueue")}
               >
-                Delete fanhub
+                Mod Queue
               </button>
+              <button
+                className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
+                onClick={() => setActiveTab("posts")}
+              >
+                Posts
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "members" ? "active" : ""}`}
+                onClick={() => setActiveTab("members")}
+              >
+                Members & Mods
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}
+                onClick={() => setActiveTab("bans")}
+              >
+                Restricted Users
+              </button>
+            </div>
+
+            {isOwner && (
+              <div className="nav-group">
+                <span className="nav-group-label">Settings</span>
+                <button
+                  className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+                  onClick={() => setActiveTab("general")}
+                >
+                  Hub Settings
+                </button>
+                {isVTuber && (
+                  <button
+                    className={`tab-btn ${activeTab === "customization" ? "active" : ""}`}
+                    onClick={() => setActiveTab("customization")}
+                  >
+                    Hub Customization
+                  </button>
+                )}
+                <button
+                  className={`tab-btn red-font ${activeTab === "delete" ? "active" : ""}`}
+                  onClick={() => setActiveTab("delete")}
+                >
+                  Delete Fan Hub
+                </button>
+              </div>
             )}
           </div>
         </aside>
@@ -137,6 +162,10 @@ export default function HubModerationPage() {
             ? <MemberModerationContent fanHubId={fanHubId} isOwner={isOwner} />
             : activeTab === "bans"
             ? <BansManagementContent fanHubId={fanHubId} />
+            : (isOwner && activeTab === "customization" && isVTuber)
+            ? <HubCustomizationContent fanHubId={fanHubId} hubData={hubData} />
+            : (isOwner && activeTab === "general")
+            ? <GeneralSettingsContent fanHubId={fanHubId} hubData={hubData} />
             : (isOwner && activeTab === "delete")
             ? <DeleteFanhubContent fanHubId={fanHubId} hubName={hubData.hubName} />
             : <ModQueueContent fanHubId={fanHubId} isOwner={isOwner} />

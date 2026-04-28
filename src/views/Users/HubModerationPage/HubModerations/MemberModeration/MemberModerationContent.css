@@ -81,10 +81,18 @@
   color: #1e293b;
 }
 
-.username, .username-cell {
+.username, .username-cell, .display-name, .member-id, .member-name, .report-info-value, .report-value {
   color: #64748b;
   font-family: 'Courier New', monospace;
   font-size: 0.85rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.display-name, .member-name {
+  color: #1e293b;
+  font-family: inherit;
+  font-weight: 600;
 }
 
 .ban-btn {
@@ -399,6 +407,8 @@
   font-size: 0.875rem;
   color: #111827;
   font-weight: 500;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .mm-ban-form {

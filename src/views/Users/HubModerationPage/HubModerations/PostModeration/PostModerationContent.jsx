@@ -509,7 +509,17 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
                         <div className="pm-media-preview">
                           {mediaItem.mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (<video controls className="pm-media-video" onClick={(e) => e.stopPropagation()}><source src={mediaItem.mediaUrl} type="video/mp4" />Your browser does not support the video tag.</video>) : (<img src={mediaItem.mediaUrl} alt={`Media ${mediaItem.mediaId}`} className="pm-media-image" />)}
                         </div>
-                        <div className="pm-media-info"><div className="pm-media-id">Media ID: #{mediaItem.mediaId}</div><div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>{mediaItem.aiValidationStatus || "UNKNOWN"}</div></div>
+                        <div className="pm-media-info">
+                          <div className="pm-media-id-status">
+                            <div className="pm-media-id">Media ID: #{mediaItem.mediaId}</div>
+                            <div className={`pm-media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>{mediaItem.aiValidationStatus || "UNKNOWN"}</div>
+                          </div>
+                          {mediaItem.aiValidationComment && (
+                            <div className="pm-media-ai-comment" title={mediaItem.aiValidationComment}>
+                              {mediaItem.aiValidationComment}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -565,7 +575,13 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
             <div className="media-viewer-body">
               {selectedMedia.mediaUrl?.match(/\.(mp4|webm|ogg)$/i) ? (<video controls autoPlay className="media-viewer-video"><source src={selectedMedia.mediaUrl} type="video/mp4" />Your browser does not support the video tag.</video>) : (<img src={selectedMedia.mediaUrl} alt={`Media ${selectedMedia.mediaId}`} className="media-viewer-image" />)}
             </div>
-            <div className="media-viewer-info"><div className="media-viewer-id">Media ID: #{selectedMedia.mediaId}</div><div className={`media-viewer-ai-status ${getAiValidationStatusClass(selectedMedia.aiValidationStatus)}`}>{selectedMedia.aiValidationStatus || "UNKNOWN"}</div></div>
+            <div className="media-viewer-info">
+              <div className="media-viewer-id">Media ID: #{selectedMedia.mediaId}</div>
+              <div className={`media-viewer-ai-status ${getAiValidationStatusClass(selectedMedia.aiValidationStatus)}`}>{selectedMedia.aiValidationStatus || "UNKNOWN"}</div>
+              {selectedMedia.aiValidationComment && (
+                <div className="media-viewer-ai-comment">{selectedMedia.aiValidationComment}</div>
+              )}
+            </div>
           </div>
         </div>
       )}

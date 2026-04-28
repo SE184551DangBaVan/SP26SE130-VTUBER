@@ -914,6 +914,23 @@ body:has(.create-hub-page-container) .modal-body::-webkit-scrollbar-thumb:hover 
   color: #155724;
 }
 
+.preview-explore-banner {
+  padding: 10px;
+  background: #f1f3f4;
+  border-radius: 12px;
+  border: 1px dashed #ccc;
+}
+
+.preview-explore-banner .explore-banner-component {
+  zoom: 0.65;
+}
+
+@media (max-width: 600px) {
+  .preview-explore-banner .explore-banner-component {
+    zoom: 0.5;
+  }
+}
+
 @media (max-width: 1024px) {
   .create-hub-editor {
     grid-template-columns: 1fr;

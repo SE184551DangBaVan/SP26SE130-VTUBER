@@ -112,6 +112,11 @@
 }
 
 /* Column specific styles */
+.user-id, .display-name, .username, .banned-by-name {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .user-id {
   font-weight: 700;
   color: #888;
@@ -124,11 +129,10 @@
 
 .reason-text {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: 0.85rem;
   color: #555;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .banned-by-name {
