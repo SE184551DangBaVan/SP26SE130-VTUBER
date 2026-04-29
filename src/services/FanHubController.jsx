@@ -376,3 +376,55 @@ export const deleteFanHub = async (fanHubId) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Get all strikes for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Array>} Array of strikes
+ */
+export const getFanHubStrikes = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub-strike/fan-hub/${fanHubId}`);
+
+    console.log("getFanHubStrikes response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Fetch fan hub strikes error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+/**
+ * Get analytics for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object|null>} Analytics data or null
+ */
+export const getHubAnalytics = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub/analytics/${fanHubId}`);
+
+    console.log("getHubAnalytics response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.error("Fetch fan hub analytics error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};

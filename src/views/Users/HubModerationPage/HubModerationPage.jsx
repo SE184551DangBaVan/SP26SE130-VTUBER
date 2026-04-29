@@ -12,6 +12,7 @@ import GeneralSettingsContent from "./HubModerations/GeneralSettings/GeneralSett
 import DeleteFanhubContent from "./HubModerations/DeleteFanhub/DeleteFanhubContent.jsx";
 import ModQueueContent from "./HubModerations/ModQueue/ModQueueContent.jsx";
 import HubCustomizationContent from "./HubModerations/HubCustomization/HubCustomizationContent.jsx";
+import HubAnalyticsContent from "./HubModerations/HubAnalytics/HubAnalyticsContent.jsx";
 import "./HubModerationPage.css";
 
 export default function HubModerationPage() {
@@ -127,6 +128,14 @@ export default function HubModerationPage() {
             {isOwner && (
               <div className="nav-group">
                 <span className="nav-group-label">Settings</span>
+                {isVTuber && (
+                  <button
+                    className={`tab-btn ${activeTab === "analytics" ? "active" : ""}`}
+                    onClick={() => setActiveTab("analytics")}
+                  >
+                    Hub Analytic
+                  </button>
+                )}
                 <button
                   className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
                   onClick={() => setActiveTab("general")}
@@ -162,6 +171,8 @@ export default function HubModerationPage() {
             ? <MemberModerationContent fanHubId={fanHubId} isOwner={isOwner} />
             : activeTab === "bans"
             ? <BansManagementContent fanHubId={fanHubId} />
+            : (isOwner && activeTab === "analytics" && isVTuber)
+            ? <HubAnalyticsContent fanHubId={fanHubId} />
             : (isOwner && activeTab === "customization" && isVTuber)
             ? <HubCustomizationContent fanHubId={fanHubId} hubData={hubData} />
             : (isOwner && activeTab === "general")
