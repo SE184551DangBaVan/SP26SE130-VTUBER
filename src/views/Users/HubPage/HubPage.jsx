@@ -4,15 +4,18 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
+import { getHubMembers, joinFanHub, joinFanhubWithAnswers, leaveFanHub } from '@/services/MemberController';
 import { checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
+import { getJoinQuestions } from '@/services/HubQuestionnaireController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { useReportModal } from '@/contexts/ReportContext';
+import JoinQuestionnaireModal from './JoinQuestionnaireModal';
 import { BASE_URL } from '@/config';
 import PostDetails from '../PostsPage/PostDetails';
 import PostCard from '../PostsPage/PostCard';
 import './HubPage.css';
-import { GroupRounded } from '@mui/icons-material';
+import { GroupRounded, MoreVertRounded } from '@mui/icons-material';
 
 import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
 import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
@@ -31,6 +34,8 @@ export default function HubPage({ ownedHub }) {
   const searchParams = useSearchParams();
   const subdomainFromParams = params?.subdomain;
 
+  const { openReportModal } = useReportModal();
+
   // Generate random loading image on mount
   const [randomLoadingImage, setRandomLoadingImage] = useState(null);
 
@@ -48,14 +53,13 @@ export default function HubPage({ ownedHub }) {
   const [membersLoading, setMembersLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('latest');
 
-  // State for promote modal
-  const [showPromoteModal, setShowPromoteModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [promoting, setPromoting] = useState(false);
-
   // State for join fan hub
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [showJoinQuestions, setShowJoinQuestions] = useState(false);
+  const [joinQuestions, setJoinQuestions] = useState([]);
+  const [showExtraOptions, setShowExtraOptions] = useState(false);
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
 
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
@@ -147,34 +151,28 @@ export default function HubPage({ ownedHub }) {
   const [serverPage, setServerPage] = useState(0);
   const observer = useRef();
 
-  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
+  const fetchPosts = useCallback(async (pageNum, sortBy, sortDir, append = true) => {
     if (!activeFanHubId) return;
 
     setPostsLoading(true);
     try {
-      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy);
+      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy, sortDir);
 
       if (hubPosts.length < 7) {
         setHasMore(false);
       }
 
-      const sortedPosts = [...hubPosts].sort((a, b) => {
-        const dateA = new Date(a.createdAt);
-        const dateB = new Date(b.createdAt);
-        return sortBy === 'createdAt' ? dateB - dateA : dateA - dateB;
-      });
-
-      if (sortedPosts.length > 0) {
+      if (hubPosts.length > 0) {
         if (append && pageNum !== 0) {
-          setPosts(prev => [...prev, ...sortedPosts]);
+          setPosts(prev => [...prev, ...hubPosts]);
         } else {
-          setPosts(sortedPosts);
+          setPosts(hubPosts);
         }
         setServerPage(pageNum + 1);
       } else if (hubPosts.length === 7) {
         const nextPage = pageNum + 1;
         setServerPage(nextPage);
-        await fetchPosts(nextPage, sortBy, append);
+        await fetchPosts(nextPage, sortBy, sortDir, append);
         return;
       } else {
         if (pageNum === 0) setPosts([]);
@@ -189,10 +187,11 @@ export default function HubPage({ ownedHub }) {
   }, [activeFanHubId]);
 
   useEffect(() => {
-    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    const sortBy = 'createdAt';
+    const sortDir = sortOrder === 'latest' ? 'desc' : 'asc';
     setServerPage(0);
     setHasMore(true);
-    fetchPosts(0, sortBy);
+    fetchPosts(0, sortBy, sortDir);
   }, [activeFanHubId, sortOrder]);
 
   const lastPostElementRef = useCallback(
@@ -202,8 +201,9 @@ export default function HubPage({ ownedHub }) {
 
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-          fetchPosts(serverPage, sortBy);
+          const sortBy = 'createdAt';
+          const sortDir = sortOrder === 'latest' ? 'desc' : 'asc';
+          fetchPosts(serverPage, sortBy, sortDir);
         }
       }, { rootMargin: '200px' });
 
@@ -255,63 +255,93 @@ export default function HubPage({ ownedHub }) {
     fetchMembers();
   }, [activeFanHubId, isOwner, roleInHub]);
 
-  // Handle promote member to moderator
-  const handlePromoteClick = (member) => {
-     setSelectedMember(member);
-     setShowPromoteModal(true);
-  };
-
-  const handlePromoteConfirm = async () => {
-    if (!selectedMember || !activeFanHubId) return;
-
-    setPromoting(true);
-    try {
-      const result = await setModerator(activeFanHubId, [selectedMember.id]);
-
-      if (result?.success) {
-        setMembers(prev => prev.map(m =>
-          m.id === selectedMember.id
-            ? { ...m, roleInHub: 'MODERATOR' }
-            : m
-        ));
-        setShowPromoteModal(false);
-        setSelectedMember(null);
-      } else {
-        alert(result?.message || 'Failed to promote member');
-      }
-    } catch (error) {
-      console.error('Promote error:', error);
-      alert('Failed to promote member');
-    } finally {
-      setPromoting(false);
-    }
-  };
-
-  const handlePromoteCancel = () => {
-    setShowPromoteModal(false);
-    setSelectedMember(null);
-  };
-
   const handleJoinFanHub = async () => {
     if (!activeFanHubId) return;
 
-    setJoining(true);
-    const toastId = showLoading('Joining FanHub...');
+    if (hubData.requiresApproval) {
+      setJoining(true);
+      const toastId = showLoading('Checking requirements...');
+      try {
+        const questions = await getJoinQuestions(activeFanHubId);
+        updateToast(toastId, 'dismiss'); // Close the "Checking..." toast
+
+        if (questions && questions.length > 0) {
+          setJoinQuestions(questions);
+          setShowJoinQuestions(true);
+        } else {
+          // No questions, but requires approval
+          await handleQuestionnaireSubmit([]);
+        }
+      } catch (error) {
+        console.error('Error fetching join questions:', error);
+        updateToast(toastId, 'error', 'Failed to fetch join questions');
+      } finally {
+        setJoining(false);
+      }
+    } else {
+      // Normal join (requiresApproval is false)
+      setJoining(true);
+      const toastId = showLoading('Joining FanHub...');
+
+      try {
+        const result = await joinFanHub(activeFanHubId);
+
+        if (result?.success) {
+          updateToast(toastId, 'success', 'Joined FanHub successfully!');
+          setIsMember(true);
+          setRoleInHub('MEMBER');
+
+          window.dispatchEvent(new CustomEvent('hubsUpdated'));
+        } else {
+          updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
+        }
+      } catch (error) {
+        console.error('Join error:', error);
+        updateToast(toastId, 'error', 'Network error. Please try again.');
+      } finally {
+        setJoining(false);
+      }
+    }
+  };
+
+  const handleLeaveFanHub = async () => {
+    if (!activeFanHubId) return;
+
+    const toastId = showLoading('Leaving FanHub...');
+    setShowExtraOptions(false);
+    setShowLeaveConfirmModal(false);
 
     try {
-      const result = await joinFanHub(activeFanHubId);
+      const result = await leaveFanHub(activeFanHubId);
 
       if (result?.success) {
-        updateToast(toastId, 'success', 'Joined FanHub successfully!');
-        setIsMember(true);
-        setRoleInHub('MEMBER');
-
+        updateToast(toastId, 'success', 'Left FanHub successfully!');
+        setIsMember(false);
+        setRoleInHub(null);
         window.dispatchEvent(new CustomEvent('hubsUpdated'));
       } else {
-        updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
+        updateToast(toastId, 'error', result?.message || 'Failed to leave FanHub');
       }
     } catch (error) {
-      console.error('Join error:', error);
+      console.error('Leave error:', error);
+      updateToast(toastId, 'error', 'Network error. Please try again.');
+    }
+  };
+
+  const handleQuestionnaireSubmit = async (answers) => {
+    setJoining(true);
+    const toastId = showLoading('Submitting request...');
+    try {
+      const result = await joinFanhubWithAnswers(activeFanHubId, answers);
+      if (result?.success) {
+        updateToast(toastId, 'success', result.data || 'Request submitted successfully!');
+        setShowJoinQuestions(false);
+        // If it's awaiting approval, we don't set isMember to true yet
+      } else {
+        updateToast(toastId, 'error', result?.message || 'Failed to submit request');
+      }
+    } catch (error) {
+      console.error('Join with answers error:', error);
       updateToast(toastId, 'error', 'Network error. Please try again.');
     } finally {
       setJoining(false);
@@ -488,6 +518,42 @@ export default function HubPage({ ownedHub }) {
                   Joined
                 </button>
               )}
+              <div className='hub-extra-options-container' style={{ position: 'relative' }}>
+                <button
+                  className='hub-extra-options-btn'
+                  onClick={() => setShowExtraOptions(!showExtraOptions)}
+                >
+                  <MoreVertRounded />
+                </button>
+                {showExtraOptions && (
+                  <div className='hub-extra-options-menu'>
+                    <button 
+                      className='hub-extra-option-item' 
+                      onClick={() => {
+                        setShowExtraOptions(false);
+                        openReportModal({
+                          type: 'FANHUB',
+                          targetId: activeFanHubId,
+                          targetName: hubData.hubName
+                        });
+                      }}
+                    >
+                      Report FanHub
+                    </button>
+                    {isMember && !isOwner && (
+                      <button 
+                        className='hub-extra-option-item text-danger' 
+                        onClick={() => {
+                          setShowExtraOptions(false);
+                          setShowLeaveConfirmModal(true);
+                        }}
+                      >
+                        Leave FanHub
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -652,15 +718,6 @@ export default function HubPage({ ownedHub }) {
                             <span className='member-username'>@{member.username}</span>
                             <span className='member-role'>{member.roleInHub}</span>
                           </div>
-                          {isOwner && !isAlreadyModerator && (
-                            <button
-                              className='promote-btn'
-                              onClick={() => handlePromoteClick(member)}
-                              style={{background: `${hubData.themeColor}`}}
-                            >
-                              <span>Promote</span>
-                            </button>
-                          )}
                           <div className='member-tooltip'>
                             <div><strong>Score:</strong> {member.fanHubScore}</div>
                             <div><strong>Joined:</strong> {new Date(member.joinedAt).toLocaleDateString('en-GB', {
@@ -689,44 +746,6 @@ export default function HubPage({ ownedHub }) {
         />
       )}
 
-      {/* Promote to Moderator Modal */}
-      {showPromoteModal && selectedMember && (
-        <div className='modal-overlay' onClick={handlePromoteCancel}>
-          <div className='modal-content promote-modal' onClick={(e) => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2>Promote to Moderator</h2>
-              <button className='modal-close' onClick={handlePromoteCancel}>×</button>
-            </div>
-
-            <div className='modal-body'>
-              <p className='modal-description'>
-                Set <strong>{selectedMember.displayName}</strong> (@{selectedMember.username}) as a moderator?
-              </p>
-              <p className='modal-note'>
-                Moderators can help manage the hub and its members.
-              </p>
-            </div>
-
-            <div className='modal-footer'>
-              <button
-                className='confirm-btn stylised-btn'
-                onClick={handlePromoteConfirm}
-                disabled={promoting}
-              >
-                {promoting ? (
-                  <span className='stylised-text'>
-                    <span className='spinner' />
-                    Promoting...
-                  </span>
-                ) : (
-                  <span className='stylised-text'>Confirm</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Join to Post Modal */}
       {showCreatePostModal && (
         <div className='modal-overlay' onClick={() => setShowCreatePostModal(false)}>
@@ -746,6 +765,51 @@ export default function HubPage({ ownedHub }) {
               <p className='modal-note'>
                 Become part of the community and share your thoughts!
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join Questionnaire Modal */}
+      {showJoinQuestions && (
+        <JoinQuestionnaireModal
+          questions={joinQuestions}
+          onSubmit={handleQuestionnaireSubmit}
+          onCancel={() => setShowJoinQuestions(false)}
+          submitting={joining}
+        />
+      )}
+
+      {/* Leave FanHub Confirmation Modal */}
+      {showLeaveConfirmModal && (
+        <div className='hub-leave-confirm-overlay' onClick={() => setShowLeaveConfirmModal(false)}>
+          <div className='hub-leave-confirm-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='hlc-header'>
+              <h2 className='hlc-title'>Leave FanHub?</h2>
+              <button className='hlc-close-btn' onClick={() => setShowLeaveConfirmModal(false)}>×</button>
+            </div>
+            <div className='hlc-body'>
+              <div className='hlc-warning-icon'>
+                <GroupRounded />
+                <span className='hlc-minus-badge'>-</span>
+              </div>
+              <p className='hlc-description'>
+                Are you sure you want to leave <strong>{hubData.hubName}</strong>?
+              </p>
+              <div className='hlc-note-container'>
+                <p className='hlc-note-text'>
+                  You will lose access to member-only features and your progress in this community.
+                </p>
+              </div>
+            </div>
+            <div className='hlc-footer'>
+              <button className='hlc-btn-cancel' onClick={() => setShowLeaveConfirmModal(false)}>Stay in Hub</button>
+              <button 
+                className='hlc-btn-confirm' 
+                onClick={handleLeaveFanHub}
+              >
+                Confirm Leave
+              </button>
             </div>
           </div>
         </div>

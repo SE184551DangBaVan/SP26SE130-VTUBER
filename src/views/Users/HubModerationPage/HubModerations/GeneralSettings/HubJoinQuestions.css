@@ -1,0 +1,259 @@
+.hub-join-questions {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.settings-help-text {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.add-question-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.add-question-form input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+.add-question-form input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #fff;
+  color: #1e293b;
+}
+
+.add-btn {
+  background-color: #2d8cf0;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.add-btn:hover:not(:disabled) {
+  background-color: #1a7ae0;
+  transform: translateY(-1px);
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.question-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  position: relative;
+}
+
+.question-item:hover {
+  border-color: #cbd5e1;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.question-item.dragging {
+  opacity: 0.5;
+  background: #f1f5f9;
+  border: 2px dashed #3b82f6;
+  transform: scale(0.98);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+  cursor: grab;
+  padding: 0 4px;
+  transition: color 0.2s;
+}
+
+.drag-handle:hover {
+  color: #64748b;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.top-right-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.question-item:hover .top-right-delete {
+  opacity: 1;
+}
+
+.top-right-delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #64748b;
+}
+
+.edit-icon-btn:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.question-number {
+  font-weight: 800;
+  color: #2d8cf0;
+  font-size: 0.9rem;
+  min-width: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.question-main {
+  flex: 1;
+}
+
+.view-mode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.question-content {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.question-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-right: 1.5rem;
+}
+
+.edit-mode {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.edit-mode input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  color: #1e293b;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.confirm-edit-btn, .cancel-edit-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.confirm-edit-btn {
+  background: #10b981;
+  color: white;
+}
+
+.confirm-edit-btn:hover {
+  background: #059669;
+}
+
+.cancel-edit-btn {
+  background: #94a3b8;
+  color: white;
+}
+
+.cancel-edit-btn:hover {
+  background: #64748b;
+}
+
+.no-questions {
+  text-align: center;
+  padding: 3rem;
+  color: #94a3b8;
+  font-style: italic;
+  background: rgba(248, 250, 252, 0.5);
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+}
+
+.questions-loading {
+  padding: 3rem;
+  text-align: center;
+  color: #64748b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
