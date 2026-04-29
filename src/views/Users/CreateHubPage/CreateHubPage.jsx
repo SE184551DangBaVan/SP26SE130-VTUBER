@@ -341,7 +341,7 @@ export default function CreateHubPage() {
                 <div className='form-field'>
                   <label htmlFor='subdomain'>Subdomain *</label>
                   <div className='input-with-prefix'>
-                    <span className='input-prefix'>vhub.io/</span>
+                    <span className='input-prefix'>@</span>
                     <input
                       id='subdomain'
                       type='text'
@@ -584,7 +584,7 @@ export default function CreateHubPage() {
                   </div>
                   <div className='browser-url'>
                     <span className='url-lock'>🔒</span>
-                    <span className='url-text'>vhub.io/{subdomain || 'yourhub'}</span>
+                    <span className='url-text'>{subdomain || 'yourhub'}</span>
                   </div>
                 </div>
 

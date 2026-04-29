@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
+import { getHubMembers, joinFanHub } from '@/services/MemberController';
 import { checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
@@ -47,11 +47,6 @@ export default function HubPage({ ownedHub }) {
   const [postsLoading, setPostsLoading] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('latest');
-
-  // State for promote modal
-  const [showPromoteModal, setShowPromoteModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [promoting, setPromoting] = useState(false);
 
   // State for join fan hub
   const [isMember, setIsMember] = useState(false);
@@ -254,43 +249,6 @@ export default function HubPage({ ownedHub }) {
 
     fetchMembers();
   }, [activeFanHubId, isOwner, roleInHub]);
-
-  // Handle promote member to moderator
-  const handlePromoteClick = (member) => {
-     setSelectedMember(member);
-     setShowPromoteModal(true);
-  };
-
-  const handlePromoteConfirm = async () => {
-    if (!selectedMember || !activeFanHubId) return;
-
-    setPromoting(true);
-    try {
-      const result = await setModerator(activeFanHubId, [selectedMember.id]);
-
-      if (result?.success) {
-        setMembers(prev => prev.map(m =>
-          m.id === selectedMember.id
-            ? { ...m, roleInHub: 'MODERATOR' }
-            : m
-        ));
-        setShowPromoteModal(false);
-        setSelectedMember(null);
-      } else {
-        alert(result?.message || 'Failed to promote member');
-      }
-    } catch (error) {
-      console.error('Promote error:', error);
-      alert('Failed to promote member');
-    } finally {
-      setPromoting(false);
-    }
-  };
-
-  const handlePromoteCancel = () => {
-    setShowPromoteModal(false);
-    setSelectedMember(null);
-  };
 
   const handleJoinFanHub = async () => {
     if (!activeFanHubId) return;
@@ -652,15 +610,6 @@ export default function HubPage({ ownedHub }) {
                             <span className='member-username'>@{member.username}</span>
                             <span className='member-role'>{member.roleInHub}</span>
                           </div>
-                          {isOwner && !isAlreadyModerator && (
-                            <button
-                              className='promote-btn'
-                              onClick={() => handlePromoteClick(member)}
-                              style={{background: `${hubData.themeColor}`}}
-                            >
-                              <span>Promote</span>
-                            </button>
-                          )}
                           <div className='member-tooltip'>
                             <div><strong>Score:</strong> {member.fanHubScore}</div>
                             <div><strong>Joined:</strong> {new Date(member.joinedAt).toLocaleDateString('en-GB', {
@@ -687,44 +636,6 @@ export default function HubPage({ ownedHub }) {
         <PostDetails
           scrollPositionRef={scrollPositionRef}
         />
-      )}
-
-      {/* Promote to Moderator Modal */}
-      {showPromoteModal && selectedMember && (
-        <div className='modal-overlay' onClick={handlePromoteCancel}>
-          <div className='modal-content promote-modal' onClick={(e) => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2>Promote to Moderator</h2>
-              <button className='modal-close' onClick={handlePromoteCancel}>×</button>
-            </div>
-
-            <div className='modal-body'>
-              <p className='modal-description'>
-                Set <strong>{selectedMember.displayName}</strong> (@{selectedMember.username}) as a moderator?
-              </p>
-              <p className='modal-note'>
-                Moderators can help manage the hub and its members.
-              </p>
-            </div>
-
-            <div className='modal-footer'>
-              <button
-                className='confirm-btn stylised-btn'
-                onClick={handlePromoteConfirm}
-                disabled={promoting}
-              >
-                {promoting ? (
-                  <span className='stylised-text'>
-                    <span className='spinner' />
-                    Promoting...
-                  </span>
-                ) : (
-                  <span className='stylised-text'>Confirm</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Join to Post Modal */}

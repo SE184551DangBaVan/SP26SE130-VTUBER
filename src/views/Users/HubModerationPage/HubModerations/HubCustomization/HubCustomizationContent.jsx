@@ -144,7 +144,7 @@ export default function HubCustomizationContent({ fanHubId, hubData }) {
   return (
     <div className="hub-customization-content">
       <div className="customization-section">
-        <h2>Brand Identity</h2>
+        <h2>Avatar & Theme</h2>
         <p className="section-description">Customize how your hub looks to everyone.</p>
         
         <div className="customization-grid">

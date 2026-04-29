@@ -165,7 +165,7 @@ export default function HubModerationPage() {
             : (isOwner && activeTab === "customization" && isVTuber)
             ? <HubCustomizationContent fanHubId={fanHubId} hubData={hubData} />
             : (isOwner && activeTab === "general")
-            ? <GeneralSettingsContent fanHubId={fanHubId} hubData={hubData} />
+            ? <GeneralSettingsContent fanHubId={fanHubId} hubData={hubData} isVTuber={isVTuber} />
             : (isOwner && activeTab === "delete")
             ? <DeleteFanhubContent fanHubId={fanHubId} hubName={hubData.hubName} />
             : <ModQueueContent fanHubId={fanHubId} isOwner={isOwner} />
