@@ -9,7 +9,9 @@ import { GroupRounded } from '@mui/icons-material';
 import NothingHere from '../../../assets/Decor/loading-9.gif'
 import RetroWindow from '@/components/RetroWindow/RetroWindow';
 
-const CATEGORIES = ["Game", "Just Chatting", "Music", "ASMR", "Cooking", "Art"];
+import ExploreBanner from '@/components/ExploreBanner/ExploreBanner';
+import { HUB_CATEGORIES } from '@/constants/hubCategories';
+
 const ITEMS_PER_SECTION = 6;
 
 export default function ExplorePage() {
@@ -17,10 +19,7 @@ export default function ExplorePage() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selecetedCategory, setSelecetedCategory] = useState(null);
   const [expandCategory, setExpandCategory] = useState(false);
-  const [hubOwnerPfp, setHubOwnerPfp] = useState(null);
-  const [hubBanner, setHubBanner] = useState(null);
-  const [hubImage, setHubImage] = useState(null);
-
+  
   const [topHub, setTopHub] = useState(null);
   const [topLoading, setTopLoading] = useState(true);
 
@@ -36,7 +35,7 @@ export default function ExplorePage() {
 
   const handleVisitHub = (hub) => {
     // Navigate using subdomain
-    if (hub.subdomain) {
+    if (hub && hub.subdomain) {
       router.push(`/hub/${hub.subdomain}`);
     } else {
       console.warn('Hub does not have subdomain');
@@ -222,79 +221,26 @@ export default function ExplorePage() {
       <div className="explore-section">
         <h3>Search Results:</h3>
         {hubs.length === 0 ? (
-        // fallback (your old static look)
-        <div className="explore-banner" style={{ background: "#333", justifyContent: 'center', alignItems: 'center' }}>
-          <div className="explore-banner-left">
-            <h2>(NO DATA)</h2>
-          </div>
-        </div>
-      ) : (
-        hubs.map((hub, idx) => (
-          <div
-            key={idx}
-            className="explore-banner"
-            style={{
-              backgroundImage: hub.bannerUrl
-                ? `url(${hub.bannerUrl})`
-                : "#333",
-              color: hub.themeColor || "#fff",
-              border: `3px solid ${hub?.themeColor || "#fff"} `
-            }}
-          >
+          <div className="explore-banner" style={{ background: "#333", justifyContent: 'center', alignItems: 'center' }}>
             <div className="explore-banner-left">
-              <div className="hub-info">
-                <div className="hub-owner-info">
-                  <img
-                    className="hub-owner-pfp"
-                    src={hub.avatarUrl || "/profile-pic-undefined.jpg"}
-                    alt=""
-                    onError={(e) => {
-                      e.target.src = "/profile-pic-undefined.jpg";
-                    }}
-                  />
-                  <div className="hub-owner-info-display">
-                    <div className="hub-owner-display-name">
-                      <span>Owned by:</span>
-                      <span>{hub.ownerDisplayName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <h2>{hub.hubName?.toUpperCase()}</h2>
-              </div>
-
-              <button
-                className="explore-visit-btn"
-                onClick={() => handleVisitHub(hub)}
-                style={{background: hub?.themeColor}}
-              >
-                <div className="hub-info-member-count">
-                  <span>{hub?.memberCount ?? "N/A"}</span> <GroupRounded />
-                </div>
-                Visit Fanhub <span className="ico">→</span>
-              </button>
-            </div>
-
-            <div className="explore-banner-right">
-              {[1, 2, 3, 4].map((i) => (
-                hub.highlightImgUrls[i-1] ?
-                <img
-                  key={i}
-                  src={`${hub.highlightImgUrls[i-1]}`}
-                  alt=""
-                  onError={(e) => {
-                    e.target.src = "/picture-not-available-photo.jpg";
-                  }}
-                />
-                :
-                <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
-                  <Skeleton />
-                </SkeletonTheme>
-              ))}
+              <h2>(NO DATA)</h2>
             </div>
           </div>
-        ))
-      )}
+        ) : (
+          hubs.map((hub, idx) => (
+            <ExploreBanner
+              key={idx}
+              bannerUrl={hub.bannerUrl}
+              themeColor={hub.themeColor}
+              avatarUrl={hub.avatarUrl}
+              ownerDisplayName={hub.ownerDisplayName}
+              hubName={hub.hubName}
+              memberCount={hub.memberCount}
+              highlightImgUrls={hub.highlightImgUrls}
+              onVisit={() => handleVisitHub(hub)}
+            />
+          ))
+        )}
       </div>
     )
   }
@@ -335,25 +281,25 @@ export default function ExplorePage() {
           <button className='see-more-category-btn' onClick={() => setExpandCategory(!expandCategory)}>See More <span>&gt;&gt;</span></button>
         </div>
         <div className={`category-row ${expandCategory ? 'expand' : ''}`} >
-          {["Game", "Just Chatting", "Music", "ASMR", "Cooking", "Art"].map((cat, i) => (
+          {HUB_CATEGORIES.map((cat, i) => (
           <div
             key={i}
             className="category-card"
             onMouseEnter={() => setHoveredIndex(i)}
             onMouseLeave={() => setHoveredIndex(null)}
-            onClick={() => setSelecetedCategory(cat)}
+            onClick={() => setSelecetedCategory(cat.name)}
           >
             <img
               src={hoveredIndex === i 
-                ? `/category-${i + 1}.gif` 
-                : `/category-${i + 1}.png`}
-              alt={cat} 
+                ? `/category-${cat.imageId}.gif` 
+                : `/category-${cat.imageId}.png`}
+              alt={cat.name} 
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "/WompWomp.png";
               }}
             />
-            <span>{cat}</span>
+            <span>{cat.name}</span>
           </div>
         ))}
         </div>
@@ -367,73 +313,17 @@ export default function ExplorePage() {
             <div className="explore-section top-hubs" >
               <h3>Most Popular FanHubs:</h3>
               <div className='explore-banner-list'>
-                <div className="explore-banner"
-                style={{
-                  backgroundColor: '#555',
-                  backgroundImage: topHub?.bannerUrl
-                    ? `url(${topHub.bannerUrl})`
-                    : "#999",
-                  color: topHub?.themeColor || "#fff",
-                  border: `3px solid ${topHub?.themeColor || "#fff"} `
-                }}
-              >
-                <div className="explore-banner-left">
-                  <div className="hub-info">
-                    <div className="hub-owner-info">
-                      <img
-                        className="hub-owner-pfp"
-                        src={topHub?.avatarUrl || "/profile-pic-undefined.jpg"}
-                        alt=""
-                        onError={(e) => {
-                          e.target.src = "/profile-pic-undefined.jpg";
-                        }}
-                      />
-
-                      <div className="hub-owner-info-display">
-                        <div className="hub-owner-display-name">
-                          <span>Owned by:</span>
-                          <span>{topHub?.ownerDisplayName || "Unknown"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <h2 style={{ color: topHub?.themeColor || "#fff" }}>{topHub?.hubName?.toUpperCase() || "NO HUB"}</h2>
-                  </div>
-
-                  <button 
-                    className="explore-visit-btn"
-                    onClick={() => handleVisitHub(topHub)}
-                    disabled={!topHub?.fanHubId}
-                    style={{background: topHub?.themeColor}}
-                  >
-                    <div className="hub-info-member-count">
-                      <span><p>{topHub?.memberCount ?? "N/A"}</p></span> <GroupRounded />
-                    </div>
-                    Visit Fanhub <span className="ico">→</span>
-                  </button>
-                </div>
-
-                <div className="explore-banner-right">
-                  {!topLoading ? (
-                    [1, 2, 3, 4].map((i) => (
-                      <img
-                        key={i}
-                        src={`${topHub?.highlightImgUrls[i-1]}`}
-                        alt=""
-                        onError={(e) => {
-                          e.target.src = "/picture-not-available-photo.jpg";
-                        }}
-                      />
-                    ))
-                  ) : (
-                    [1, 2, 3, 4].map((i) => (
-                      <SkeletonTheme key={i} baseColor="#d7d7d7" highlightColor="#ffffff">
-                        <Skeleton />
-                      </SkeletonTheme>
-                    ))
-                  )}
-                </div>
-              </div>
+                <ExploreBanner
+                  bannerUrl={topHub?.bannerUrl}
+                  themeColor={topHub?.themeColor}
+                  avatarUrl={topHub?.avatarUrl}
+                  ownerDisplayName={topHub?.ownerDisplayName}
+                  hubName={topHub?.hubName}
+                  memberCount={topHub?.memberCount}
+                  highlightImgUrls={topHub?.highlightImgUrls}
+                  onVisit={() => handleVisitHub(topHub)}
+                  loading={topLoading}
+                />
               </div>
               <a href="https://landfall.se/peak" target="_blank" rel="noopener noreferrer" className='art-credits'>Art by: Landfall</a>
             </div>
@@ -450,11 +340,11 @@ export default function ExplorePage() {
           windowTitle="Recommended Categories"
           windowContent={(
             typeof window !== 'undefined' && localStorage.getItem('username') || sessionStorage.getItem('username') ? (
-            CATEGORIES.map((category) => (
+              HUB_CATEGORIES.map((cat) => (
               <SimplifiedSection
-                key={category}
-                category={category}
-                hubs={groupedHubs[category] || []}
+                key={cat.name}
+                category={cat.name}
+                hubs={groupedHubs[cat.name] || []}
               />
             ))
           ) : null)}

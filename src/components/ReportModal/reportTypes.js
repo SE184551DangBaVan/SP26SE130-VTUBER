@@ -5,11 +5,13 @@
 export const REPORT_TYPE = {
   POST: "POST",
   MEMBER: "MEMBER",
+  FANHUB: "FANHUB",
 };
 
 export const REPORT_TYPE_LABELS = {
   [REPORT_TYPE.POST]: "Post",
   [REPORT_TYPE.MEMBER]: "Member",
+  [REPORT_TYPE.FANHUB]: "FanHub",
 };
 
 /**

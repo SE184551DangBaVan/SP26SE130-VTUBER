@@ -4,7 +4,10 @@ import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import './CreateHubPage.css';
 import { getFanHubs, createFanHubV2 } from '@/services/FanHubController';
 import HubPage from '@/views/Users/HubPage/HubPage';
+import ExploreBanner from '@/components/ExploreBanner/ExploreBanner';
+import { HUB_CATEGORIES } from '@/constants/hubCategories';
 import { useRouter } from 'next/navigation';
+
 
 import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
 import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
@@ -338,7 +341,7 @@ export default function CreateHubPage() {
                 <div className='form-field'>
                   <label htmlFor='subdomain'>Subdomain *</label>
                   <div className='input-with-prefix'>
-                    <span className='input-prefix'>vhub.io/</span>
+                    <span className='input-prefix'>@</span>
                     <input
                       id='subdomain'
                       type='text'
@@ -484,15 +487,15 @@ export default function CreateHubPage() {
                 <div className='form-field'>
                   <label>Categories</label>
                   <div className='category-select'>
-                    {["Game", "Talking", "Singing", "ASMR", "Art", "Music", "Cooking", "Just Chatting"].map((cat) => (
+                    {HUB_CATEGORIES.map((cat) => (
                       <button
-                        key={cat}
+                        key={cat.name}
                         type='button'
-                        className={`category-chip ${categories.includes(cat) ? 'active' : ''}`}
-                        onClick={() => toggleCategory(cat)}
+                        className={`category-chip ${categories.includes(cat.name) ? 'active' : ''}`}
+                        onClick={() => toggleCategory(cat.name)}
                       >
-                        {cat}
-                        {categories.includes(cat) && (
+                        {cat.name}
+                        {categories.includes(cat.name) && (
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className='chip-check'>
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
@@ -581,7 +584,7 @@ export default function CreateHubPage() {
                   </div>
                   <div className='browser-url'>
                     <span className='url-lock'>🔒</span>
-                    <span className='url-text'>vhub.io/{subdomain || 'yourhub'}</span>
+                    <span className='url-text'>{subdomain || 'yourhub'}</span>
                   </div>
                 </div>
 
@@ -682,6 +685,24 @@ export default function CreateHubPage() {
                       Public Hub
                     </span>
                   )}
+                </div>
+
+                <div className='preview-explore-header' style={{marginTop: '24px', marginBottom: '12px'}}>
+                  <h3>Explore Page Preview</h3>
+                  <p className='field-hint'>How your hub looks on the Explore page</p>
+                </div>
+                
+                <div className='preview-explore-banner'>
+                  <ExploreBanner
+                    bannerUrl={bannerPreview}
+                    themeColor={themeColor}
+                    avatarUrl={avatarPreview}
+                    ownerDisplayName={username}
+                    hubName={hubName}
+                    memberCount={0}
+                    highlightImgUrls={explorePreviews}
+                    onVisit={() => {}}
+                  />
                 </div>
               </div>
             </div>

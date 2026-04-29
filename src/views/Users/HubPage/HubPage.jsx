@@ -3,18 +3,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
-import { getUserById } from '@/services/UserController';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers, setModerator, joinFanHub } from '@/services/MemberController';
-import { uploadImages, checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
-import { updateFanHub } from '@/services/FanHubController';
+import { getHubMembers, joinFanHub, joinFanhubWithAnswers, leaveFanHub } from '@/services/MemberController';
+import { checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
+import { getJoinQuestions } from '@/services/HubQuestionnaireController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import { useReportModal } from '@/contexts/ReportContext';
+import JoinQuestionnaireModal from './JoinQuestionnaireModal';
 import { BASE_URL } from '@/config';
 import PostDetails from '../PostsPage/PostDetails';
 import PostCard from '../PostsPage/PostCard';
 import './HubPage.css';
-import { GroupRounded, EditRounded, Shield } from '@mui/icons-material';
+import { GroupRounded, MoreVertRounded } from '@mui/icons-material';
 
 import LoadingImg1 from '../../../assets/Decor/Loading-1.gif'
 import LoadingImg2 from '../../../assets/Decor/Loading-2.gif'
@@ -28,11 +29,12 @@ import SpeakerIco from '../../../assets/UI-Elements/announcement.svg'
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
 
 export default function HubPage({ ownedHub }) {
-  const { userAuth } = useAuth();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const subdomainFromParams = params?.subdomain;
+
+  const { openReportModal } = useReportModal();
 
   // Generate random loading image on mount
   const [randomLoadingImage, setRandomLoadingImage] = useState(null);
@@ -51,38 +53,16 @@ export default function HubPage({ ownedHub }) {
   const [membersLoading, setMembersLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('latest');
 
-  // State for promote modal
-  const [showPromoteModal, setShowPromoteModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [promoting, setPromoting] = useState(false);
-
   // State for join fan hub
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
-
-  // State for edit images modal
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [bannerFile, setBannerFile] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [backgroundFiles, setBackgroundFiles] = useState([]);
-  const [bannerPreview, setBannerPreview] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [backgroundPreviews, setBackgroundPreviews] = useState([]);
-  const [uploading, setUploading] = useState(false);
-
-  // State for hub info editing
-  const [editHubName, setEditHubName] = useState('');
-  const [editSubdomain, setEditSubdomain] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editThemeColor, setEditThemeColor] = useState('#555');
-  const [editCategories, setEditCategories] = useState([]);
-  const [editIsPrivate, setEditIsPrivate] = useState(false);
-  const [editRequiresApproval, setEditRequiresApproval] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [showJoinQuestions, setShowJoinQuestions] = useState(false);
+  const [joinQuestions, setJoinQuestions] = useState([]);
+  const [showExtraOptions, setShowExtraOptions] = useState(false);
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
 
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
-  const lastScrollValue = useRef(0);
   const scrollPositionRef = useRef(0);
 
   // Throttled scroll handler using requestAnimationFrame
@@ -92,10 +72,7 @@ export default function HubPage({ ownedHub }) {
 
       rafRef.current = requestAnimationFrame(() => {
         const currentScroll = window.scrollY || window.pageYOffset;
-        if (Math.abs(currentScroll - lastScrollValue.current) > 2) {
-          lastScrollValue.current = currentScroll;
-          setNavScrollOffset(currentScroll);
-        }
+        setNavScrollOffset(currentScroll);
         rafRef.current = null;
       });
     };
@@ -130,7 +107,6 @@ export default function HubPage({ ownedHub }) {
   const [roleInHub, setRoleInHub] = useState(null);
 
   // Check if user can create posts (Owner, Moderator, or Member)
-  // Note: roleInHub will be set from fanHubsJoined, so this should work correctly
   const canCreatePost = isOwner || roleInHub === 'MODERATOR' || roleInHub === 'MEMBER';
 
   // Handle create post click
@@ -175,34 +151,28 @@ export default function HubPage({ ownedHub }) {
   const [serverPage, setServerPage] = useState(0);
   const observer = useRef();
 
-  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
+  const fetchPosts = useCallback(async (pageNum, sortBy, sortDir, append = true) => {
     if (!activeFanHubId) return;
 
     setPostsLoading(true);
     try {
-      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy);
+      const hubPosts = await getPostsByFanHub(activeFanHubId, pageNum, 7, sortBy, sortDir);
 
       if (hubPosts.length < 7) {
         setHasMore(false);
       }
 
-      const sortedPosts = [...hubPosts].sort((a, b) => {
-        const dateA = new Date(a.createdAt);
-        const dateB = new Date(b.createdAt);
-        return sortBy === 'createdAt' ? dateB - dateA : dateA - dateB;
-      });
-
-      if (sortedPosts.length > 0) {
+      if (hubPosts.length > 0) {
         if (append && pageNum !== 0) {
-          setPosts(prev => [...prev, ...sortedPosts]);
+          setPosts(prev => [...prev, ...hubPosts]);
         } else {
-          setPosts(sortedPosts);
+          setPosts(hubPosts);
         }
         setServerPage(pageNum + 1);
       } else if (hubPosts.length === 7) {
         const nextPage = pageNum + 1;
         setServerPage(nextPage);
-        await fetchPosts(nextPage, sortBy, append);
+        await fetchPosts(nextPage, sortBy, sortDir, append);
         return;
       } else {
         if (pageNum === 0) setPosts([]);
@@ -217,10 +187,11 @@ export default function HubPage({ ownedHub }) {
   }, [activeFanHubId]);
 
   useEffect(() => {
-    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    const sortBy = 'createdAt';
+    const sortDir = sortOrder === 'latest' ? 'desc' : 'asc';
     setServerPage(0);
     setHasMore(true);
-    fetchPosts(0, sortBy);
+    fetchPosts(0, sortBy, sortDir);
   }, [activeFanHubId, sortOrder]);
 
   const lastPostElementRef = useCallback(
@@ -230,8 +201,9 @@ export default function HubPage({ ownedHub }) {
 
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-          fetchPosts(serverPage, sortBy);
+          const sortBy = 'createdAt';
+          const sortDir = sortOrder === 'latest' ? 'desc' : 'asc';
+          fetchPosts(serverPage, sortBy, sortDir);
         }
       }, { rootMargin: '200px' });
 
@@ -244,9 +216,7 @@ export default function HubPage({ ownedHub }) {
     const fetchUserMembership = async () => {
       if (!activeFanHubId || !currentUserId) return;
       try {
-        // Use checkIsMember to get the user's role in this hub
         const memberData = await checkIsMember(activeFanHubId);
-
 
         if (memberData && memberData.isMember) {
           setIsMember(true);
@@ -262,18 +232,17 @@ export default function HubPage({ ownedHub }) {
 
     fetchUserMembership();
   }, [activeFanHubId, currentUserId, isOwner]);
+
   useEffect(() => {
     const fetchMembers = async () => {
       if (!activeFanHubId) return;
 
-      // Only fetch members if user is Owner or Moderator (others get 403)
       if (!isOwner && roleInHub !== 'MODERATOR') {
         return;
       }
 
       setMembersLoading(true);
       try {
-          // currently fetches 50 at once and no pagination
         const membersData = await getHubMembers(activeFanHubId, 0, 50, 'joinedAt');
         setMembers(membersData);
       } catch (error) {
@@ -286,267 +255,99 @@ export default function HubPage({ ownedHub }) {
     fetchMembers();
   }, [activeFanHubId, isOwner, roleInHub]);
 
-  // Handle promote member to moderator
-  const handlePromoteClick = (member) => {
-     setSelectedMember(member);
-     setShowPromoteModal(true);
-  };
-
-  const handlePromoteConfirm = async () => {
-    if (!selectedMember || !activeFanHubId) return;
-
-    setPromoting(true);
-    try {
-      const result = await setModerator(activeFanHubId, [selectedMember.id]);
-
-      if (result?.success) {
-        // Update the member's role in the local state
-        setMembers(prev => prev.map(m =>
-          m.id === selectedMember.id
-            ? { ...m, roleInHub: 'MODERATOR' }
-            : m
-        ));
-        setShowPromoteModal(false);
-        setSelectedMember(null);
-      } else {
-        alert(result?.message || 'Failed to promote member');
-      }
-    } catch (error) {
-      console.error('Promote error:', error);
-      alert('Failed to promote member');
-    } finally {
-      setPromoting(false);
-    }
-  };
-
-  const handlePromoteCancel = () => {
-    setShowPromoteModal(false);
-    setSelectedMember(null);
-  };
-
   const handleJoinFanHub = async () => {
     if (!activeFanHubId) return;
 
-    setJoining(true);
-    const toastId = showLoading('Joining FanHub...');
+    if (hubData.requiresApproval) {
+      setJoining(true);
+      const toastId = showLoading('Checking requirements...');
+      try {
+        const questions = await getJoinQuestions(activeFanHubId);
+        updateToast(toastId, 'dismiss'); // Close the "Checking..." toast
+
+        if (questions && questions.length > 0) {
+          setJoinQuestions(questions);
+          setShowJoinQuestions(true);
+        } else {
+          // No questions, but requires approval
+          await handleQuestionnaireSubmit([]);
+        }
+      } catch (error) {
+        console.error('Error fetching join questions:', error);
+        updateToast(toastId, 'error', 'Failed to fetch join questions');
+      } finally {
+        setJoining(false);
+      }
+    } else {
+      // Normal join (requiresApproval is false)
+      setJoining(true);
+      const toastId = showLoading('Joining FanHub...');
+
+      try {
+        const result = await joinFanHub(activeFanHubId);
+
+        if (result?.success) {
+          updateToast(toastId, 'success', 'Joined FanHub successfully!');
+          setIsMember(true);
+          setRoleInHub('MEMBER');
+
+          window.dispatchEvent(new CustomEvent('hubsUpdated'));
+        } else {
+          updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
+        }
+      } catch (error) {
+        console.error('Join error:', error);
+        updateToast(toastId, 'error', 'Network error. Please try again.');
+      } finally {
+        setJoining(false);
+      }
+    }
+  };
+
+  const handleLeaveFanHub = async () => {
+    if (!activeFanHubId) return;
+
+    const toastId = showLoading('Leaving FanHub...');
+    setShowExtraOptions(false);
+    setShowLeaveConfirmModal(false);
 
     try {
-      const result = await joinFanHub(activeFanHubId);
+      const result = await leaveFanHub(activeFanHubId);
 
       if (result?.success) {
-        updateToast(toastId, 'success', 'Joined FanHub successfully!');
-        setIsMember(true);
-        setRoleInHub('MEMBER');
-
-        // Dispatch event to update sidebar's JoinedHubsContainer
+        updateToast(toastId, 'success', 'Left FanHub successfully!');
+        setIsMember(false);
+        setRoleInHub(null);
         window.dispatchEvent(new CustomEvent('hubsUpdated'));
       } else {
-        updateToast(toastId, 'error', result?.message || 'Failed to join FanHub');
+        updateToast(toastId, 'error', result?.message || 'Failed to leave FanHub');
       }
     } catch (error) {
-      console.error('Join error:', error);
+      console.error('Leave error:', error);
+      updateToast(toastId, 'error', 'Network error. Please try again.');
+    }
+  };
+
+  const handleQuestionnaireSubmit = async (answers) => {
+    setJoining(true);
+    const toastId = showLoading('Submitting request...');
+    try {
+      const result = await joinFanhubWithAnswers(activeFanHubId, answers);
+      if (result?.success) {
+        updateToast(toastId, 'success', result.data || 'Request submitted successfully!');
+        setShowJoinQuestions(false);
+        // If it's awaiting approval, we don't set isMember to true yet
+      } else {
+        updateToast(toastId, 'error', result?.message || 'Failed to submit request');
+      }
+    } catch (error) {
+      console.error('Join with answers error:', error);
       updateToast(toastId, 'error', 'Network error. Please try again.');
     } finally {
       setJoining(false);
     }
   };
 
-  // Convert file to base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  // Handle banner file change
-  const handleBannerChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      const base64 = await fileToBase64(file);
-      setBannerPreview(base64);
-    }
-  };
-
-  // Handle avatar file change
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAvatarFile(file);
-      const base64 = await fileToBase64(file);
-      setAvatarPreview(base64);
-    }
-  };
-
-  // Handle background files change (max 4)
-  const handleBackgroundChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      // Limit to max 4 images
-      const limitedFiles = files.slice(0, 4);
-      setBackgroundFiles(limitedFiles);
-      const previews = await Promise.all(limitedFiles.map(file => fileToBase64(file)));
-      setBackgroundPreviews(previews);
-    }
-  };
-
-  // Remove background image
-  const removeBackgroundImage = (index) => {
-    setBackgroundFiles(prev => prev.filter((_, i) => i !== index));
-    setBackgroundPreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle edit button click
-  const handleEditClick = () => {
-    // Populate form with current hub data
-    setEditHubName(hubData.hubName || '');
-    setEditSubdomain(hubData.subdomain || '');
-    setEditDescription(hubData.description || '');
-    setEditThemeColor(hubData.themeColor || '#555');
-    setEditCategories(hubData.categories || []);
-    setEditIsPrivate(hubData.isPrivate || false);
-    setEditRequiresApproval(hubData.requiresApproval || false);
-
-    // Reset image uploads
-    setBannerFile(null);
-    setAvatarFile(null);
-    setBackgroundFiles([]);
-    setBannerPreview(null);
-    setAvatarPreview(null);
-    setBackgroundPreviews([]);
-    setHasChanges(false);
-    setShowEditModal(true);
-  };
-
-  // Handle edit modal close
-  const handleEditClose = () => {
-    setShowEditModal(false);
-    setBannerFile(null);
-    setAvatarFile(null);
-    setBackgroundFiles([]);
-    setBannerPreview(null);
-    setAvatarPreview(null);
-    setBackgroundPreviews([]);
-    setEditHubName('');
-    setEditSubdomain('');
-    setEditDescription('');
-    setEditThemeColor('#555');
-    setEditCategories([]);
-    setEditIsPrivate(false);
-    setEditRequiresApproval(false);
-    setHasChanges(false);
-  };
-
-  // Toggle category in edit form
-  const toggleEditCategory = (cat) => {
-    setEditCategories((prev) =>
-      prev.includes(cat)
-        ? prev.filter((c) => c !== cat)
-        : [...prev, cat]
-    );
-  };
-
-  // Check if any changes have been made
-  useEffect(() => {
-    if (!showEditModal) return;
-
-    const hubInfoChanged =
-      editHubName !== hubData.hubName ||
-      editSubdomain !== hubData.subdomain ||
-      editDescription !== hubData.description ||
-      editThemeColor !== hubData.themeColor ||
-      JSON.stringify(editCategories) !== JSON.stringify(hubData.categories) ||
-      editIsPrivate !== hubData.isPrivate ||
-      editRequiresApproval !== hubData.requiresApproval;
-
-    const imagesSelected = bannerFile || avatarFile || backgroundFiles.length > 0;
-
-    setHasChanges(hubInfoChanged || imagesSelected);
-  }, [editHubName, editSubdomain, editDescription, editThemeColor, editCategories, editIsPrivate, editRequiresApproval, bannerFile, avatarFile, backgroundFiles, showEditModal]);
-
-  // Handle save changes (hub info + images)
-  const handleSaveEdit = async () => {
-    setUploading(true);
-    const toastId = showLoading('Saving changes...');
-
-    try {
-      // Step 1: Update hub info if there are changes
-      const hubInfoChanged =
-        editHubName !== hubData.hubName ||
-        editSubdomain !== hubData.subdomain ||
-        editDescription !== hubData.description ||
-        editThemeColor !== hubData.themeColor ||
-        JSON.stringify(editCategories) !== JSON.stringify(hubData.categories) ||
-        editIsPrivate !== hubData.isPrivate ||
-        editRequiresApproval !== hubData.requiresApproval;
-
-      if (hubInfoChanged) {
-        const updatePayload = {
-          hubName: editHubName || hubData.hubName,
-          subdomain: editSubdomain || hubData.subdomain,
-          description: editDescription || hubData.description,
-          themeColor: editThemeColor || hubData.themeColor,
-          category: editCategories.length > 0 ? editCategories : hubData.categories,
-          isPrivate: editIsPrivate,
-          requiresApproval: editRequiresApproval,
-        };
-
-        const updateRes = await updateFanHub(activeFanHubId, updatePayload);
-
-        if (!updateRes?.success) {
-          updateToast(toastId, 'error', updateRes?.message || 'Failed to update hub info');
-          setUploading(false);
-          return;
-        }
-      }
-
-      // Step 2: Upload images if any selected
-      const imagesSelected = bannerFile || avatarFile || backgroundFiles.length > 0;
-
-      if (imagesSelected) {
-        const backgroundsToUpload = backgroundFiles.slice(0, 4);
-
-        const uploadRes = await uploadImages(
-          activeFanHubId,
-          bannerFile,
-          avatarFile,
-          backgroundsToUpload
-        );
-
-        if (!uploadRes?.success) {
-          updateToast(toastId, 'error', uploadRes?.data || 'Failed to upload images');
-          setUploading(false);
-          return;
-        }
-      }
-
-      updateToast(toastId, 'success', 'Hub updated successfully!');
-
-      // Refresh hub data to show updates
-      const { getFanHubs } = await import('@/services/FanHubController');
-      const hubs = await getFanHubs();
-      const updatedHub = hubs.find(h =>
-        h.fanHubId === activeFanHubId ||
-        h.ownerUsername === hubData.ownerUsername
-      );
-
-      if (updatedHub) {
-        setHubData(updatedHub);
-      }
-
-      handleEditClose();
-    } catch (error) {
-      console.error('Save error:', error);
-      updateToast(toastId, 'error', 'Network error. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Filter posts by type (IMAGE, VIDEO for now)
   const filteredPosts = posts.filter(post =>
     post.postType === 'IMAGE' || post.postType === 'VIDEO' || post.postType === 'TEXT'
   );
@@ -560,13 +361,11 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
-  // Handle post click - navigate to hub page with post id in URL
   const handlePostClick = (post) => {
     scrollPositionRef.current = window.scrollY;
     router.push(`/hub/${hubData.subdomain}?id=${post.postId}`, { scroll: false });
   };
 
-  // Handle share click
   const handleShareClick = (post) => {
     const shareUrl = `${BASE_URL}/posts?shareId=${post.postId}`;
 
@@ -577,7 +376,6 @@ export default function HubPage({ ownedHub }) {
         showSteamError('Failed to copy link', 'Error');
       });
     } else {
-      // Fallback for browsers that don't support navigator.clipboard
       try {
         const textArea = document.createElement('textarea');
         textArea.value = shareUrl;
@@ -592,7 +390,6 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
-  // Show loading if no hub data
   if (!hubData) {
     return (
       <div className='hub-page-container'>
@@ -668,8 +465,7 @@ export default function HubPage({ ownedHub }) {
                   onClick={handleModerationClick}
                   title='Moderation Hub'
                 >
-                  <Shield fontSize='small' />
-                  <span>Moderation</span>
+                  <span>Mod Tools</span>
                 </button>
               )}
               <button
@@ -722,11 +518,42 @@ export default function HubPage({ ownedHub }) {
                   Joined
                 </button>
               )}
-              {isOwner && (
-                <button className='edit-banner-btn' onClick={handleEditClick} title='Edit banner and avatar'>
-                  <EditRounded fontSize='small' />
+              <div className='hub-extra-options-container' style={{ position: 'relative' }}>
+                <button
+                  className='hub-extra-options-btn'
+                  onClick={() => setShowExtraOptions(!showExtraOptions)}
+                >
+                  <MoreVertRounded />
                 </button>
-              )}
+                {showExtraOptions && (
+                  <div className='hub-extra-options-menu'>
+                    <button 
+                      className='hub-extra-option-item' 
+                      onClick={() => {
+                        setShowExtraOptions(false);
+                        openReportModal({
+                          type: 'FANHUB',
+                          targetId: activeFanHubId,
+                          targetName: hubData.hubName
+                        });
+                      }}
+                    >
+                      Report FanHub
+                    </button>
+                    {isMember && !isOwner && (
+                      <button 
+                        className='hub-extra-option-item text-danger' 
+                        onClick={() => {
+                          setShowExtraOptions(false);
+                          setShowLeaveConfirmModal(true);
+                        }}
+                      >
+                        Leave FanHub
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -891,15 +718,6 @@ export default function HubPage({ ownedHub }) {
                             <span className='member-username'>@{member.username}</span>
                             <span className='member-role'>{member.roleInHub}</span>
                           </div>
-                          {isOwner && !isAlreadyModerator && (
-                            <button
-                              className='promote-btn'
-                              onClick={() => handlePromoteClick(member)}
-                              style={{background: `${hubData.themeColor}`}}
-                            >
-                              <span>Promote</span>
-                            </button>
-                          )}
                           <div className='member-tooltip'>
                             <div><strong>Score:</strong> {member.fanHubScore}</div>
                             <div><strong>Joined:</strong> {new Date(member.joinedAt).toLocaleDateString('en-GB', {
@@ -928,44 +746,6 @@ export default function HubPage({ ownedHub }) {
         />
       )}
 
-      {/* Promote to Moderator Modal */}
-      {showPromoteModal && selectedMember && (
-        <div className='modal-overlay' onClick={handlePromoteCancel}>
-          <div className='modal-content promote-modal' onClick={(e) => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2>Promote to Moderator</h2>
-              <button className='modal-close' onClick={handlePromoteCancel}>×</button>
-            </div>
-
-            <div className='modal-body'>
-              <p className='modal-description'>
-                Set <strong>{selectedMember.displayName}</strong> (@{selectedMember.username}) as a moderator?
-              </p>
-              <p className='modal-note'>
-                Moderators can help manage the hub and its members.
-              </p>
-            </div>
-
-            <div className='modal-footer'>
-              <button
-                className='confirm-btn stylised-btn'
-                onClick={handlePromoteConfirm}
-                disabled={promoting}
-              >
-                {promoting ? (
-                  <span className='stylised-text'>
-                    <span className='spinner' />
-                    Promoting...
-                  </span>
-                ) : (
-                  <span className='stylised-text'>Confirm</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Join to Post Modal */}
       {showCreatePostModal && (
         <div className='modal-overlay' onClick={() => setShowCreatePostModal(false)}>
@@ -990,231 +770,45 @@ export default function HubPage({ ownedHub }) {
         </div>
       )}
 
-      {/* Edit Hub Modal */}
-      {showEditModal && (
-        <div className='modal-overlay' onClick={handleEditClose}>
-          <div className='modal-content edit-hub-modal' onClick={(e) => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2>Edit FanHub</h2>
-              <button className='modal-close' onClick={handleEditClose}>×</button>
+      {/* Join Questionnaire Modal */}
+      {showJoinQuestions && (
+        <JoinQuestionnaireModal
+          questions={joinQuestions}
+          onSubmit={handleQuestionnaireSubmit}
+          onCancel={() => setShowJoinQuestions(false)}
+          submitting={joining}
+        />
+      )}
+
+      {/* Leave FanHub Confirmation Modal */}
+      {showLeaveConfirmModal && (
+        <div className='hub-leave-confirm-overlay' onClick={() => setShowLeaveConfirmModal(false)}>
+          <div className='hub-leave-confirm-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='hlc-header'>
+              <h2 className='hlc-title'>Leave FanHub?</h2>
+              <button className='hlc-close-btn' onClick={() => setShowLeaveConfirmModal(false)}>×</button>
             </div>
-
-            <div className='modal-body'>
-              <div className='edit-hub-form'>
-                {/* Hub Info Section */}
-                <div className='edit-section'>
-                  <h3>Hub Information</h3>
-
-                  <div className='form-group'>
-                    <label htmlFor='edit-hub-name'>Hub Name</label>
-                    <input
-                      type='text'
-                      id='edit-hub-name'
-                      value={editHubName}
-                      onChange={(e) => setEditHubName(e.target.value)}
-                      placeholder='Enter hub name'
-                    />
-                  </div>
-
-                  <div className='form-group'>
-                    <label htmlFor='edit-subdomain'>Subdomain</label>
-                    <input
-                      type='text'
-                      id='edit-subdomain'
-                      value={editSubdomain}
-                      onChange={(e) => setEditSubdomain(e.target.value)}
-                      placeholder='@YourHub'
-                    />
-                  </div>
-
-                  <div className='form-group'>
-                    <label htmlFor='edit-description'>Description</label>
-                    <textarea
-                      id='edit-description'
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder='Describe your hub...'
-                      rows='4'
-                    />
-                  </div>
-
-                  <div className='form-group'>
-                    <label htmlFor='edit-theme-color'>Theme Color</label>
-                    <div className='color-picker-wrapper'>
-                      <input
-                        type='color'
-                        id='edit-theme-color'
-                        value={editThemeColor}
-                        onChange={(e) => setEditThemeColor(e.target.value)}
-                      />
-                      <span className='color-value'>{editThemeColor}</span>
-                    </div>
-                  </div>
-
-                  <div className='form-group'>
-                    <label>Categories</label>
-                    <div className='category-select'>
-                      {['Game', 'Just Chatting', 'Music', 'ASMR', 'Cooking', 'Art', 'Cosplay'].map((cat) => (
-                        <button
-                          key={cat}
-                          type='button'
-                          className={`category-chip ${editCategories.includes(cat) ? 'active' : ''}`}
-                          onClick={() => toggleEditCategory(cat)}
-                        >
-                          {cat}
-                          {editCategories.includes(cat) && (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className='chip-check'>
-                              <path d="M20 6L9 17l-5-5" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className='form-group checkbox-group'>
-                      <label className='checkbox-label'>
-                        <input
-                          type='checkbox'
-                          checked={editIsPrivate}
-                          onChange={(e) => setEditIsPrivate(e.target.checked)}
-                        />
-                        <span>Private Hub</span>
-                      </label>
-                      <label className='checkbox-label'>
-                        <input
-                          type='checkbox'
-                          checked={editRequiresApproval}
-                          onChange={(e) => setEditRequiresApproval(e.target.checked)}
-                        />
-                        <span>Requires Approval</span>
-                      </label>
-                    </div>
-                </div>
-
-                {/* Images Section */}
-                <div className='edit-section'>
-                  <h3>Images</h3>
-
-                  <div className='image-upload-group'>
-                    <label htmlFor='edit-banner-upload'>Banner Image</label>
-                    <div className='image-upload-wrapper'>
-                      <input
-                        type='file'
-                        id='edit-banner-upload'
-                        accept='image/*'
-                        onChange={handleBannerChange}
-                        className='image-upload-input'
-                      />
-                      <label htmlFor='edit-banner-upload' className='image-upload-btn'>
-                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                          <circle cx='8.5' cy='8.5' r='1.5' />
-                          <polyline points='21 15 16 10 5 21' />
-                        </svg>
-                        {bannerFile ? 'Change Banner' : 'Upload Banner'}
-                      </label>
-                      {bannerFile && (
-                        <span className='image-file-name'>{bannerFile.name}</span>
-                      )}
-                    </div>
-                    {bannerPreview && (
-                      <div className='image-preview banner-preview'>
-                        <img src={bannerPreview} alt='Banner preview' />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='image-upload-group'>
-                    <label htmlFor='edit-avatar-upload'>Avatar Image</label>
-                    <div className='image-upload-wrapper'>
-                      <input
-                        type='file'
-                        id='edit-avatar-upload'
-                        accept='image/*'
-                        onChange={handleAvatarChange}
-                        className='image-upload-input'
-                      />
-                      <label htmlFor='edit-avatar-upload' className='image-upload-btn'>
-                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                          <circle cx='8.5' cy='8.5' r='1.5' />
-                          <polyline points='21 15 16 10 5 21' />
-                        </svg>
-                        {avatarFile ? 'Change Avatar' : 'Upload Avatar'}
-                      </label>
-                      {avatarFile && (
-                        <span className='image-file-name'>{avatarFile.name}</span>
-                      )}
-                    </div>
-                    {avatarPreview && (
-                      <div className='image-preview avatar-preview'>
-                        <img src={avatarPreview} alt='Avatar preview' />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='image-upload-group'>
-                    <label htmlFor='edit-background-upload'>Background Images</label>
-                    <span className='field-hint'>Add background images (max 4)</span>
-                    <div className='image-upload-wrapper'>
-                      <input
-                        type='file'
-                        id='edit-background-upload'
-                        accept='image/*'
-                        multiple
-                        onChange={handleBackgroundChange}
-                        className='image-upload-input'
-                      />
-                      <label htmlFor='edit-background-upload' className='image-upload-btn'>
-                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='upload-icon'>
-                          <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                          <circle cx='8.5' cy='8.5' r='1.5' />
-                          <polyline points='21 15 16 10 5 21' />
-                        </svg>
-                        {backgroundFiles.length > 0 ? 'Change Images' : 'Upload Backgrounds'}
-                      </label>
-                    </div>
-                    {backgroundPreviews.length > 0 && (
-                      <div className='explore-preview-grid'>
-                        {backgroundPreviews.map((preview, index) => (
-                          <div key={index} className='explore-preview-item'>
-                            <img src={preview} alt={`Background ${index + 1}`} />
-                            <button
-                              type='button'
-                              className='remove-image-btn'
-                              onClick={() => removeBackgroundImage(index)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div className='hlc-body'>
+              <div className='hlc-warning-icon'>
+                <GroupRounded />
+                <span className='hlc-minus-badge'>-</span>
+              </div>
+              <p className='hlc-description'>
+                Are you sure you want to leave <strong>{hubData.hubName}</strong>?
+              </p>
+              <div className='hlc-note-container'>
+                <p className='hlc-note-text'>
+                  You will lose access to member-only features and your progress in this community.
+                </p>
               </div>
             </div>
-
-            <div className='modal-footer'>
-              <button
-                className='cancel-btn stylised-btn cancel'
-                onClick={handleEditClose}
-                disabled={uploading}
+            <div className='hlc-footer'>
+              <button className='hlc-btn-cancel' onClick={() => setShowLeaveConfirmModal(false)}>Stay in Hub</button>
+              <button 
+                className='hlc-btn-confirm' 
+                onClick={handleLeaveFanHub}
               >
-                <span className='stylised-text'>Cancel</span>
-              </button>
-              <button
-                className='confirm-btn stylised-btn'
-                onClick={handleSaveEdit}
-                disabled={uploading || !hasChanges}
-              >
-                {uploading ? (
-                  <span className='stylised-text'>
-                    <span className='spinner'></span>Saving...
-                  </span>
-                ) : (
-                  <span className='stylised-text'>Save Changes</span>
-                )}
+                Confirm Leave
               </button>
             </div>
           </div>
@@ -1223,4 +817,3 @@ export default function HubPage({ ownedHub }) {
     </div>
   );
 }
-

@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "https://vtuber-fanhub-bsc3arfzhqhahshy.southeastasia-01.azurewebsites.net/vhub/api/v1";
-
-const getAuthToken = () => {
-  return sessionStorage.getItem("token") || localStorage.getItem("token");
-};
+import axiosInstance from "@/utils/axiosInstance";
 
 /**
  * Get pending posts for a specific fan hub (posts requiring moderation)
@@ -16,20 +10,8 @@ const getAuthToken = () => {
  */
 export const getPendingPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return [];
-    }
-
-    const res = await axios.get(
-      `${API_BASE_URL}/posts/fan-hub/${fanHubId}/pending?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`,
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.get(
+      `/posts/fan-hub/${fanHubId}/pending?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
     );
 
     console.log("getPendingPostsByFanHub response:", res.data);
@@ -57,21 +39,9 @@ export const getPendingPostsByFanHub = async (fanHubId, pageNo = 0, pageSize = 1
  */
 export const reviewPost = async (postId, status) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return null;
-    }
-
-    const res = await axios.put(
-      `${API_BASE_URL}/posts/review?postId=${postId}&status=${status}`,
-      {},
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.put(
+      `/posts/review?postId=${postId}&status=${status}`,
+      {}
     );
 
     console.log("reviewPost response:", res.data);
@@ -99,26 +69,14 @@ export const reviewPost = async (postId, status) => {
  */
 export const reviewPostsBulk = async (postIds, status) => {
   try {
-    const token = getAuthToken();
-
-    if (!token) {
-      console.warn("No auth token found");
-      return { success: false, message: "No auth token" };
-    }
-
     if (!postIds || postIds.length === 0) {
       return { success: false, message: "No posts selected" };
     }
 
     const postIdsParam = postIds.join(',');
-    const res = await axios.put(
-      `${API_BASE_URL}/posts/review/bulk?postIds=${postIdsParam}&status=${status}`,
-      {},
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      }
+    const res = await axiosInstance.put(
+      `/posts/review/bulk?postIds=${postIdsParam}&status=${status}`,
+      {}
     );
 
     console.log("reviewPostsBulk response:", res.data);

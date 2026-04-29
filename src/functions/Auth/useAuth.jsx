@@ -2,7 +2,8 @@
 
 import axios from "axios";
 import { useState, useContext, createContext, useEffect, useMemo, useCallback, useRef } from "react";
-import { checkToken, getAuthToken, getCurrentUserProfile, getUserById, API_BASE_URL, logoutUser } from "@/services/UserController";
+import { checkToken, getAuthToken, getCurrentUserProfile, getUserById, logoutUser } from "@/services/UserController";
+import { API_BASE_URL } from "@/utils/axiosInstance";
 import { usePathname, useRouter } from "next/navigation";
 
 import LoadingImg1 from '../../assets/Decor/Loading-1.gif'
