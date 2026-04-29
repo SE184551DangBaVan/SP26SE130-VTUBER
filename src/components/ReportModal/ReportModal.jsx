@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { reportPost, reportMember } from "@/services/ReportController";
+import { createFanHubReport } from "@/services/HubReportController";
 import { REPORT_TYPE, REPORT_TYPE_LABELS, REPORT_REASONS } from "./reportTypes";
 import "./ReportModal.css";
 
@@ -17,8 +18,8 @@ const OTHER_REASON = "Other";
  * Props:
  *   isOpen     - boolean, controls visibility
  *   onClose    - function, called to close the modal
- *   type       - "POST" | "MEMBER" (from REPORT_TYPE)
- *   targetId   - numeric postId or memberId
+ *   type       - "POST" | "MEMBER" | "FANHUB" (from REPORT_TYPE)
+ *   targetId   - numeric postId, memberId or fanHubId
  *   targetName - optional display label for context
  */
 export default function ReportModal({ isOpen, onClose, type, targetId, targetName, relatedCommentId }) {
@@ -86,6 +87,8 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
           response = await reportPost(targetId, finalReason.trim());
         } else if (type === REPORT_TYPE.MEMBER) {
           response = await reportMember(targetId, finalReason.trim(), relatedCommentId);
+        } else if (type === REPORT_TYPE.FANHUB) {
+          response = await createFanHubReport(targetId, finalReason.trim());
         } else {
           throw new Error("Unknown report type");
         }
@@ -103,7 +106,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
         setIsSubmitting(false);
       }
     },
-    [selectedReason, otherReason, finalReason, type, targetId, onClose]
+    [selectedReason, otherReason, finalReason, type, targetId, onClose, relatedCommentId]
   );
 
   const handleBackdropClick = (e) => {
@@ -123,7 +126,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
       <div className="report-modal-container" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
         {/* Header */}
         <div className="report-modal-header">
-          <h2 id="report-modal-title" className="report-modal-title">Report</h2>
+          <h2 id="report-modal-title" className="report-modal-title">Report {typeLabel}</h2>
           <button className="report-modal-close-btn" onClick={onClose} aria-label="Close report modal">
             &times;
           </button>
@@ -132,7 +135,7 @@ export default function ReportModal({ isOpen, onClose, type, targetId, targetNam
         {/* Body */}
         <form onSubmit={handleSubmit} className="report-modal-form">
           <p className="report-modal-description">
-            Why are you reporting this {typeLabel.toLowerCase()}?
+            Why are you reporting this {typeLabel.toLowerCase()}? <strong>{displayLabel !== typeLabel ? displayLabel : ""}</strong>
           </p>
 
           <label className="report-modal-label">

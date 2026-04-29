@@ -50,7 +50,6 @@ const ExploreBanner = ({
         <button
           className="explore-visit-btn"
           onClick={onVisit}
-          style={{ background: themeColor }}
         >
           <div className="hub-info-member-count">
             <span><p>{memberCount ?? "N/A"}</p></span> <GroupRounded />

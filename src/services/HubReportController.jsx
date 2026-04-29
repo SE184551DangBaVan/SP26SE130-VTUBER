@@ -33,3 +33,28 @@ export const getFanHubReportsWithReports = async (pageNo = 0, pageSize = 10, sor
     return [];
   }
 };
+
+/**
+ * Create a report for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {string} reason - Report reason
+ * @returns {Promise<Object>} API response
+ */
+export const createFanHubReport = async (fanHubId, reason) => {
+  try {
+    const res = await axiosInstance.post(`/fan-hub-report/create`, {
+      fanHubId,
+      reason
+    });
+
+    console.log("createFanHubReport response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Create fan hub report error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
