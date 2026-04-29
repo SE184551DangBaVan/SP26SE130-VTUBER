@@ -243,19 +243,19 @@ export default function Register() {
                           <div className="options">
                             <div title="English">
                               <input id="en" name="option" type="radio" checked={translateLanguage == "En"} onChange={() => setTranslateLanguage("En")} />
-                              <label className="option" htmlFor="en-r" data-txt="EN" ></label>
+                              <label className="option" htmlFor="en" data-txt="EN" ></label>
                             </div>
                             <div title="Tiếng Việt">
                               <input id="vn" name="option" type="radio" checked={translateLanguage == "Vn"} onChange={() => setTranslateLanguage("Vn")} />
-                              <label className="option" htmlFor="vn-r" data-txt="VN" ></label>
+                              <label className="option" htmlFor="vn" data-txt="VN" ></label>
                             </div>
                             <div title="中文">
                               <input id="cn" name="option" type="radio" checked={translateLanguage == "Cn"} onChange={() => setTranslateLanguage("Cn")} />
-                              <label className="option" htmlFor="cn-r" data-txt="CN" ></label>
+                              <label className="option" htmlFor="cn" data-txt="CN" ></label>
                             </div>
                             <div title="日本語">
                               <input id="jp" name="option" type="radio" checked={translateLanguage == "Jp"} onChange={() => setTranslateLanguage("Jp")} />
-                              <label className="option" htmlFor="jp-r" data-txt="JP" ></label>
+                              <label className="option" htmlFor="jp" data-txt="JP" ></label>
                             </div>
                           </div>
                         </div>

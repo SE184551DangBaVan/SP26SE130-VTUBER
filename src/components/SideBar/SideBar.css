@@ -18,7 +18,7 @@
   width: 15px;
   height: 2px;
   background: #202020;
-  transform: translate(-25%, -200%);
+  transform: translate(0%, -200%);
 }
 #side-bar-toggle:checked ~ #side-bar-header #side-bar-toggle-burger:before, #side-bar-toggle:checked ~ #side-bar-header #side-bar-toggle-burger::after {
   width: 15px;
@@ -142,15 +142,16 @@
 
 label[for=side-bar-toggle] {
   position: absolute;
-  right: -20px;
-  width: 2.5rem;
+  left: 16px;
+  width: 1.8rem;
   height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background-image: var(--background);
-  border-radius: 50%;
+  border-radius: 0 50% 50% 0;
   border: 2px solid #222222;
+  border-left: none;
   cursor: pointer;
 }
 
@@ -240,12 +241,13 @@ label[for=side-bar-toggle] {
 
 #side-bar:has(#side-bar-toggle:checked) #side-bar-content-highlight {
   border-radius: 8px;
+  left: 15px;
   width: calc(100% - 20px);
   transition: top 0.2s, background-color 0.4s ease, border-radius 0.3s ease;
 }
 
 #side-bar:has(#side-bar-toggle:checked) .side-bar-button {
-  padding-left: 0;
+  padding-left: 15px;
 }
 
 .side-bar-button {

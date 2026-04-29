@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { showLoading, updateToast } from '../../utils/toastUtils';
 import CheckBox from '../../components/CheckBox/CheckBox';
 import ToggleVisibility from '../../components/ToggleVisibility/ToggleVisibility';
+import ImageGalleryBackdrop from '../../components/ImageGalleryBackdrop/ImageGalleryBackdrop';
 
 export default function Login() {
   const {login} = useAuth();
@@ -55,6 +56,7 @@ export default function Login() {
 
   return (
       <div className={`login-wrapper ${showExitAnimation ? 'exit' : ''}`}>
+        <ImageGalleryBackdrop />
         <div className="background-grid-vfx login"></div>
         <div className="card-switch">
           <div className="flip-card__inner">
