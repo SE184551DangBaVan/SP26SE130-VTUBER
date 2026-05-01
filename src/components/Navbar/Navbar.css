@@ -406,12 +406,17 @@ body:has(.page-main-content) .nav-container .button-primary {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: none;
+  border: 2px solid transparent;
   border-radius: 50%;
   background-color: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #2a2b33;
+}
+
+.navbar-action-btn.profile-btn:hover {
+  box-shadow: 0 0 5px #000000;
+  transform: scale(1.05);
 }
 
 .navbar-action-btn.active {

@@ -1,0 +1,132 @@
+/* Image Gallery Backdrop */
+.image-gallery-backdrop {
+  position: fixed;
+  top: -40vh;
+  left: 800px;
+  right: -100px;
+  height: 200vh;
+  bottom: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  transform: rotateX(30deg) rotateZ(10deg) scale(0.85);
+}
+
+.gallery-scroll-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  perspective: 1200px;
+}
+
+/* Grid Layout with 3D Perspective */
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(20, auto);
+  gap: 12px;
+  padding: 20px;
+  animation: scrollGallery 120s linear infinite;
+  pointer-events: all;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  perspective: 1200px;
+}
+
+@keyframes scrollGallery {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Grid Block */
+.grid-block {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* Tile */
+.tile {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Tile Link */
+.tile-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+/* Tile Image */
+.tile-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  transition: opacity 0.3s ease-in, top 0.3s ease-in, left 0.3s ease-in, box-shadow 0.4s ease-out;
+  position: relative;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+}
+
+/* Hover Effects */
+.tile-link:hover .tile-img {
+  opacity: 1;
+  top: -8px;
+  left: -8px;
+  box-shadow: var(--shadow-style);
+}
+
+/* Remove the old nth-child shadow rules */
+
+/* Pause animation on hover for better UX */
+.image-gallery-backdrop:hover .grid {
+  animation-play-state: paused;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(40, auto);
+    gap: 8px;
+    padding: 10px;
+    transform: rotateX(25deg) rotateZ(10deg) scale(0.9);
+  }
+
+  .grid-block {
+    aspect-ratio: 16 / 9;
+    border-radius: 6px;
+  }
+
+  .tile-img {
+    border-radius: 6px;
+  }
+
+  .tile-link:hover .tile-img {
+    top: -4px;
+    left: -4px;
+  }
+}

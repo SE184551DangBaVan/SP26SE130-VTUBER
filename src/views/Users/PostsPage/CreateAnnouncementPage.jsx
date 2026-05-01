@@ -7,7 +7,6 @@ import { useSideBar } from '@/contexts/SideBarContext.tsx';
 import { getMyHubAsOwner } from '@/services/FanHubController';
 import { createPost } from '@/services/PostController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
-import { EventRounded } from '@mui/icons-material';
 import './CreatePostPage.css';
 
 export default function CreateAnnouncementPage() {
@@ -28,8 +27,8 @@ export default function CreateAnnouncementPage() {
   const [titleLength, setTitleLength] = useState(0);
 
   const [isSchedule, setIsSchedule] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleStartDate, setScheduleStartDate] = useState('');
+  const [scheduleEndDate, setScheduleEndDate] = useState('');
 
   const textareaRef = useRef(null);
 
@@ -102,46 +101,17 @@ export default function CreateAnnouncementPage() {
     const newIsSchedule = !isSchedule;
     setIsSchedule(newIsSchedule);
     if (!newIsSchedule) {
-      setShowDatePicker(false);
-      setScheduleDate('');
+      setScheduleStartDate('');
+      setScheduleEndDate('');
     }
   };
 
-  const handleDatePickerClick = (e) => {
-    e.stopPropagation();
-    setShowDatePicker(true);
+  const handleScheduleStartDateChange = (e) => {
+    setScheduleStartDate(e.target.value);
   };
 
-  const handleDateChange = (e) => {
-    setScheduleDate(e.target.value);
-  };
-
-  const handleApplySchedule = () => {
-    if (!scheduleDate) {
-      showError('Warning: A specific schedule date is not selected');
-      return;
-    }
-
-    const isoDate = new Date(scheduleDate).toISOString();
-    const appendText = ` - Append Schedule: ${isoDate}`;
-
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      const startPos = textarea.selectionStart;
-      const endPos = textarea.selectionEnd;
-      const beforeText = content.substring(0, startPos);
-      const afterText = content.substring(endPos);
-
-      const newContent = beforeText + appendText + afterText;
-      setContent(newContent);
-      setShowDatePicker(false);
-      setScheduleDate('');
-    }
-  };
-
-  const handleCancelSchedule = () => {
-    setShowDatePicker(false);
-    setScheduleDate('');
+  const handleScheduleEndDateChange = (e) => {
+    setScheduleEndDate(e.target.value);
   };
 
   const handleSubmit = async () => {
@@ -160,11 +130,10 @@ export default function CreateAnnouncementPage() {
       return;
     }
 
-    // Validation for schedule: if isSchedule is true, content must have a date appended
+    // Validation for schedule: if isSchedule is true, both dates must be provided
     if (isSchedule) {
-      const hasScheduleInContent = content.includes('- Append Schedule:');
-      if (!hasScheduleInContent) {
-        showError('Warning: A specific schedule is not selected');
+      if (!scheduleStartDate || !scheduleEndDate) {
+        showError('Both start and end dates are required for scheduled posts');
         return;
       }
     }
@@ -190,6 +159,11 @@ export default function CreateAnnouncementPage() {
         isAnnouncement: true,
         isSchedule: isSchedule
       };
+
+      if (isSchedule) {
+        postData.startTime = new Date(scheduleStartDate).toISOString();
+        postData.endTime = new Date(scheduleEndDate).toISOString();
+      }
 
       await createPost(postData, mediaToUpload, mediaKey);
 
@@ -341,37 +315,38 @@ export default function CreateAnnouncementPage() {
                   onChange={(e) => setContent(e.target.value)}
                   rows={8}
                 />
-                {/* Date Picker Button - only shown when isSchedule is true */}
-                {!showDatePicker && isSchedule && (
-                  <button
-                    type='button'
-                    className='date-picker-trigger-btn'
-                    onClick={handleDatePickerClick}
-                    title='Add Schedule'
-                  >
-                    <EventRounded fontSize='small' />
-                  </button>
-                )}
-                {/* Date Picker Popup */}
-                {showDatePicker && (
-                  <div className='date-picker-popup'>
-                    <input
-                      type='datetime-local'
-                      value={scheduleDate}
-                      onChange={handleDateChange}
-                      className='date-picker-input'
-                    />
-                    <div className='date-picker-actions'>
-                      <button type='button' className='date-btn cancel' onClick={handleCancelSchedule}>
-                        Cancel
-                      </button>
-                      <button type='button' className='date-btn apply' onClick={handleApplySchedule}>
-                        Apply
-                      </button>
+              </div>
+              {/* Date Range Picker - only shown when isSchedule is true */}
+              {isSchedule && (
+                <div className='schedule-date-range-container'>
+                  <div className='date-input-row'>
+                    <div className='date-input-group'>
+                      <label htmlFor='schedule-start-date' className='form-label'>
+                        Start Date:
+                      </label>
+                      <input
+                        type='datetime-local'
+                        id='schedule-start-date'
+                        value={scheduleStartDate}
+                        onChange={handleScheduleStartDateChange}
+                        className='form-input date-input'
+                      />
+                    </div>
+                    <div className='date-input-group'>
+                      <label htmlFor='schedule-end-date' className='form-label'>
+                        End Date:
+                      </label>
+                      <input
+                        type='datetime-local'
+                        id='schedule-end-date'
+                        value={scheduleEndDate}
+                        onChange={handleScheduleEndDateChange}
+                        className='form-input date-input'
+                      />
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Media Upload - Only for IMAGE and VIDEO types */}

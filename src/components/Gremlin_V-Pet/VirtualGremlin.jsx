@@ -15,7 +15,7 @@ export default function VirtualGremlin() {
     console.log("Loading sprite sheet:", SpriteSheet);
     
     createAnimationController({
-      imageSrc: SpriteSheet,
+      imageSrc: SpriteSheet.src,
       frameWidth: 350,
       frameHeight: 350,
       totalFrames: 340
@@ -50,7 +50,7 @@ export default function VirtualGremlin() {
     <div
       className="pet"
       style={{
-        backgroundImage: `url(${SpriteSheet})`,
+        backgroundImage: `url(${SpriteSheet.src})`,
         backgroundPosition: `${x}px ${y}px`
       }}
     />
