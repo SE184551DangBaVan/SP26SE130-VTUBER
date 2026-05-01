@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
-import { banFanHubMember, getHubMembers, getPendingMembers } from "@/services/MemberController.jsx";
+import { banFanHubMember, getHubMembers, getPendingMembers, reviewMember, removeModerator, getMemberDetail, kickMember } from "@/services/MemberController.jsx";
 import MemberReportsTable from "./MemberReportsTable";
+import PendingMembersTable from "./PendingMembersTable";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 import "./MemberModerationContent.css";
 
 const BAN_TYPE_OPTIONS = [
   { value: "COMMENT", label: "Comment" },
   { value: "POST", label: "Post" },
-  { value: "JOIN", label: "Join" },
-  { value: "INTERACT", label: "Interact" },
 ];
 
 const PAGE_SIZE = 10;
@@ -60,166 +60,6 @@ export default function MemberModerationContent({ fanHubId, isOwner }) {
   );
 }
 
-/* ───────── Pending Members Table ───────── */
-function PendingMembersTable({ fanHubId }) {
-  const [pendingMembers, setPendingMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
-  
-  const [selectedPending, setSelectedPending] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchPending = useCallback(async (reset = false) => {
-    if (reset) {
-      setLoading(true);
-      setPendingMembers([]);
-      setCurrentPage(0);
-      setHasMore(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      const pageNo = reset ? 0 : currentPage;
-      const data = await getPendingMembers(fanHubId, pageNo, PAGE_SIZE);
-
-      let items = [];
-      if (data && typeof data === "object" && data.content) {
-        items = Array.isArray(data.content) ? data.content : [];
-      } else if (Array.isArray(data)) {
-        items = data;
-      }
-
-      if (reset) {
-        setPendingMembers(items);
-      } else {
-        setPendingMembers(prev => [...prev, ...items]);
-      }
-
-      setHasMore(items.length === PAGE_SIZE);
-      setCurrentPage(prev => reset ? 1 : prev + 1);
-    } catch (err) {
-      console.error("Failed to fetch pending members:", err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [fanHubId, currentPage]);
-
-  useEffect(() => {
-    if (fanHubId) fetchPending(true);
-  }, [fanHubId]);
-
-  const handleApprove = (member) => {
-    console.log("approve button clicked", member.id);
-  };
-
-  const handleReject = (member) => {
-    console.log("reject button clicked", member.id);
-  };
-
-  const openModal = (member) => {
-    setSelectedPending(member);
-    setIsModalOpen(true);
-  };
-
-  if (loading) return <div className="loading">Loading requests...</div>;
-
-  return (
-    <div className="pending-members-wrapper">
-      {pendingMembers.length === 0 ? (
-        <div className="empty-message">No pending join requests</div>
-      ) : (
-        <div className="moderation-table-container">
-          <table className="moderation-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Member</th>
-                <th>Has Answers</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingMembers.map((m) => (
-                <tr key={m.id}>
-                  <td>#{m.id}</td>
-                  <td>
-                    <div className="member-cell">
-                      <img src={m.avatarUrl || "/profile-pic-undefined.jpg"} alt="" className="table-avatar" />
-                      <span>{m.displayName || m.username}</span>
-                    </div>
-                  </td>
-                  <td>
-                    {m.joinAnswers && m.joinAnswers.length > 0 ? (
-                      <button className="view-answers-btn" onClick={() => openModal(m)}>
-                        Yes (View)
-                      </button>
-                    ) : (
-                      "No"
-                    )}
-                  </td>
-                  <td>
-                    <div className="action-btns">
-                      <button className="approve-btn" onClick={() => handleApprove(m)}>APPROVE</button>
-                      <button className="reject-btn" onClick={() => handleReject(m)}>REJECT</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {hasMore && (
-            <div className="load-more-container">
-              <button className="load-more-btn" onClick={() => fetchPending(false)} disabled={loadingMore}>
-                {loadingMore ? "Loading..." : "Load more"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Answers Modal */}
-      {isModalOpen && selectedPending && (
-        <div className="mm-modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="mm-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="mm-modal-header">
-              <h2>Join Request Details</h2>
-              <button className="mm-modal-close" onClick={() => setIsModalOpen(false)}>×</button>
-            </div>
-            <div className="mm-modal-body">
-              <div className="member-info-header">
-                <img src={selectedPending.avatarUrl || "/profile-pic-undefined.jpg"} alt="" className="modal-avatar" />
-                <div>
-                  <h3>{selectedPending.displayName || selectedPending.username}</h3>
-                  <p>ID: #{selectedPending.id}</p>
-                </div>
-              </div>
-
-              <div className="answers-section">
-                <h4>Submitted Answers:</h4>
-                {selectedPending.joinAnswers?.map((ans, idx) => (
-                  <div key={idx} className="answer-item">
-                    <p className="question-text"><strong>Q{idx + 1}:</strong> {ans.questionContent}</p>
-                    <p className="answer-text">{ans.content}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mm-modal-footer">
-              <button className="approve-btn" onClick={() => { handleApprove(selectedPending); setIsModalOpen(false); }}>APPROVE</button>
-              <button className="reject-btn" onClick={() => { handleReject(selectedPending); setIsModalOpen(false); }}>REJECT</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ───────── Members Table ───────── */
 function MembersTable({ fanHubId, roleFilter }) {
   const { userAuth } = useAuth();
@@ -232,9 +72,22 @@ function MembersTable({ fanHubId, roleFilter }) {
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
-  const [banForm, setBanForm] = useState({ reason: "", banType: "COMMENT", bannedUntil: "" });
+  const [banForm, setBanForm] = useState({
+    reason: "",
+    banType: "COMMENT",
+    durationMode: "TEMPORARY",
+    hours: 1,
+    days: 0,
+    months: 0,
+    years: 0
+  });
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [refreshing, setRefreshing] = useState(false);
+
+  // Expandable Row State
+  const [expandedMemberId, setExpandedMemberId] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [memberDetail, setMemberDetail] = useState(null);
 
   const fetchMembers = useCallback(async (reset = false) => {
     if (reset) {
@@ -303,41 +156,72 @@ function MembersTable({ fanHubId, roleFilter }) {
 
   const handleBanMember = async () => {
     if (!selectedMember || !banForm.reason.trim()) {
-      showToast("Please provide a ban reason", "error");
+      showToast("Please provide a restriction reason", "error");
       return;
     }
+
+    let bannedUntil = null;
+    if (banForm.durationMode === "TEMPORARY") {
+      const { hours, days, months, years } = banForm;
+      if (hours === 0 && days === 0 && months === 0 && years === 0) {
+        showToast("Duration cannot be zero for temporary restriction", "error");
+        return;
+      }
+
+      const date = new Date();
+      date.setHours(date.getHours() + parseInt(hours));
+      date.setDate(date.getDate() + parseInt(days));
+      date.setMonth(date.getMonth() + parseInt(months));
+      date.setFullYear(date.getFullYear() + parseInt(years));
+      bannedUntil = date.toISOString();
+    }
+
     try {
       const result = await banFanHubMember({
         fanHubMemberId: selectedMember.id,
         reason: banForm.reason.trim(),
         banType: banForm.banType,
-        bannedUntil: banForm.bannedUntil
-          ? new Date(banForm.bannedUntil).toISOString()
-          : null,
+        bannedUntil: bannedUntil,
       });
       if (result?.success) {
-        showToast("Member banned successfully!", "success");
+        showToast("Member restricted successfully!", "success");
         await fetchMembers(true);
         closeBanModal();
       } else {
-        showToast(result?.message || "Failed to ban member", "error");
+        showToast(result?.message || "Failed to restrict member", "error");
       }
     } catch (err) {
-      console.error("Ban member error:", err);
-      showToast("Error banning member", "error");
+      console.error("Restrict member error:", err);
+      showToast("Error restricting member", "error");
     }
   };
 
   const openBanModal = (member) => {
     setSelectedMember(member);
-    setBanForm({ reason: "", banType: "COMMENT", bannedUntil: "" });
+    setBanForm({
+      reason: "",
+      banType: "COMMENT",
+      durationMode: "TEMPORARY",
+      hours: 1,
+      days: 0,
+      months: 0,
+      years: 0
+    });
     setIsBanModalOpen(true);
   };
 
   const closeBanModal = () => {
     setIsBanModalOpen(false);
     setSelectedMember(null);
-    setBanForm({ reason: "", banType: "COMMENT", bannedUntil: "" });
+    setBanForm({
+      reason: "",
+      banType: "COMMENT",
+      durationMode: "TEMPORARY",
+      hours: 1,
+      days: 0,
+      months: 0,
+      years: 0
+    });
   };
 
   useEffect(() => {
@@ -362,13 +246,90 @@ function MembersTable({ fanHubId, roleFilter }) {
 
   const canBanMember = (member) => {
     if (!userAuth?.role) return false;
+    // For moderators tab, we don't use the ban button anymore (replaced by demote)
+    if (roleFilter === "MODERATOR") return false;
+    
     if (member.roleInHub === "MODERATOR" && userAuth.role !== "VTUBER" && userAuth.role !== "ADMIN") {
       return false;
     }
     return true;
   };
 
+  const isVtuber = userAuth?.role === "VTUBER";
+
+  const handleDemote = async (member) => {
+    if (!window.confirm(`Are you sure you want to demote ${member.displayName || member.username} from moderator?`)) {
+      return;
+    }
+
+    try {
+      const result = await removeModerator(fanHubId, [member.id]);
+      if (result?.success) {
+        showToast("Moderator demoted successfully!", "success");
+        await fetchMembers(true);
+      } else {
+        showToast(result?.message || "Failed to demote moderator", "error");
+      }
+    } catch (err) {
+      console.error("Demote moderator error:", err);
+      showToast("Error demoting moderator", "error");
+    }
+  };
+
+  const handleToggleExpand = async (member) => {
+    if (roleFilter !== "MEMBER") return; // Only for Approved Members tab
+    
+    if (expandedMemberId === member.id) {
+      setExpandedMemberId(null);
+      setMemberDetail(null);
+      return;
+    }
+
+    setExpandedMemberId(member.id);
+    setDetailLoading(true);
+    try {
+      const res = await getMemberDetail(member.id);
+      if (res.success) {
+        setMemberDetail(res.data);
+      } else {
+        showToast(res.message || "Failed to fetch member details", "error");
+        setExpandedMemberId(null);
+      }
+    } catch (err) {
+      console.error("Fetch detail error:", err);
+      showToast("Error fetching member details", "error");
+      setExpandedMemberId(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleKickMember = async (member) => {
+    if (!window.confirm(`Are you sure you want to kick ${member.displayName || member.username}?`)) {
+      return;
+    }
+
+    try {
+      const res = await kickMember(fanHubId, member.memberId || member.id);
+      if (res.success) {
+        showToast("Member kicked successfully!", "success");
+        setExpandedMemberId(null);
+        await fetchMembers(true);
+      } else {
+        showToast(res.message || "Failed to kick member", "error");
+      }
+    } catch (err) {
+      console.error("Kick error:", err);
+      showToast("Error kicking member", "error");
+    }
+  };
+
   if (loading) return <div className="loading">Loading members...</div>;
+
+  // Actions column visibility logic:
+  // - Members tab (Approved Members): HIDDEN (using expandable row instead)
+  // - Moderators tab: ONLY visible to VTUBER
+  const showActionsColumn = roleFilter === "MODERATOR" && isVtuber;
 
   return (
     <div className="members-table-wrapper">
@@ -392,28 +353,110 @@ function MembersTable({ fanHubId, roleFilter }) {
                 <th>Username</th>
                 <th className="sortable" onClick={() => handleSort("roleInHub")}>Role{getSortIcon("roleInHub")}</th>
                 <th className="sortable" onClick={() => handleSort("joinedAt")}>Joined Date{getSortIcon("joinedAt")}</th>
-                <th>Actions</th>
+                {showActionsColumn && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {members.map((member) => (
-                <tr key={member.id}>
-                  <td className="member-id">#{member.id}</td>
-                  <td className="display-name">{member.displayName || "-"}</td>
-                  <td className="username">{member.username || "-"}</td>
-                  <td><span className={`role-badge ${getRoleClass(member.roleInHub)}`}>{member.roleInHub || "MEMBER"}</span></td>
-                  <td className="joined-date">{formatDate(member.joinedAt)}</td>
-                  <td className="action-cell">
-                    <button
-                      className="ban-btn"
-                      onClick={() => openBanModal(member)}
-                      disabled={!canBanMember(member)}
-                      title={!canBanMember(member) ? "Only Vtubers/Admins can ban moderators" : ""}
-                    >
-                      Ban
-                    </button>
-                  </td>
-                </tr>
+                <React.Fragment key={member.id}>
+                  <tr 
+                    onClick={() => handleToggleExpand(member)}
+                    className={`${roleFilter === "MEMBER" ? "clickable-row" : ""} ${expandedMemberId === member.id ? "expanded-row" : ""}`}
+                  >
+                    <td className="member-id">#{member.id}</td>
+                    <td className="display-name">{member.displayName || "-"}</td>
+                    <td className="username">{member.username || "-"}</td>
+                    <td><span className={`role-badge ${getRoleClass(member.roleInHub)}`}>{member.roleInHub || "MEMBER"}</span></td>
+                    <td className="joined-date">{formatDate(member.joinedAt)}</td>
+                    {showActionsColumn && (
+                      <td className="action-cell" onClick={(e) => e.stopPropagation()}>
+                        {roleFilter === "MODERATOR" ? (
+                          isVtuber && (
+                            <button
+                              className="demote-btn"
+                              onClick={() => handleDemote(member)}
+                              title="Demote to member"
+                            >
+                              Demote
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            className="ban-btn"
+                            onClick={() => openBanModal(member)}
+                            disabled={!canBanMember(member)}
+                            title={!canBanMember(member) ? "Only Vtubers/Admins can ban moderators" : ""}
+                          >
+                            Ban
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                  {expandedMemberId === member.id && (
+                    <tr className="expansion-row">
+                      <td colSpan={showActionsColumn ? 6 : 5}>
+                        <div className="expansion-content">
+                          {detailLoading ? (
+                            <div className="loading-small">Loading details...</div>
+                          ) : memberDetail ? (
+                            <div className="member-expanded-details">
+                              <div className="details-header">
+                                <UserAvatar
+                                  avatarUrl={memberDetail.avatarUrl}
+                                  size="small"
+                                  className="detail-avatar-small"
+                                />
+                                <div className="details-main-info">
+                                  <h4>{memberDetail.displayName || memberDetail.username}</h4>
+                                  <div className="stats-badges">
+                                    <span className="stat-badge">Score: <strong>{memberDetail.fanHubScore}</strong></span>
+                                  </div>
+                                </div>
+                                <div className="details-actions">
+                                  <button 
+                                    className="restrict-btn-small" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openBanModal({ id: memberDetail.memberId, displayName: memberDetail.displayName, username: memberDetail.username, roleInHub: memberDetail.roleInHub });
+                                    }}
+                                  >
+                                    RESTRICT
+                                  </button>
+                                  <button 
+                                    className="kick-btn-small" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleKickMember(memberDetail);
+                                    }}
+                                  >
+                                    KICK
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              {memberDetail.joinAnswers && memberDetail.joinAnswers.length > 0 && (
+                                <div className="details-answers">
+                                  <h5>Join Answers:</h5>
+                                  <div className="answers-grid">
+                                    {memberDetail.joinAnswers.map((ans, idx) => (
+                                      <div key={idx} className="answer-item-small">
+                                        <p className="q-text-small">Q: {ans.questionContent}</p>
+                                        <p className="a-text-small">A: {ans.content}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="error-message">Failed to load member details</div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -435,12 +478,12 @@ function MembersTable({ fanHubId, roleFilter }) {
         </div>
       )}
 
-      {/* Ban Modal */}
+      {/* Restrict Modal */}
       {isBanModalOpen && selectedMember && (
-        <div className="mm-modal-overlay" onClick={closeBanModal}>
+        <div className="mm-modal-overlay restrict-modal-overlay" onClick={closeBanModal}>
           <div className="mm-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="mm-modal-header">
-              <h2>Ban Member</h2>
+              <h2>Restrict Member</h2>
               <button className="mm-modal-close" onClick={closeBanModal}>×</button>
             </div>
             <div className="mm-modal-body">
@@ -452,24 +495,83 @@ function MembersTable({ fanHubId, roleFilter }) {
               </div>
               <div className="mm-ban-form">
                 <div className="mm-form-group">
-                  <label htmlFor="ban-type">Ban Type</label>
+                  <label htmlFor="ban-type">Restriction Type</label>
                   <select id="ban-type" value={banForm.banType} onChange={(e) => setBanForm({ ...banForm, banType: e.target.value })}>
                     {BAN_TYPE_OPTIONS.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                   </select>
                 </div>
+
                 <div className="mm-form-group">
-                  <label htmlFor="ban-until">Banned Until</label>
-                  <input id="ban-until" type="datetime-local" value={banForm.bannedUntil} onChange={(e) => setBanForm({ ...banForm, bannedUntil: e.target.value })} />
+                  <label>Restriction Duration</label>
+                  <div className="duration-mode-options">
+                    <button 
+                      className={`mode-btn ${banForm.durationMode === "TEMPORARY" ? "active" : ""}`}
+                      onClick={() => setBanForm({ ...banForm, durationMode: "TEMPORARY" })}
+                    >
+                      Temporary
+                    </button>
+                    <button 
+                      className={`mode-btn ${banForm.durationMode === "PERMANENT" ? "active" : ""}`}
+                      onClick={() => setBanForm({ ...banForm, durationMode: "PERMANENT" })}
+                    >
+                      Permanent
+                    </button>
+                  </div>
                 </div>
+
+                {banForm.durationMode === "TEMPORARY" && (
+                  <div className="mm-form-group full-width">
+                    <label>Duration Units</label>
+                    <div className="duration-units-grid">
+                      <div className="unit-field">
+                        <label>Hours</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          value={banForm.hours} 
+                          onChange={(e) => setBanForm({ ...banForm, hours: Math.max(0, parseInt(e.target.value) || 0) })} 
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Days</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          value={banForm.days} 
+                          onChange={(e) => setBanForm({ ...banForm, days: Math.max(0, parseInt(e.target.value) || 0) })} 
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Months</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          value={banForm.months} 
+                          onChange={(e) => setBanForm({ ...banForm, months: Math.max(0, parseInt(e.target.value) || 0) })} 
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Years</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          value={banForm.years} 
+                          onChange={(e) => setBanForm({ ...banForm, years: Math.max(0, parseInt(e.target.value) || 0) })} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mm-form-group full-width">
                   <label htmlFor="ban-reason">Reason</label>
-                  <textarea id="ban-reason" rows={4} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter ban reason..." />
+                  <textarea id="ban-reason" rows={3} value={banForm.reason} onChange={(e) => setBanForm({ ...banForm, reason: e.target.value })} placeholder="Enter restriction reason..." />
                 </div>
               </div>
             </div>
             <div className="mm-modal-footer">
               <button className="mm-modal-cancel-btn" onClick={closeBanModal}>Cancel</button>
-              <button className="mm-modal-confirm-btn" onClick={handleBanMember}>Confirm Ban</button>
+              <button className="mm-modal-confirm-btn" onClick={handleBanMember}>Confirm Restriction</button>
             </div>
           </div>
         </div>

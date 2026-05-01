@@ -17,6 +17,7 @@ import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist } from '@mui/icons-material';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 
 const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
@@ -25,7 +26,7 @@ const MAX_NEST_DEPTH = 5;
 export default function CommentSection({ postId, router, commentCount, fanHubId }) {
   const localRouter = useRouter();
   const navRouter = router || localRouter;
-  const { userAuth, points, setPoints } = useAuth();
+  const { userAuth, points, setPoints, avatarUrl, avatarFrame } = useAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -33,7 +34,6 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
   const [isHubMember, setIsHubMember] = useState(false);
   const [checkingMembership, setCheckingMembership] = useState(false);
   const [joiningHub, setJoiningHub] = useState(false);
@@ -81,18 +81,6 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       setJoiningHub(false);
     }
   };
-
-  // Get current user avatar from localStorage or a default
-  useEffect(() => {
-    try {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        setCurrentUser(JSON.parse(userData));
-      }
-    } catch (e) {
-      // ignore
-    }
-  }, []);
 
   useEffect(() => {
     if (!postId) return;
@@ -147,15 +135,12 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
         showSteamSuccess('Comment posted!', 'Success');
 
         if (parentCommentId) {
-          // If replying to a comment, we need to refresh that comment's replies
-          // For simplicity, re-fetch all comments
           setOffset(0);
           setHasMore(true);
           fetchComments(0);
           setReplyingTo(null);
           setReplyText('');
         } else {
-          // Reset and re-fetch
           setCommentText('');
           setOffset(0);
           setHasMore(true);
@@ -165,8 +150,24 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     } catch (error) {
       console.error('Error sending comment:', error);
       const serverError = error.response?.data;
-      const errorMessage = serverError?.data || serverError?.message || error.message || 'Failed to post comment';
-      showSteamError(errorMessage, error.response?.status === 403 ? 'Forbidden' : 'Error');
+      
+      let errorMessage = 'Failed to post comment';
+      let errorTitle = 'Error';
+      
+      if (error.response?.status === 403) {
+        errorTitle = 'Action Restricted';
+        const details = serverError?.data || serverError?.message;
+        
+        if (details && (details.toLowerCase().includes('ban') || details.toLowerCase().includes('restrict'))) {
+          errorMessage = details;
+        } else {
+          errorMessage = 'You are restricted from commenting in this hub due to a moderation action. Please contact the hub moderator if you believe this is an error.';
+        }
+      } else {
+        errorMessage = serverError?.message || serverError?.data || error.message || 'An unexpected error occurred';
+      }
+      
+      showSteamError(errorMessage, errorTitle);
     }
   };
 
@@ -246,10 +247,20 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       }
     } catch (error) {
       console.error('Gifting error:', error);
-      showSteamError(
-        error?.response?.data?.message || 'Failed to send rose',
-        'Error'
-      );
+      const serverError = error.response?.data;
+      let errorMessage = serverError?.data || serverError?.message || 'Failed to send rose';
+      let errorTitle = 'Error';
+
+      if (error.response?.status === 403) {
+        errorTitle = 'Action Restricted';
+        if (errorMessage.toLowerCase().includes('ban') || errorMessage.toLowerCase().includes('restrict')) {
+          // Keep server message
+        } else {
+          errorMessage = 'You are currently restricted from interacting in this hub.';
+        }
+      }
+      
+      showSteamError(errorMessage, errorTitle);
     }
   };
 
@@ -311,13 +322,11 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       <div className='comment-input-container'>
         <div className='comment-input-wrapper'>
           {(fanHubId && isHubMember && !checkingMembership) && 
-          <img
+          <UserAvatar
             className='comment-input-avatar'
-            src={currentUser?.avatarUrl || '/profile-pic-undefined.jpg'}
-            alt='Your avatar'
-            onError={(e) => {
-              e.target.src = '/profile-pic-undefined.jpg';
-            }}
+            avatarUrl={avatarUrl}
+            avatarFrame={avatarFrame}
+            size="small"
           />}
           <div className='comment-input-box'>
             {fanHubId && !isHubMember && !checkingMembership ? (
@@ -463,14 +472,11 @@ function CommentItem({
     <>
       <div className='comment-item' style={{ paddingLeft: depth > 0 ? `${depth * 24 + 16}px` : '16px' }}>
         <div className='comment-content'>
-          <img
+          <UserAvatar
             className='comment-avatar'
-            src={comment.avatarUrl || '/profile-pic-undefined.jpg'}
-            alt={comment.displayName}
+            avatarUrl={comment.avatarUrl}
             onClick={() => onAuthorClick(comment.username)}
-            onError={(e) => {
-              e.target.src = '/profile-pic-undefined.jpg';
-            }}
+            size="small"
           />
           <div className='comment-body'>
             <div className='comment-header'>

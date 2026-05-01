@@ -6,6 +6,7 @@ import { useSideBar } from '@/contexts/SideBarContext';
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
 import { ChevronLeft, ChevronRight, EventRounded } from '@mui/icons-material';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import './NewsPage.css';
 
 import TagIco from '../../../assets/UI-Elements/tag-duotone.svg'
@@ -158,9 +159,9 @@ export default function NewsPage() {
         {selectedPost && (
           <div className='news-main-content' style={{ backgroundColor: selectedPost.fanHubThemeColor + '08' }}>
             <div className='news-hub-header'>
-              <img 
-                src={selectedPost.authorAvatarUrl || '/profile-pic-undefined.jpg'} 
-                alt={selectedPost.authorDisplayName}
+              <UserAvatar 
+                avatarUrl={selectedPost.authorAvatarUrl} 
+                size="medium"
                 className='news-hub-avatar'
               />
               <h2 className='news-hub-name'>{selectedPost.authorDisplayName}</h2>
@@ -258,9 +259,9 @@ export default function NewsPage() {
                 <div className='other-news-content'>
                   <h4 className='other-news-title'>{post.title}</h4>
                   <div className='other-news-meta'>
-                    <img 
-                      src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'} 
-                      alt={post.authorDisplayName}
+                    <UserAvatar 
+                      avatarUrl={post.authorAvatarUrl} 
+                      size="small"
                       className='other-news-avatar'
                     />
                     <span className='other-news-time'>{formatTimeAgo(post.createdAt)}</span>

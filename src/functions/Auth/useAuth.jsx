@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState({
     displayName: "",
     avatarUrl: "",
+    avatarFrame: "",
     points: 0,
     paidPoints: 0,
     translateLanguage: "",
@@ -60,6 +61,7 @@ export const AuthProvider = ({ children }) => {
     setProfile({
       displayName: "",
       avatarUrl: "",
+      avatarFrame: "",
       points: 0,
       paidPoints: 0,
       translateLanguage: "",
@@ -87,6 +89,7 @@ export const AuthProvider = ({ children }) => {
         setProfile({
           displayName: userData.displayName || "",
           avatarUrl: userData.avatarUrl || "",
+          avatarFrame: userData.avatarFrame || "",
           points: userData.points || 0,
           paidPoints: userData.paidPoints || 0,
           translateLanguage: userData.translateLanguage || "",

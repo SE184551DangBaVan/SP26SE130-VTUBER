@@ -3,6 +3,7 @@
 import React from 'react';
 import './NotificationDropdown.css';
 import { NotificationsOffOutlined, DoneAllOutlined, DeleteOutline } from '@mui/icons-material';
+import UserAvatar from '../UserAvatar/UserAvatar';
 
 const formatTimeAgo = (date) => {
     const now = new Date();
@@ -72,9 +73,9 @@ const NotificationDropdown = ({
                                 className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
                                 onClick={() => onNotificationClick(notif)}
                             >
-                                <img 
-                                    src={notif.triggeredByAvatarUrl || "/profile-pic-undefined.jpg"} 
-                                    alt="Triggered By" 
+                                <UserAvatar 
+                                    avatarUrl={notif.triggeredByAvatarUrl} 
+                                    size="small"
                                     className="notification-avatar"
                                 />
                                 <div className="notification-content">
