@@ -3,7 +3,7 @@
 import './Login.css'
 import { useAuth } from '../../functions/Auth/useAuth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { showLoading, updateToast } from '../../utils/toastUtils';
 import CheckBox from '../../components/CheckBox/CheckBox';
 import ToggleVisibility from '../../components/ToggleVisibility/ToggleVisibility';
@@ -20,6 +20,17 @@ export default function Login() {
 
   const [loginError, setLoginError] = useState(null);
   const [showExitAnimation, setShowExitAnimation] = useState(false);
+  const [rotatingTextIndex, setRotatingTextIndex] = useState(0);
+
+  const rotatingTexts = ["Interests", "Hobbies", "Oshi"];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotatingTextIndex((prevIndex) => (prevIndex + 1) % rotatingTexts.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -58,6 +69,18 @@ export default function Login() {
       <div className={`login-wrapper ${showExitAnimation ? 'exit' : ''}`}>
         <ImageGalleryBackdrop />
         <div className="background-grid-vfx login"></div>
+        <div className="background-welcome-login">
+          <div className="background-welcome-login-text">
+            <span>Find A Community</span>
+            <span>With Matching </span>
+            <span className='background-welcome-login-rotating-text'>
+              <p key={rotatingTextIndex} className="rotating-text-item">
+                {rotatingTexts[rotatingTextIndex]}
+              </p>
+            </span>
+            <span>Today!</span>
+          </div>
+        </div>
         <div className="card-switch">
           <div className="flip-card__inner">
             <div className="flip-card__front">

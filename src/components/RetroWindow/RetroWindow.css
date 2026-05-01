@@ -3,7 +3,7 @@
     border-radius: 12px;
     background-color: #FFFFFF;
     border: 3px solid #000000;
-    box-shadow: 10px 10px 0 0 #000000;
+    box-shadow: 4px 4px 0 0 #000000;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -29,6 +29,9 @@
 }
 .retro-window-container.yellow .window-border {
     background-color: #FDCB96;
+}
+.retro-window-container.purple .window-border {
+    background-color: #a06ed3;
 }
 
 

@@ -9,7 +9,6 @@ import { createPost, createPollPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamError } from '@/utils/SteamNotification';
-import { EventRounded } from '@mui/icons-material';
 import './CreatePostPage.css';
 
 export default function CreatePostPage() {
@@ -40,7 +39,6 @@ export default function CreatePostPage() {
   const [pollOptions, setPollOptions] = useState(['', '']);
   const dropdownRef = useRef(null);
   const textareaRef = useRef(null);
-  const datePickerRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -87,48 +85,11 @@ export default function CreatePostPage() {
     fetchJoinedHubs();
   }, [userAuth, router]);
 
-  // VTUBER exclusive fields
-  const [isAnnouncement, setIsAnnouncement] = useState(false);
-  const [isSchedule, setIsSchedule] = useState(false);
-  const [isHubOwner, setIsHubOwner] = useState(false);
-  const [checkingOwnership, setCheckingOwnership] = useState(true);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState('');
-
   useEffect(() => {
     if (!loadingHubs && joinedHubs.length === 0) {
       showError('You have not joined any hubs yet');
     }
   }, [loadingHubs, joinedHubs]);
-
-  // Check if user is the hub owner and has VTUBER role
-  useEffect(() => {
-    const checkOwnership = async () => {
-      if (!fanHubId || !userAuth?.role) {
-        setCheckingOwnership(false);
-        return;
-      }
-
-      try {
-        const memberData = await checkIsMember(parseInt(fanHubId));
-        console.log("role in hub:", memberData?.roleInHub);
-        console.log("role:", userAuth.role);
-
-        // User is hub owner if they have VTUBER role and are a member
-        const isOwner = userAuth.role === 'VTUBER' &&
-                        memberData?.roleInHub === 'VTUBER';
-
-        setIsHubOwner(isOwner);
-      } catch (error) {
-        console.error('Error checking hub ownership:', error);
-        setIsHubOwner(false);
-      } finally {
-        setCheckingOwnership(false);
-      }
-    };
-
-    checkOwnership();
-  }, [fanHubId, userAuth]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -162,57 +123,6 @@ export default function CreatePostPage() {
       }
       return newPreviews;
     });
-  };
-
-  const handleScheduleToggle = () => {
-    const newIsSchedule = !isSchedule;
-    setIsSchedule(newIsSchedule);
-    if (!newIsSchedule) {
-      setShowDatePicker(false);
-      setScheduleDate('');
-    }
-  };
-
-  const handleDatePickerClick = (e) => {
-    e.stopPropagation();
-    setShowDatePicker(true);
-  };
-
-  const handleDateChange = (e) => {
-    const dateValue = e.target.value;
-    setScheduleDate(dateValue);
-  };
-
-  const handleApplySchedule = () => {
-    if (!scheduleDate) {
-      showError('Please select a date');
-      return;
-    }
-
-    // Format as ISO string
-    const isoDate = new Date(scheduleDate).toISOString();
-    const appendText = ` - Append Schedule: ${isoDate}`;
-
-    // Insert at current cursor position or append to end
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      const startPos = textarea.selectionStart;
-      const endPos = textarea.selectionEnd;
-      const beforeText = content.substring(0, startPos);
-      const afterText = content.substring(endPos);
-
-      const newContent = beforeText + appendText + afterText;
-      setContent(newContent);
-      setShowDatePicker(false);
-
-      // Reset date picker
-      setScheduleDate('');
-    }
-  };
-
-  const handleCancelSchedule = () => {
-    setShowDatePicker(false);
-    setScheduleDate('');
   };
 
   const handleSubmit = async () => {

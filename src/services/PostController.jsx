@@ -122,7 +122,9 @@ export const createPost = async (postData, mediaFiles = null, mediaKey = 'images
           content: postData.content || '',
           hashtags: postData.hashtags || [],
           isAnnouncement: postData.isAnnouncement || false,
-          isSchedule: postData.isSchedule || false
+          isSchedule: postData.isSchedule || false,
+          startTime: postData.startTime || null,
+          endTime: postData.endTime || null
         })],
         { type: 'application/json' }
       )

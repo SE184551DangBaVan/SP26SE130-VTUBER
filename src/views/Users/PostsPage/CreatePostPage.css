@@ -688,6 +688,53 @@
   z-index: 100;
 }
 
+/* Schedule Date Range Container */
+.schedule-date-range-container {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.date-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-input-group .form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.date-input-group .date-input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1f2937;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.date-input-group .date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.date-input-group .date-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
 .custom-hub-option {
   display: flex;
   align-items: center;
