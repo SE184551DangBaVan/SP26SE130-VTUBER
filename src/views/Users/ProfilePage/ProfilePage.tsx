@@ -2,9 +2,18 @@
 import { useEffect, useState, useRef } from "react";
 import "./ProfilePage.css";
 import { useRouter } from "next/navigation";
-import { getUserByUsername, selectDisplayBadges, updateUserProfile, uploadAvatarFrame, setUserOshi } from "@/services/UserController";
+import {
+    getUserByUsername,
+    selectDisplayBadges,
+    updateUserProfile,
+    uploadAvatarFrame,
+    setUserOshi,
+    getUserFrames
+} from "@/services/UserController";
 import { useAuth } from "@/functions/Auth/useAuth";
 import { showSuccess, showError } from "@/utils/toastUtils";
+import { MoreVert, Check } from "@mui/icons-material";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 
 export default function ProfilePage({ username }: { username: string }) {
   const router = useRouter();
@@ -16,6 +25,17 @@ export default function ProfilePage({ username }: { username: string }) {
   const [userId, setUserId] = useState<number | null>(null);
   const [loggedInUserId, setLoggedInUserId] = useState<number | null>(null);
   const [isSettingOshi, setIsSettingOshi] = useState(false);
+
+  // Extra Options Menu State
+  const [showExtraOptions, setShowExtraOptions] = useState(false);
+  const extraOptionsRef = useRef<HTMLDivElement>(null);
+
+  // Frame Selection State
+  const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
+  const [userFrames, setUserFrames] = useState<any[]>([]);
+  const [loadingFrames, setLoadingFrames] = useState(false);
+  const [selectedFrameUrl, setSelectedFrameUrl] = useState<string | null>(null);
+  const [currentFrameUrl, setCurrentFrameUrl] = useState<string | null>(null);
 
   // Inline editing state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -49,6 +69,15 @@ export default function ProfilePage({ username }: { username: string }) {
     if (storedUserId) {
       setLoggedInUserId(parseInt(storedUserId, 10));
     }
+
+    // Handle outside clicks for extra options menu
+    const handleClickOutside = (e: MouseEvent) => {
+      if (extraOptionsRef.current && !extraOptionsRef.current.contains(e.target as Node)) {
+        setShowExtraOptions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -58,12 +87,15 @@ export default function ProfilePage({ username }: { username: string }) {
         if (data) {
             console.log(data);
           setUserId(data.userId);
+          setCurrentFrameUrl(data.frameUrl);
+          setSelectedFrameUrl(data.frameUrl);
           setUserData({
             displayName: data.displayName || data.username,
             username: data.username,
             email: data.email || "",
             avatar: data.avatarUrl || "/profile-pic-undefined.jpg",
             hasFrame: data.frameUrl !== null,
+            frameUrl: data.frameUrl,
             displayBadges: data.displayBadges || [],
             bio: data.bio || "No bio yet...",
             milestones: {
@@ -245,6 +277,57 @@ export default function ProfilePage({ username }: { username: string }) {
     }
   };
 
+  // Change Frame handlers
+  const handleOpenFrameModal = async () => {
+    setShowExtraOptions(false);
+    setLoadingFrames(true);
+    setIsFrameModalOpen(true);
+    try {
+      const frames = await getUserFrames();
+      setUserFrames(frames || []);
+    } catch (error) {
+      console.error("Failed to fetch frames:", error);
+      showError("Failed to load your frames");
+    } finally {
+      setLoadingFrames(false);
+    }
+  };
+
+  const handleCloseFrameModal = () => {
+    setIsFrameModalOpen(false);
+    setSelectedFrameUrl(currentFrameUrl);
+  };
+
+  const handleSelectFrame = (frameUrl: string) => {
+    setSelectedFrameUrl(frameUrl === selectedFrameUrl ? null : frameUrl);
+  };
+
+  const handleSaveFrame = async () => {
+    setIsUploading(true);
+    try {
+      // Use the refactored uploadAvatarFrame with frameUrl as param
+      const result = await uploadAvatarFrame(null, selectedFrameUrl);
+      if (result?.success) {
+        setCurrentFrameUrl(selectedFrameUrl);
+        setUserData({
+          ...userData,
+          hasFrame: selectedFrameUrl !== null,
+          frameUrl: selectedFrameUrl,
+        });
+        showSuccess("Avatar frame updated successfully!");
+        setIsFrameModalOpen(false);
+        await auth.refreshUser();
+      } else {
+        showError(result?.message || "Failed to update frame");
+      }
+    } catch (error) {
+      console.error("Save frame error:", error);
+      showError("An error occurred while saving the frame");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Avatar upload handlers
   const handleOpenAvatarUploadModal = () => {
     setIsAvatarUploadModalOpen(true);
@@ -393,27 +476,19 @@ export default function ProfilePage({ username }: { username: string }) {
   return (
     <div className="user-profile">
       <div className="main-info">
-        <div 
-          className={`user-avatar ${userData.hasFrame ? 'has-frame' : ''}`}
+        <UserAvatar
+          avatarUrl={userData.avatar}
+          avatarFrame={userData.frameUrl}
+          size="xlarge"
+          className={`profile-main-avatar ${userData.hasFrame ? 'has-frame' : ''}`}
           onClick={isCurrentUser ? handleOpenAvatarUploadModal : undefined}
-          onMouseEnter={(e) => {
-            if (isCurrentUser) {
-              e.currentTarget.classList.add('avatar-hoverable');
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (isCurrentUser) {
-              e.currentTarget.classList.remove('avatar-hoverable');
-            }
-          }}
         >
-          <img src={userData.avatar} alt="User Avatar" className="avatar-image" />
           {isCurrentUser && (
             <div className="avatar-edit-overlay">
               <span>Edit</span>
             </div>
           )}
-        </div>
+        </UserAvatar>
         <div className="user-details">
           <div className="display-name-wrapper">
             {isEditingName ? (
@@ -440,12 +515,28 @@ export default function ProfilePage({ username }: { username: string }) {
               <>
                 <h1 className="display-name">{userData.displayName}</h1>
                 {isCurrentUser ? (
-                  <button className="edit-icon-btn" onClick={handleStartEditName} title="Edit display name">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
+                  <div className="extra-options-wrapper" ref={extraOptionsRef}>
+                    <button 
+                      className="extra-options-btn" 
+                      onClick={() => setShowExtraOptions(!showExtraOptions)}
+                      title="More options"
+                    >
+                      <MoreVert />
+                    </button>
+                    {showExtraOptions && (
+                      <div className="extra-options-dropdown">
+                        <button className="extra-option-item" onClick={handleStartEditName}>
+                          Edit Name
+                        </button>
+                        <button className="extra-option-item" onClick={handleOpenModal}>
+                          Edit Badges
+                        </button>
+                        <button className="extra-option-item" onClick={handleOpenFrameModal}>
+                          Change Frame
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   userData.role === "VTUBER" && (
                     <button 
@@ -481,11 +572,6 @@ export default function ProfilePage({ username }: { username: string }) {
               </>
             )}
           </div>
-          {isCurrentUser && userData.allBadges && userData.allBadges.length > 0 && (
-            <button className="edit-badges-btn" onClick={handleOpenModal}>
-              Edit Display Badges
-            </button>
-          )}
         </div>
         {userData.oshi.name !== "N/A" && userData.oshi.avatar && (
           <div className="oshi-display">
@@ -494,7 +580,7 @@ export default function ProfilePage({ username }: { username: string }) {
               className="oshi-info" 
               onClick={() => router.push(`/user/${userData.oshi.username}`)}
             >
-              <img src={userData.oshi.avatar} alt={userData.oshi.name} className="oshi-avatar" />
+              <UserAvatar avatarUrl={userData.oshi.avatar} size="medium" className="oshi-avatar" />
               <p className="oshi-name">{userData.oshi.name}</p>
             </div>
           </div>
@@ -597,14 +683,12 @@ export default function ProfilePage({ username }: { username: string }) {
           <div className="section-content hubs-grid">
             {userData.hubs && userData.hubs.length > 0 ? (
               userData.hubs.map((hub: any, index: number) => (
-                <div key={index} className="hub-item">
-                  <div className="hub-avatar">
-                    {hub.avatarUrl ? (
-                      <img src={hub.avatarUrl} alt={hub.hubName || "Hub"} className="hub-avatar-image" />
-                    ) : (
-                      <div className="hub-avatar-placeholder">🎮</div>
-                    )}
-                  </div>
+                <div key={index} className="hub-item" onClick={() => router.push(`/hub/${hub.subdomain}`)} style={{ cursor: 'pointer' }}>
+                  <UserAvatar
+                    avatarUrl={hub.avatarUrl}
+                    size="medium"
+                    className="hub-avatar"
+                  />
                   <p className="hub-name">{hub.hubName || "Hub"}</p>
                 </div>
               ))
@@ -708,9 +792,12 @@ export default function ProfilePage({ username }: { username: string }) {
             </div>
             <div className="profile-modal-body avatar-preview-body">
               <div className="avatar-preview-container">
-                <div className="avatar-preview-circle">
-                  <img src={previewUrl} alt="Avatar Preview" className="avatar-preview-image" />
-                </div>
+                <UserAvatar 
+                  avatarUrl={previewUrl} 
+                  avatarFrame={userData.frameUrl}
+                  size="xlarge"
+                  className="avatar-preview-image" 
+                />
                 <p className="avatar-preview-label">This is how your avatar will look</p>
               </div>
             </div>
@@ -720,6 +807,74 @@ export default function ProfilePage({ username }: { username: string }) {
               </button>
               <button className="profile-btn-save" onClick={handlePreviewAccept} disabled={isUploading}>
                 {isUploading ? "Uploading..." : "Accept"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Frame Selection Modal */}
+      {isFrameModalOpen && (
+        <div className="profile-modal-overlay" onClick={handleCloseFrameModal}>
+          <div className="profile-modal-content frame-selection-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <h2>Change Avatar Frame</h2>
+              <button className="profile-modal-close" onClick={handleCloseFrameModal}>×</button>
+            </div>
+            <div className="profile-modal-body">
+              <div className="frame-preview-section">
+                <UserAvatar
+                  avatarUrl={userData.avatar}
+                  avatarFrame={selectedFrameUrl}
+                  size="xlarge"
+                  className="preview-avatar-container"
+                />
+                <p className="preview-label">Preview</p>
+              </div>
+
+              <div className="frame-inventory-section">
+                <h3>Your Inventory</h3>
+                {loadingFrames ? (
+                  <div className="loading-small">Loading frames...</div>
+                ) : userFrames.length === 0 ? (
+                  <div className="empty-inventory">
+                    <p>No frames available in your inventory.</p>
+                    <button className="go-shop-btn" onClick={() => router.push('/shop')}>Go to Shop</button>
+                  </div>
+                ) : (
+                  <div className="frame-grid">
+                    <div 
+                      className={`frame-item ${selectedFrameUrl === null ? 'selected' : ''}`}
+                      onClick={() => handleSelectFrame('')}
+                    >
+                      <div className="frame-icon-placeholder">None</div>
+                      <p className="frame-name">No Frame</p>
+                      {selectedFrameUrl === null && <div className="frame-check"><Check fontSize="small" /></div>}
+                    </div>
+                    {userFrames.map((frame, index) => (
+                      <div 
+                        key={index} 
+                        className={`frame-item ${selectedFrameUrl === frame.imageUrl ? 'selected' : ''}`}
+                        onClick={() => handleSelectFrame(frame.imageUrl)}
+                      >
+                        <div className="frame-image-wrapper">
+                          <img src={frame.imageUrl} alt={frame.itemName} className="frame-inventory-img" />
+                        </div>
+                        <p className="frame-name">{frame.itemName}</p>
+                        {selectedFrameUrl === frame.imageUrl && <div className="frame-check"><Check fontSize="small" /></div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="profile-modal-footer">
+              <button className="profile-btn-cancel" onClick={handleCloseFrameModal}>Cancel</button>
+              <button 
+                className="profile-btn-save" 
+                onClick={handleSaveFrame}
+                disabled={selectedFrameUrl === currentFrameUrl || isUploading}
+              >
+                {isUploading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

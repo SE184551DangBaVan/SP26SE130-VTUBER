@@ -218,12 +218,12 @@ export const updateUserProfile = async (userData) => {
 };
 
 /**
- * Upload user avatar and/or frame
+ * Upload user avatar and/or set avatar frame
  * @param {File} avatarFile - Avatar image file (MultipartFile)
- * @param {File} frameFile - Frame image file (MultipartFile, optional)
- * @returns {Promise<Object>} Result of the upload operation
+ * @param {string} frameUrl - The imageUrl of the frame to set (optional)
+ * @returns {Promise<Object>} Result of the operation
  */
-export const uploadAvatarFrame = async (avatarFile, frameFile = null) => {
+export const uploadAvatarFrame = async (avatarFile, frameUrl = null) => {
   try {
     const formData = new FormData();
     
@@ -231,12 +231,13 @@ export const uploadAvatarFrame = async (avatarFile, frameFile = null) => {
       formData.append('avatar', avatarFile);
     }
     
-    if (frameFile) {
-      formData.append('frame', frameFile);
+    let url = `/user/upload-avatar-frame`;
+    if (frameUrl) {
+      url += `?frame=${encodeURIComponent(frameUrl)}`;
     }
 
     const res = await axiosInstance.post(
-      `/user/upload-avatar-frame`,
+      url,
       formData,
       {
         headers: {
@@ -255,6 +256,27 @@ export const uploadAvatarFrame = async (avatarFile, frameFile = null) => {
       data: err.response?.data,
     });
     return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get all frames that a user has
+ * @returns {Promise<Array>} Array of user frames
+ */
+export const getUserFrames = async () => {
+  try {
+    const res = await axiosInstance.get(`/user/frames`);
+
+    console.log("getUserFrames response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data.data;
+    }
+
+    return [];
+  } catch (err) {
+    console.error("Get user frames error:", err);
+    return [];
   }
 };
 

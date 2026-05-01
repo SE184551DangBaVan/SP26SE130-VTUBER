@@ -9,6 +9,7 @@ import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { ShareRounded, CommentRounded, AutoAwesome, Translate, MoreHoriz, Flag, SwapHoriz, Close, PushPin, LocalFlorist, DeleteOutline } from '@mui/icons-material';
 import { votePoll, unVotePoll } from '@/services/PostController';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import './PostsPage.css';
 
 /**
@@ -431,12 +432,11 @@ export default function PostCard({
       return (
         <div className='post-header'>
           <div className='post-author-info'>
-            <img
+            <UserAvatar
               className='post-author-avatar'
-              src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-              alt={post.authorDisplayName}
+              avatarUrl={post.authorAvatarUrl}
               onClick={handleAvatarClick}
-              onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+              size="small"
             />
             <div className='post-author-details'>
               <span className='author-display-name'>{post.authorDisplayName}</span>
@@ -523,13 +523,11 @@ export default function PostCard({
     return (
       <div className='post-header'>
         <div className='post-author-info'>
-          <img
+          <UserAvatar
             className='post-author-avatar'
-            src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-            alt={post.authorDisplayName}
-            title="Go to author profile"
+            avatarUrl={post.authorAvatarUrl}
             onClick={handleAvatarClick}
-            onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+            size="small"
           />
           <div className='post-author-details'>
             <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>

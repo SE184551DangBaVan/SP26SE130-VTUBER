@@ -2,6 +2,7 @@ import React from 'react';
 import { GroupRounded } from '@mui/icons-material';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import UserAvatar from '../UserAvatar/UserAvatar';
 import './ExploreBanner.css';
 
 
@@ -9,6 +10,7 @@ const ExploreBanner = ({
   bannerUrl,
   themeColor = '#fff',
   avatarUrl,
+  avatarFrame,
   ownerDisplayName,
   hubName,
   memberCount,
@@ -29,13 +31,10 @@ const ExploreBanner = ({
       <div className="explore-banner-left">
         <div className="hub-info">
           <div className="hub-owner-info">
-            <img
+            <UserAvatar
               className="hub-owner-pfp"
-              src={avatarUrl || "/profile-pic-undefined.jpg"}
-              alt=""
-              onError={(e) => {
-                e.target.src = "/profile-pic-undefined.jpg";
-              }}
+              avatarUrl={avatarUrl}
+              size="medium"
             />
             <div className="hub-owner-info-display">
               <div className="hub-owner-display-name">

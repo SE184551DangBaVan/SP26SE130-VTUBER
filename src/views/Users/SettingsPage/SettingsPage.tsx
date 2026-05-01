@@ -9,6 +9,7 @@ import { useSideBar } from "@/contexts/SideBarContext";
 import { languageOptions } from "@/constants/languageOptions";
 import { showSuccess, showError, showWarning } from "@/utils/toastUtils";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 
 type SettingsSection = "profile" | "account" | "logout";
 
@@ -577,9 +578,9 @@ export default function SettingsPage() {
                     onMouseLeave={(e) => e.currentTarget.classList.remove('avatar-hoverable')}
                     onClick={handleOpenAvatarModal}
                   >
-                    <img
-                      src={avatarPreviewUrl || userData?.avatarUrl || "/profile-pic-undefined.jpg"}
-                      alt="Profile Avatar"
+                    <UserAvatar
+                      avatarUrl={avatarPreviewUrl || userData?.avatarUrl}
+                      size="large"
                       className="settings-avatar-image"
                     />
                     <div className="settings-avatar-overlay">
@@ -699,9 +700,11 @@ export default function SettingsPage() {
             </div>
             <div className="settings-modal-body avatar-preview-body">
               <div className="avatar-preview-container">
-                <div className="avatar-preview-circle">
-                  <img src={avatarPreviewUrl} alt="Avatar Preview" className="avatar-preview-image" />
-                </div>
+                <UserAvatar 
+                  avatarUrl={avatarPreviewUrl} 
+                  size="xlarge"
+                  className="avatar-preview-image" 
+                />
                 <p className="avatar-preview-label">This is how your avatar will look</p>
               </div>
             </div>

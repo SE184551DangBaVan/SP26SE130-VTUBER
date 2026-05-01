@@ -96,7 +96,7 @@
   font-weight: 600;
   color: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1001;
+  z-index: 21000;
   animation: slideInRight 0.3s ease;
 }
 

@@ -1,3 +1,4 @@
+import UserAvatar from '../UserAvatar/UserAvatar';
 import './ProfileBanner.css'
 
 export default function ProfileBanner() {
@@ -7,7 +8,11 @@ export default function ProfileBanner() {
         <div id="profile-banner-header">
         </div>
         <div id="profile-banner-content">
-        <img id="profile-banner-pfp" src="https://avatars.githubusercontent.com/u/71274141?v=4" width="100"/>
+        <UserAvatar 
+            avatarUrl="https://avatars.githubusercontent.com/u/71274141?v=4" 
+            size="large" 
+            className="profile-banner-pfp" 
+        />
         <div id="profile-banner-status-dnd"></div>
         <div id="profile-banner-badges">
             <img data-tooltip="HypeSquad Bravery" id="profile-banner-badge" src="https://static.wikia.nocookie.net/discord/images/b/b5/Bravery.png" />

@@ -65,6 +65,36 @@ export const setModerator = async (fanHubId, memberIds) => {
 };
 
 /**
+ * Remove a member from moderator role in a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number[]} memberIds - Array of member IDs to demote
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const removeModerator = async (fanHubId, memberIds) => {
+  try {
+    const res = await axiosInstance.post(
+      `/fan-hub-member/remove-moderator/${fanHubId}?memberIds=${memberIds.join(',')}`,
+      {}
+    );
+
+    console.log("removeModerator response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to remove moderator" };
+  } catch (err) {
+    console.error("Remove moderator error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
  * Get pending members of a fan hub (requests requiring approval)
  * @param {number} fanHubId - Fan Hub ID
  * @param {number} pageNo - Page number
@@ -264,6 +294,92 @@ export const revokeBan = async (banId) => {
     return { success: false, message: "Failed to revoke ban" };
   } catch (err) {
     console.error("Revoke ban error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Kick a member from a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {number} memberId - Member ID to kick
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const kickMember = async (fanHubId, memberId) => {
+  try {
+    const res = await axiosInstance.put(
+      `/fan-hub-member/${fanHubId}/kick/${memberId}`,
+      {}
+    );
+
+    console.log("kickMember response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to kick member" };
+  } catch (err) {
+    console.error("Kick member error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get member detail by ID
+ * @param {number} memberId - Fan Hub Member ID
+ * @returns {Promise<Object>} Member detail data
+ */
+export const getMemberDetail = async (memberId) => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub-member/members/${memberId}/detail`);
+
+    console.log("getMemberDetail response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to fetch member details" };
+  } catch (err) {
+    console.error("Fetch member detail error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Review a membership request (Approve or Reject)
+ * @param {number} fanHubMemberId - Fan Hub Member ID
+ * @param {string} status - New status (APPROVED or REJECTED)
+ * @returns {Promise<Object>} Result of the review operation
+ */
+export const reviewMember = async (fanHubMemberId, status) => {
+  try {
+    const res = await axiosInstance.put(
+      `/fan-hub-member/review?fanHubMemberId=${fanHubMemberId}&status=${status}`,
+      {}
+    );
+
+    console.log("reviewMember response:", res.data);
+
+    if (res.data?.success) {
+      return res.data;
+    }
+
+    return { success: false, message: "Failed to review membership request" };
+  } catch (err) {
+    console.error("Review member error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,

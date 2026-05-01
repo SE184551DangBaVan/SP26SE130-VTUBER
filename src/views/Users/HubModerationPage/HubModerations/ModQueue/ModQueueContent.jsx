@@ -4,19 +4,26 @@ import { useState } from "react";
 import PostModerationContent from "../PostModeration/PostModerationContent";
 import PostReportsTable from "../PostModeration/PostReportsTable";
 import MemberReportsTable from "../MemberModeration/MemberReportsTable";
+import PendingMembersTable from "../MemberModeration/PendingMembersTable";
 import "./ModQueueContent.css";
 
 export default function ModQueueContent({ fanHubId, isOwner }) {
-  const [activeSubTab, setActiveSubTab] = useState("needsReview");
+  const [activeSubTab, setActiveSubTab] = useState("postReview");
 
   return (
     <div className="mod-queue-content">
       <div className="moderation-sub-nav">
         <button 
-          className={`sub-nav-btn ${activeSubTab === "needsReview" ? "active" : ""}`}
-          onClick={() => setActiveSubTab("needsReview")}
+          className={`sub-nav-btn ${activeSubTab === "postReview" ? "active" : ""}`}
+          onClick={() => setActiveSubTab("postReview")}
         >
-          Needs Review
+          Post Review
+        </button>
+        <button 
+          className={`sub-nav-btn ${activeSubTab === "memberApproval" ? "active" : ""}`}
+          onClick={() => setActiveSubTab("memberApproval")}
+        >
+          Member Approval
         </button>
         <button 
           className={`sub-nav-btn ${activeSubTab === "postReports" ? "active" : ""}`}
@@ -33,8 +40,11 @@ export default function ModQueueContent({ fanHubId, isOwner }) {
       </div>
 
       <div className="queue-container">
-        {activeSubTab === "needsReview" && (
+        {activeSubTab === "postReview" && (
           <PostModerationContent fanHubId={fanHubId} isOwner={isOwner} initialStatus="PENDING" hideTabs={true} />
+        )}
+        {activeSubTab === "memberApproval" && (
+          <PendingMembersTable fanHubId={fanHubId} />
         )}
         {activeSubTab === "postReports" && (
           <PostReportsTable fanHubId={fanHubId} isOwner={isOwner} />
