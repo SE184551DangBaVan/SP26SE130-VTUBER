@@ -77,6 +77,99 @@ body:has(.login-wrapper) {
   animation: retroGridSlide 1s linear infinite;
 }
 
+.background-welcome-login {
+  position: absolute;
+  left: 40px;
+}
+
+@font-face {
+  font-family: "Liberty";
+  src: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/907368/liberty.otf");
+}
+
+.background-welcome-login .background-welcome-login-text {
+  display: flex;
+  flex-direction: column;
+  color: #000;
+}
+
+.background-welcome-login .background-welcome-login-text > span {
+  font-family: "Press Start 2P", system-ui;
+  font-weight: 400;
+  font-size: 1.5rem;
+  letter-spacing: -.05em;
+  color: #555;
+  flex-flow: row;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.background-welcome-login .background-welcome-login-text .background-welcome-login-rotating-text .rotating-text-item {
+  color: #71bdc1;
+  text-shadow: 0 0 2rem #60d9e2;
+  font-family: "Liberty";
+  font-weight: 100;
+  font-size: 2.2rem;
+  letter-spacing: -.05em;
+  flex-flow: row;
+  display: inline-block;
+  margin: 0;
+  animation: flicker 5s ease;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 1;
+  }  
+  2% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  6% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0;
+  }
+  98% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.background-welcome-login .background-welcome-login-text span:last-child {
+  color: rgb(219, 83, 105);
+}
+
 @keyframes retroGridSlide {
   0% {
     background-position: 0 0, 0 0;
@@ -114,6 +207,7 @@ body:has(.login-wrapper) {
 
 .flip-card__front {
     position: absolute;
+    z-index: 10;
     left: -180px;
     top: 0;
     display: flex;

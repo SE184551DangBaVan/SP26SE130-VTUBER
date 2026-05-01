@@ -5,7 +5,16 @@ import { verifyEmail, signUp } from '../../functions/Auth/registerAccount';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { showLoading, updateToast } from '../../utils/toastUtils';
+import UserFinishedIcon from '../../assets/Decor/man-confirmed.svg';
+import UserUnfinishedIcon from '../../assets/Decor/man-unsured.svg';
 import IDBadgeIcon from '../../assets/UI-Elements/id-badge-identity-card-svgrepo-com.svg'
+import ImgSequence1 from '../../assets/Decor/social-network-influencers1.png'
+import ImgSequence2 from '../../assets/Decor/social-network-influencers2.png'
+import ImgSequence3 from '../../assets/Decor/social-network-influencers3.png'
+import ImgSequence4 from '../../assets/Decor/social-network-influencers4.png'
+import ImgSequence5 from '../../assets/Decor/social-network-influencers5.png'
+import ImgSequence6 from '../../assets/Decor/social-network-influencers6.png'
+
 import PasswordStrengthBar from 'react-password-strength-bar'
 
 export default function Register() {
@@ -155,6 +164,27 @@ export default function Register() {
   return (
       <div className={`register-wrapper ${showExitAnimation ? 'exit' : ''}`}>
         <div className="background-grid-vfx signup"></div>
+        <div className='register-header'>
+          Welcome to 
+          <div className="flip-card__front-right-welcome-text-logo">
+            <img src="/Nav -_ Logo.svg" alt=''/>
+          </div>!
+        </div>
+        <div className='register-header-subtext'>
+          Join us today and explore to find you favourite Vtuber's community
+        </div>
+        <div className='pop-out-images'>
+          <div className='first-image-sequence'>
+            <img className='pop-out-image-sequence' src={ImgSequence1.src}></img>
+            <img className='pop-out-image-sequence' src={ImgSequence2.src}></img>
+            <img className='pop-out-image-sequence' src={ImgSequence3.src}></img>
+          </div>
+          <div className='second-image-sequence'>
+            <img className='pop-out-image-sequence' src={ImgSequence4.src}></img>
+            <img className='pop-out-image-sequence' src={ImgSequence5.src}></img>
+            <img className='pop-out-image-sequence' src={ImgSequence6.src}></img>
+          </div>
+        </div>
         <div className="card-switch">
           <div className="flip-card__inner">
             <div className="flip-card__front">
@@ -217,9 +247,25 @@ export default function Register() {
               </div>
               <div className="flip-card__front-right">
                 <div className='signIn-Info'>
-                  <div className='signIn-Info-ico'><img src={IDBadgeIcon.src} alt=''/></div>
+                  <div className="profile-preview-card">
+                    <div className="profile-preview-card_load"></div>
+                    {displayName ? <div className='profile-preview-card_displayName'>{displayName}</div> : <div className="profile-preview-card_load_extreme_title"></div>}
+                    {registerUsername ? <div className='profile-preview-card_userName'>@{registerUsername}</div> : <div className="profile-preview-card_load_extreme_descripion"></div>}
+                  </div>
+                  <div className='signIn-Info-ico'>
+                    <img src={IDBadgeIcon.src} alt='' />
+                  </div>
                   
                     <form className="flip-card__form">
+                      {registerUsername && emailEntered && registerPassword && displayName && userInput === otp ? 
+                      <div className='user-representation'>
+                        <img src={UserFinishedIcon.src} alt="User Icon"/>
+                      </div>
+                      :
+                      <div className='user-representation-confirmed'>
+                        <img src={UserUnfinishedIcon.src} alt="User Icon"/>
+                      </div>
+                      }
                       <div className='input-field'>
                         <div className="select">
                           <div
@@ -243,19 +289,19 @@ export default function Register() {
                           <div className="options">
                             <div title="English">
                               <input id="en" name="option" type="radio" checked={translateLanguage == "En"} onChange={() => setTranslateLanguage("En")} />
-                              <label className="option" htmlFor="en-r" data-txt="EN" ></label>
+                              <label className="option" htmlFor="en" data-txt="EN" ></label>
                             </div>
                             <div title="Tiếng Việt">
                               <input id="vn" name="option" type="radio" checked={translateLanguage == "Vn"} onChange={() => setTranslateLanguage("Vn")} />
-                              <label className="option" htmlFor="vn-r" data-txt="VN" ></label>
+                              <label className="option" htmlFor="vn" data-txt="VN" ></label>
                             </div>
                             <div title="中文">
                               <input id="cn" name="option" type="radio" checked={translateLanguage == "Cn"} onChange={() => setTranslateLanguage("Cn")} />
-                              <label className="option" htmlFor="cn-r" data-txt="CN" ></label>
+                              <label className="option" htmlFor="cn" data-txt="CN" ></label>
                             </div>
                             <div title="日本語">
                               <input id="jp" name="option" type="radio" checked={translateLanguage == "Jp"} onChange={() => setTranslateLanguage("Jp")} />
-                              <label className="option" htmlFor="jp-r" data-txt="JP" ></label>
+                              <label className="option" htmlFor="jp" data-txt="JP" ></label>
                             </div>
                           </div>
                         </div>

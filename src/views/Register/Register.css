@@ -92,12 +92,160 @@ body:has(.register-wrapper) {
   transition: all 0.8s ease;
 }
 
+.register-header {
+  position: absolute;
+  top: 20px;
+  left: 44%;
+  color: #000;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  font-family: "Jersey 20", system-ui;
+  font-size: 36px;
+  transform: translateY(-100%);
+  animation: slide-down 1s ease forwards;
+  animation-delay: 2s;
+}
+
+.register-header-subtext {
+  position: absolute;
+  top: 70px;
+  left: 40%;
+  color: #888888;
+  font-size: 12px;
+  font-family: 'Monda', system-ui;
+  transform: translateY(-100px);
+  animation: slide-down 1s ease forwards;
+  animation-delay: 2.2s;
+}
+
+@keyframes slide-down {
+  0% {
+    transform: translateY(-100px);
+  }
+  30% {
+    transform: translateY(20px);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  50%{
+    transform: translateY(10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+  80% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.pop-out-images {
+  position: absolute;
+  right: 140px;
+  top: 32%;
+  height: 250px;
+  width: calc(100vw - 140px);
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 48vw;
+}
+
+.pop-out-images img {
+  backdrop-filter: drop-shadow(2px 2px 0 10px #000);
+}
+
+.pop-out-images .first-image-sequence img {
+  width: 180px;
+  opacity: 0;
+  transform: translateX(-150%);
+  animation: first-pop-sequence 0.8s ease forwards;
+}
+
+.pop-out-images .first-image-sequence {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.pop-out-images .first-image-sequence img:nth-child(2) {
+  margin-left: 50px;
+  animation-delay: 0.2s;
+}
+
+.pop-out-images .first-image-sequence img:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes first-pop-sequence {
+  0% {
+    opacity: 0;
+    transform: translateX(-150%);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.pop-out-images .second-image-sequence img {
+  width: 180px;
+  opacity: 0;
+  transform: translateX(150%);
+  animation: second-pop-sequence 0.8s ease forwards;
+}
+
+.pop-out-images .second-image-sequence {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.pop-out-images .second-image-sequence img:nth-child(1) {
+  animation-delay: 1.4s;
+}
+
+.pop-out-images .second-image-sequence img:nth-child(2) {
+  margin-right: 50px;
+  animation-delay: 1.2s;
+}
+
+.pop-out-images .second-image-sequence img:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes second-pop-sequence {
+  0% {
+    opacity: 0;
+    transform: translateX(150%);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .card-switch {
   position: relative;
   z-index: 2;
   width: 300px;
   height: 440px;
   perspective: 1000px;
+  top: -15px;
 }
 
 /* card */
@@ -147,10 +295,97 @@ body:has(.register-wrapper) {
   height: 100%;
 }
 
+.profile-preview-card {
+  position: absolute;
+  width: 220px;
+  height: 120px;
+  background: #ffff;
+  box-shadow: 0 1px 25px rgba(0,0,0,0.25);
+  position: absolute;
+  transform: translate(-40%, -50%);
+  top: 28%;
+  left: 20%;
+  padding: 12px 10px;
+}
+
+.profile-preview-card_load {
+  width: 70px;
+  height: 70px;
+  position: relative;
+  float: left;
+  background: linear-gradient(120deg, #e5e5e5 30%, #f0f0f0 38%, #f0f0f0 
+  40%, #e5e5e5 48%);
+  border-radius: 50%;
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  animation: load89234 2s infinite;
+}
+
+.profile-preview-card_load_extreme_title {
+  width: 120px;
+  height: 15px;
+  position: relative;
+  top: 10px;
+  float: right;
+  border-radius: 5px;
+  background: linear-gradient(120deg, #e5e5e5 30%, #f0f0f0 38%, #f0f0f0 
+  40%, #e5e5e5 48%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  animation: load89234 2s infinite;
+}
+
+.profile-preview-card_load_extreme_descripion {
+  width: 100px;
+  height: 10px;
+  position: relative;
+  top: 10px;
+  right: 20px;
+  float: right;
+  border-radius: 5px;
+  background: linear-gradient(120deg, #e5e5e5 30%, #f0f0f0 38%, #f0f0f0 
+  40%, #e5e5e5 48%);
+  margin-top: 10px;
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  animation: load89234 2s infinite;
+}
+
+@keyframes load89234 {
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.profile-preview-card_displayName {
+  width: 120px;
+  height: 15px;
+  position: relative;
+  top: 10px;
+  float: right;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.profile-preview-card_userName {
+  width: 100px;
+  height: 10px;
+  position: relative;
+  top: 10px;
+  right: 20px;
+  float: right;
+  text-align: left;
+  font-size: 10px;
+  color: var(--font-color-sub);
+  margin-top: 10px;
+}
+
 .signIn-Info .signIn-Info-ico {
   position: absolute;
-  top: 60px;
-  left: 80px;
+  top: 140px;
+  left: 16px;
   height: 0;
   padding: 0;
   display: flex;
@@ -172,7 +407,7 @@ body:has(.register-wrapper) {
 }
 
 .signIn-Info-ico img {
-  width: 100px;
+  width: 40px;
   margin-top: 100%;
 }
 
@@ -352,7 +587,7 @@ body:has(.register-wrapper) {
 }
 
 .signIn-Info .input-field:has(.select) {
-  width: 250px !important;
+  width: 350px !important;
   height: 40px;
   z-index: 1;
   display: flex;
@@ -360,7 +595,7 @@ body:has(.register-wrapper) {
 }
 
 .signIn-Info .input-field .select {
-  width: 100px;
+  width: 150px;
   height: 45px;
   cursor: pointer;
   position: absolute;
@@ -491,8 +726,8 @@ body:has(.register-wrapper) {
 }
 
 .signIn-Info .input-field textarea.text-big {
-  width: 250px !important;
-  height: 100px !important;
+  width: 350px !important;
+  height: 120px !important;
 }
 
 .register-error-message {
@@ -509,6 +744,21 @@ body:has(.register-wrapper) {
   animation: pop-out 0.8s ease-out forwards;
 }
 
+.user-representation,
+.user-representation-confirmed {
+  position: absolute;
+  z-index: 0;
+  top: 40px;
+  right: 40px;
+  width: 120px;
+  height: 120px;
+}
+
+.user-representation img,
+.user-representation-confirmed img {
+  width: 100%;
+  height: 100%;
+}
 
 .input-field:has(.select) {
   width: 100%;
