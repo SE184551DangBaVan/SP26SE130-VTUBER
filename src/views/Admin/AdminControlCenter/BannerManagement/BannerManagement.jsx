@@ -17,9 +17,23 @@ const truncateText = (text, length = 100) => {
 
 const formatDateToISO = (datetimeLocalValue) => {
   if (!datetimeLocalValue) return '';
-  // datetimeLocalValue is in format "2026-04-22T23:59"
-  const date = new Date(datetimeLocalValue);
-  return date.toISOString();
+  // datetimeLocalValue is in format "2026-04-22T23:59" (local time)
+  // Split the date and time parts
+  const [datePart, timePart] = datetimeLocalValue.split('T');
+  
+  // Create a date string that JavaScript will parse as local time
+  const date = new Date(`${datePart}T${timePart}:00`);
+  
+  // Adjust for local timezone offset
+  const isoString = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
+  
+  console.log('📅 Date Formatting Debug:');
+  console.log('  Input (local):', datetimeLocalValue);
+  console.log('  Date object:', date.toString());
+  console.log('  Output (UTC):', isoString);
+  console.log('  Timezone offset:', date.getTimezoneOffset(), 'minutes');
+  
+  return isoString;
 };
 
 const formatDateRange = (startTime, endTime) => {
@@ -52,6 +66,7 @@ export default function BannerManagement() {
   const [bannerImageFile, setBannerImageFile] = useState(null);
   const [bannerImagePreview, setBannerImagePreview] = useState('');
   const [bannerSubmitting, setBannerSubmitting] = useState(false);
+  const [bannerValidationError, setBannerValidationError] = useState('');
 
   // Banner item creation form
   const [itemName, setItemName] = useState('');
@@ -62,6 +77,8 @@ export default function BannerManagement() {
   const [itemImageFile, setItemImageFile] = useState(null);
   const [itemImagePreview, setItemImagePreview] = useState('');
   const [itemSubmitting, setItemSubmitting] = useState(false);
+  const [itemValidationError, setItemValidationError] = useState('');
+  const [showItemForm, setShowItemForm] = useState(false);
 
   useEffect(() => {
     fetchBanners();
@@ -72,7 +89,33 @@ export default function BannerManagement() {
     setError(null);
     try {
       const data = await getAllBanners();
-      setBanners(Array.isArray(data) ? data : []);
+      // Sort banners: active first, then upcoming, then expired at bottom
+      const now = new Date();
+      const sorted = Array.isArray(data) ? [...data].sort((a, b) => {
+        const aStart = new Date(a.startTime);
+        const aEnd = new Date(a.endTime);
+        const bStart = new Date(b.startTime);
+        const bEnd = new Date(b.endTime);
+
+        // Active banners first
+        const aIsActive = a.isActive && aStart <= now && aEnd > now;
+        const bIsActive = b.isActive && bStart <= now && bEnd > now;
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+
+        // Then upcoming
+        const aIsUpcoming = aStart > now;
+        const bIsUpcoming = bStart > now;
+        if (aIsUpcoming && !bIsUpcoming) return -1;
+        if (!aIsUpcoming && bIsUpcoming) return 1;
+
+        // Expired at bottom
+        if (aEnd <= now && bEnd > now) return 1;
+        if (aEnd > now && bEnd <= now) return -1;
+
+        return 0;
+      }) : [];
+      setBanners(sorted);
     } catch (fetchError) {
       setError('Unable to load banners.');
     } finally {
@@ -114,6 +157,7 @@ export default function BannerManagement() {
     setBannerGachaCost('');
     setBannerImageFile(null);
     setBannerImagePreview('');
+    setBannerValidationError('');
   };
 
   const resetItemForm = () => {
@@ -124,27 +168,138 @@ export default function BannerManagement() {
     setItemType('MAIN_REWARD');
     setItemImageFile(null);
     setItemImagePreview('');
+    setItemValidationError('');
+  };
+
+  // Validation functions
+  const isBannerNameUnique = (name) => {
+    return !banners.some(b => b.name.toLowerCase() === name.toLowerCase());
+  };
+
+  const validateBannerForm = () => {
+    setBannerValidationError('');
+
+    if (!bannerName.trim()) {
+      setBannerValidationError('Banner name is required');
+      return false;
+    }
+
+    if (!isBannerNameUnique(bannerName)) {
+      setBannerValidationError('Banner name must be unique');
+      return false;
+    }
+
+    if (!bannerDescription.trim()) {
+      setBannerValidationError('Banner description is required');
+      return false;
+    }
+
+    if (!bannerStartTime) {
+      setBannerValidationError('Start date is required');
+      return false;
+    }
+
+    if (!bannerEndTime) {
+      setBannerValidationError('End date is required');
+      return false;
+    }
+
+    const now = new Date();
+    const startDate = new Date(bannerStartTime);
+    const endDate = new Date(bannerEndTime);
+
+    if (startDate < now) {
+      setBannerValidationError('Start date cannot be in the past');
+      return false;
+    }
+
+    if (startDate >= endDate) {
+      setBannerValidationError('Start date must be before end date');
+      return false;
+    }
+
+    if (!bannerGachaCost || Number(bannerGachaCost) <= 0) {
+      setBannerValidationError('Gacha cost must be greater than 0');
+      return false;
+    }
+
+    if (!bannerImageFile) {
+      setBannerValidationError('Banner image is required');
+      return false;
+    }
+
+    const maxFileSize = 50 * 1024 * 1024; // 50MB
+    if (bannerImageFile.size > maxFileSize) {
+      setBannerValidationError('Image file size must not exceed 50MB');
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateItemForm = () => {
+    setItemValidationError('');
+
+    if (!itemName.trim()) {
+      setItemValidationError('Item name is required');
+      return false;
+    }
+
+    if (!itemCategory.trim()) {
+      setItemValidationError('Item category is required');
+      return false;
+    }
+
+    if (!itemMultiplier || Number(itemMultiplier) < 1 || Number(itemMultiplier) > 99) {
+      setItemValidationError('Drop rate multiplier must be between 1-99% (cannot be 0% or 100%)');
+      return false;
+    }
+
+    return true;
+  };
+
+  const canActivateBanner = (banner) => {
+    const now = new Date();
+    const endDate = new Date(banner.endTime);
+    // Cannot activate if expired
+    if (endDate <= now) return false;
+    return true;
   };
 
   const handleBannerSubmit = async (event) => {
     event.preventDefault();
 
-    if (!bannerName || !bannerStartTime || !bannerEndTime || !bannerGachaCost) {
-      showError('Banner name, dates, and gacha cost are required.');
+    if (!validateBannerForm()) {
       return;
     }
 
     setBannerSubmitting(true);
 
     try {
-      const response = await createBanner({
+      const startISO = formatDateToISO(bannerStartTime);
+      const endISO = formatDateToISO(bannerEndTime);
+
+      const requestPayload = {
         name: bannerName,
-        startTime: formatDateToISO(bannerStartTime),
-        endTime: formatDateToISO(bannerEndTime),
+        startTime: startISO,
+        endTime: endISO,
         description: bannerDescription,
         gachaCost: Number(bannerGachaCost),
         bannerImageFile,
-      });
+      };
+
+      console.log('🎮 Banner Creation Request:');
+      console.log('  Name:', bannerName);
+      console.log('  Description:', bannerDescription);
+      console.log('  Start Time (input):', bannerStartTime);
+      console.log('  Start Time (ISO):', startISO);
+      console.log('  End Time (input):', bannerEndTime);
+      console.log('  End Time (ISO):', endISO);
+      console.log('  Gacha Cost:', bannerGachaCost);
+      console.log('  Image File:', bannerImageFile?.name, `(${(bannerImageFile?.size / 1024 / 1024).toFixed(2)}MB)`);
+      console.log('  Full Payload:', requestPayload);
+
+      const response = await createBanner(requestPayload);
 
       if (response?.success) {
         showSuccess('Banner created successfully');
@@ -154,6 +309,7 @@ export default function BannerManagement() {
         showError(response?.message || 'Failed to create banner');
       }
     } catch (submitError) {
+      console.error('❌ Banner creation error:', submitError);
       showError('Failed to create banner');
     } finally {
       setBannerSubmitting(false);
@@ -163,30 +319,32 @@ export default function BannerManagement() {
   const handleItemSubmit = async (event) => {
     event.preventDefault();
 
-    if (!itemName || !itemMultiplier) {
-      showError('Item name and multiplier are required.');
+    if (!validateItemForm()) {
       return;
     }
-    console.log('Submitting item with data:', {
-      bannerId: selectedBanner.bannerId,
-      itemName,
-      itemDescription,
-      itemCategory,
-      itemMultiplier,
-      itemType,
-      itemImageFile,
-    });
+
     setItemSubmitting(true);
 
     try {
-      const response = await addBannerItem(selectedBanner.bannerId, {
+      const requestPayload = {
         itemName,
         description: itemDescription,
         category: itemCategory,
         multiplier: Number(itemMultiplier),
         type: itemType,
         imageFile: itemImageFile,
-      });
+      };
+
+      console.log('🎁 Banner Item Creation Request:');
+      console.log('  Item Name:', itemName);
+      console.log('  Type:', itemType);
+      console.log('  Category:', itemCategory);
+      console.log('  Multiplier:', itemMultiplier + '%');
+      console.log('  Description:', itemDescription);
+      console.log('  Image File:', itemImageFile?.name || 'None');
+      console.log('  Full Payload:', requestPayload);
+
+      const response = await addBannerItem(selectedBanner.bannerId, requestPayload);
 
       if (response?.success) {
         showSuccess('Banner item added successfully');
@@ -197,6 +355,7 @@ export default function BannerManagement() {
         showError(response?.message || 'Failed to add banner item');
       }
     } catch (submitError) {
+      console.error('❌ Banner item creation error:', submitError);
       showError('Failed to add banner item');
     } finally {
       setItemSubmitting(false);
@@ -206,7 +365,26 @@ export default function BannerManagement() {
   const handleActivateBanner = async (bannerId, event) => {
     event.stopPropagation();
     if (processingBannerId === bannerId) return;
-    
+
+    // First fetch items to check if banner has items
+    try {
+      const items = await getBannerItems(bannerId);
+      if (!Array.isArray(items) || items.length === 0) {
+        showError('Add at least 2 items before activating');
+        return;
+      }
+
+      // Check if we have at least one of each type
+      const hasTypes = new Set(items.map(item => item.type));
+      if (hasTypes.size < 2) {
+        showError('Add at least 1 MAIN_REWARD and 1 GOOD_LUCK item before activating');
+        return;
+      }
+    } catch (err) {
+      showError('Failed to validate banner items');
+      return;
+    }
+
     setProcessingBannerId(bannerId);
     try {
       const response = await activateBanner(bannerId);
@@ -285,7 +463,8 @@ export default function BannerManagement() {
                         <button
                           className='banner-action-btn activate-btn'
                           onClick={(e) => handleActivateBanner(banner.bannerId, e)}
-                          disabled={processingBannerId === banner.bannerId}
+                          disabled={processingBannerId === banner.bannerId || !canActivateBanner(banner)}
+                          title={!canActivateBanner(banner) ? 'Cannot activate expired banner' : ''}
                         >
                           {processingBannerId === banner.bannerId ? 'Processing...' : 'Activate'}
                         </button>
@@ -318,9 +497,14 @@ export default function BannerManagement() {
           <div className='banner-form-panel'>
             <div className='banner-form-card'>
               <h2>Create New Banner</h2>
+              {bannerValidationError && (
+                <div className='banner-error-message' style={{ color: '#ff6348', marginBottom: '15px', padding: '10px', backgroundColor: '#ffe5e5', borderRadius: '4px' }}>
+                  ⚠️ {bannerValidationError}
+                </div>
+              )}
               <form className='banner-form' onSubmit={handleBannerSubmit}>
                 <label>
-                  Banner Name
+                  Banner Name *
                   <input
                     type='text'
                     value={bannerName}
@@ -330,7 +514,17 @@ export default function BannerManagement() {
                   />
                 </label>
                 <label>
-                  Start Time
+                  Description *
+                  <textarea
+                    value={bannerDescription}
+                    onChange={(e) => setBannerDescription(e.target.value)}
+                    placeholder='Describe this banner...'
+                    rows={4}
+                    required
+                  />
+                </label>
+                <label>
+                  Start Time *
                   <input
                     type='datetime-local'
                     value={bannerStartTime}
@@ -339,7 +533,7 @@ export default function BannerManagement() {
                   />
                 </label>
                 <label>
-                  End Time
+                  End Time *
                   <input
                     type='datetime-local'
                     value={bannerEndTime}
@@ -348,29 +542,21 @@ export default function BannerManagement() {
                   />
                 </label>
                 <label>
-                  Gacha Cost (Points)
+                  Single Pull Cost (Points) *
                   <input
                     type='number'
                     value={bannerGachaCost}
                     onChange={(e) => setBannerGachaCost(e.target.value)}
                     placeholder='10'
-                    min='0'
-                  />
-                </label>
-                <label>
-                  Description
-                  <textarea
-                    value={bannerDescription}
-                    onChange={(e) => setBannerDescription(e.target.value)}
-                    placeholder='Describe this banner...'
-                    rows={5}
+                    min='1'
+                    required
                   />
                 </label>
                 <label className='file-input-label'>
-                  Banner Image
+                  Featured Image (PNG/JPG, max 50MB) *
                   <input
                     type='file'
-                    accept='image/*'
+                    accept='image/png,image/jpeg'
                     onChange={handleBannerFileChange}
                     required
                   />
@@ -425,7 +611,7 @@ export default function BannerManagement() {
                     <div className='banner-item-card-body'>
                       <h3>{item.itemName}</h3>
                       <div className='banner-item-meta'>
-                        <span className={`banner-item-type ${item.type.toLowerCase()}`}>
+                        <span className={`banner-item-type ${item.type?.toLowerCase()}`}>
                           {item.type}
                         </span>
                         <span className='banner-item-multiplier'>{item.multiplier}%</span>
@@ -442,41 +628,52 @@ export default function BannerManagement() {
           <div className='banner-form-panel'>
             <div className='banner-form-card'>
               <h2>Add Item to Banner</h2>
+              {itemValidationError && (
+                <div className='banner-error-message' style={{ color: '#ff6348', marginBottom: '15px', padding: '10px', backgroundColor: '#ffe5e5', borderRadius: '4px' }}>
+                  ⚠️ {itemValidationError}
+                </div>
+              )}
+              <div className='items-summary' style={{ backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '4px', marginBottom: '15px', fontSize: '12px' }}>
+                <strong>Current Items:</strong> {bannerItems.length}
+              </div>
               <form className='banner-form' onSubmit={handleItemSubmit}>
                 <label>
-                  Item Name
+                  Item Name *
                   <input
                     type='text'
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder='Epic Frame'
+                    required
                   />
                 </label>
                 <label>
-                  Item Type
-                  <select value={itemType} onChange={(e) => setItemType(e.target.value)}>
+                  Item Type *
+                  <select value={itemType} onChange={(e) => setItemType(e.target.value)} required>
                     <option value='MAIN_REWARD'>Main Reward</option>
                     <option value='GOOD_LUCK'>Good Luck</option>
                   </select>
                 </label>
                 <label>
-                  Drop Rate Multiplier (%)
+                  Drop Rate Multiplier (%) *
                   <input
                     type='number'
                     value={itemMultiplier}
                     onChange={(e) => setItemMultiplier(e.target.value)}
-                    placeholder='20 (means 20% drop rate)'
-                    min='0'
-                    max='100'
+                    placeholder='30 (means 30% drop rate)'
+                    min='1'
+                    max='99'
+                    required
                   />
                 </label>
                 <label>
-                  Category (Optional)
+                  Category *
                   <input
                     type='text'
                     value={itemCategory}
                     onChange={(e) => setItemCategory(e.target.value)}
                     placeholder='FRAME, PET, etc.'
+                    required
                   />
                 </label>
                 <label>
@@ -484,8 +681,8 @@ export default function BannerManagement() {
                   <textarea
                     value={itemDescription}
                     onChange={(e) => setItemDescription(e.target.value)}
-                    placeholder='Describe this item...'
-                    rows={5}
+                    placeholder='A rare item...'
+                    rows={4}
                   />
                 </label>
                 <label className='file-input-label'>
