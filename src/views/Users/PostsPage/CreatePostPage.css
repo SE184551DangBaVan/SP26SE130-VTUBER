@@ -19,11 +19,65 @@
 .create-post-container {
   max-width: 800px;
   margin: 0 auto;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 32px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Custom Headline-style Title Input */
+.title-group {
+  margin-bottom: 12px;
+}
+
+.title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.title-input::placeholder {
+  color: #c0c0c0;
+}
+
+.title-input:focus {
+  border-bottom-color: #2d8cf0;
+}
+
+/* Metadata-style Hashtags Input */
+.hashtags-group {
+  margin-bottom: 32px;
+}
+
+.hashtags-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d8cf0;
+  outline: none;
+  font-family: inherit;
+}
+
+.hashtags-input::placeholder {
+  color: #a0a0a0;
+  font-weight: 400;
 }
 
 .create-post-header {

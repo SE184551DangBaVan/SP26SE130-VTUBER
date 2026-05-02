@@ -36,24 +36,32 @@ export const getShopItems = async (pageNo = 0, pageSize = 100, sortBy = "id") =>
 /**
  * Add a new shop item (VTuber/Hub owner only)
  * @param {Object} payload - Item data
- * @param {number} payload.request.itemId - Item ID
- * @param {string} payload.request.itemName - Item name
- * @param {string} payload.request.description - Item description
- * @param {string} payload.request.category - Item category
- * @param {number} payload.request.price - Item price
- * @param {string} payload.image - Base64 image string
  * @returns {Promise<Object>} Add result
  */
-export const addShopItem = async ({ itemName, description, category, price, imageFile }) => {
+export const addShopItem = async ({ 
+  itemId = null,
+  itemName = '', 
+  description = '', 
+  category = '', 
+  price = 0, 
+  size = 100,
+  xaxis = 0,
+  yaxis = 0,
+  imageFile = null 
+}) => {
   try {
     const formData = new FormData();
 
     // Add request JSON data as Blob with proper content type
     const requestPayload = {
+      itemId,
       itemName,
       description,
       category: category?.toUpperCase?.() || '',
-      price,
+      price: Number(price),
+      size: Number(size),
+      xaxis: Number(xaxis),
+      yaxis: Number(yaxis)
     };
 
     formData.append(
@@ -66,14 +74,84 @@ export const addShopItem = async ({ itemName, description, category, price, imag
       formData.append('image', imageFile);
     }
 
-    // Don't set Content-Type manually - axios interceptor will handle it
-    // The browser will set it with the correct boundary for FormData
     const res = await axiosInstance.post('/shop-items/add', formData);
 
     console.log("addShopItem response:", res.data);
     return res.data;
   } catch (err) {
     console.error("Add shop item error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Edit an existing shop item
+ * @param {number} shopItemId - Shop Item ID to edit
+ * @param {Object} payload - Item data
+ * @returns {Promise<Object>} Update result
+ */
+export const editShopItem = async (shopItemId, { 
+  itemName = '', 
+  description = '', 
+  category = '', 
+  price = 0, 
+  size = 100,
+  xaxis = 0,
+  yaxis = 0,
+  imageFile = null 
+}) => {
+  try {
+    const formData = new FormData();
+
+    const requestPayload = {
+      itemName,
+      description,
+      category: category?.toUpperCase?.() || '',
+      price: Number(price),
+      size: Number(size),
+      xaxis: Number(xaxis),
+      yaxis: Number(yaxis)
+    };
+
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(requestPayload)], { type: 'application/json' })
+    );
+
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    const res = await axiosInstance.put(`/shop-items/${shopItemId}/edit`, formData);
+
+    console.log("editShopItem response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Edit shop item error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Delete a shop item
+ * @param {number} shopItemId - Shop Item ID
+ * @returns {Promise<Object>} Deletion result
+ */
+export const deleteShopItem = async (shopItemId) => {
+  try {
+    const res = await axiosInstance.delete(`/shop-items/${shopItemId}/delete`);
+    console.log("deleteShopItem response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Delete shop item error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,

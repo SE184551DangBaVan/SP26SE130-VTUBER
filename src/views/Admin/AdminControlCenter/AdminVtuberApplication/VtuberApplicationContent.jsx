@@ -24,7 +24,7 @@ export default function VtuberApplicationContent() {
     setLoading(false);
   };
 
-  const handleEditClick = (app) => {
+  const handleReviewClick = (app) => {
     setSelectedApp(app);
     setReviewStatus('');
     setReviewReason('');
@@ -86,6 +86,12 @@ export default function VtuberApplicationContent() {
     }
   };
 
+  const getVerificationStatus = (isMatch) => {
+    if (isMatch === true) return <span className="verification-status verified">✓ Verified</span>;
+    if (isMatch === false) return <span className="verification-status unverified">✗ Mismatch</span>;
+    return <span className="verification-status unverified">Not Verified</span>;
+  };
+
   const paginatedApps = applications.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   return (
@@ -111,6 +117,7 @@ export default function VtuberApplicationContent() {
                   <th>Username</th>
                   <th>Channel Name</th>
                   <th>Channel Link</th>
+                  <th>Channel Verified</th>
                   <th>Status</th>
                   <th>Created At</th>
                   <th>Actions</th>
@@ -132,6 +139,7 @@ export default function VtuberApplicationContent() {
                         {app.channelLink}
                       </a>
                     </td>
+                    <td>{getVerificationStatus(app.isMatchChannelLinkAndId)}</td>
                     <td>
                       <span className={`status-badge ${getStatusBadgeClass(app.status)}`}>
                         {app.status}
@@ -140,10 +148,10 @@ export default function VtuberApplicationContent() {
                     <td>{formatDate(app.createdAt)}</td>
                     <td>
                       <button 
-                        className='edit-btn'
-                        onClick={() => handleEditClick(app)}
+                        className='review-btn'
+                        onClick={() => handleReviewClick(app)}
                       >
-                        Edit
+                        Review
                       </button>
                     </td>
                   </tr>

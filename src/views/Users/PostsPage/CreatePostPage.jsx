@@ -25,8 +25,6 @@ export default function CreatePostPage() {
   const [loadingHubs, setLoadingHubs] = useState(true);
   const [showHubDropdown, setShowHubDropdown] = useState(false);
 
-  const fanHubId = searchParams?.get('fanHubId');
-
   const [postType, setPostType] = useState('TEXT');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -172,18 +170,49 @@ export default function CreatePostPage() {
   };
 
   const handleMediaChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      const limitedFiles = postType === 'VIDEO' ? files.slice(0, 1) : files.slice(0, 4);
-      setMediaFiles(limitedFiles);
+    const newFiles = Array.from(e.target.files);
+    if (newFiles.length === 0) return;
 
-      const previews = limitedFiles.map(file => ({
+    if (postType === 'VIDEO') {
+      const file = newFiles[0];
+      setMediaFiles([file]);
+      
+      // Cleanup old previews
+      mediaPreview.forEach(p => URL.revokeObjectURL(p.url));
+      
+      setMediaPreview([{
+        name: file.name,
+        url: URL.createObjectURL(file),
+        type: file.type
+      }]);
+    } else {
+      // Calculate how many can be added
+      const currentCount = mediaFiles.length;
+      const remainingSlots = 4 - currentCount;
+      
+      if (remainingSlots <= 0) {
+        showError('You can only upload up to 4 images');
+        e.target.value = '';
+        return;
+      }
+      
+      const filesToAdd = newFiles.slice(0, remainingSlots);
+      if (newFiles.length > remainingSlots) {
+        showError(`Only the first ${remainingSlots} images were added (max 4 total)`);
+      }
+      
+      const newPreviews = filesToAdd.map(file => ({
         name: file.name,
         url: URL.createObjectURL(file),
         type: file.type
       }));
-      setMediaPreview(previews);
+      
+      setMediaFiles(prev => [...prev, ...filesToAdd]);
+      setMediaPreview(prev => [...prev, ...newPreviews]);
     }
+    
+    // Reset input value
+    e.target.value = '';
   };
 
   const removeMediaFile = (index) => {
@@ -209,26 +238,37 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (postType === 'IMAGE' && mediaFiles.length === 0) {
+      showError('Please upload at least one image');
+      return;
+    }
+
     if (postType === 'VIDEO' && mediaFiles.length === 0) {
       showError('Please upload a video file');
       return;
     }
 
     if (postType === 'POLL') {
-      // Filter out empty options
-      const validOptions = pollOptions.filter(opt => opt.trim());
-      if (validOptions.length < 2) {
+      const trimmedOptions = pollOptions.map(opt => opt.trim());
+      const filledOptions = trimmedOptions.filter(opt => opt !== '');
+      
+      if (filledOptions.length < 2) {
         showError('Poll must have at least 2 options');
         return;
       }
-      if (validOptions.length > 4) {
-        showError('Poll can have at most 4 options');
-        return;
+
+      // Check for gaps (e.g., option 1 and 3 filled, but 2 is empty)
+      let lastFilledIndex = -1;
+      for (let i = trimmedOptions.length - 1; i >= 0; i--) {
+        if (trimmedOptions[i] !== '') {
+          lastFilledIndex = i;
+          break;
+        }
       }
-      // Check for empty options in the middle
-      for (let i = 0; i < validOptions.length; i++) {
-        if (!validOptions[i].trim()) {
-          showError(`Option ${i + 1} cannot be empty`);
+
+      for (let i = 0; i <= lastFilledIndex; i++) {
+        if (trimmedOptions[i] === '') {
+          showError(`Option ${i + 1} cannot be empty if you have options following it`);
           return;
         }
       }
@@ -267,7 +307,9 @@ export default function CreatePostPage() {
           content: content.trim(),
           hashtags: hashtagsArray,
           isAnnouncement: isHubOwner ? isAnnouncement : false,
-          isSchedule: isHubOwner ? isSchedule : false
+          isSchedule: isHubOwner ? isSchedule : false,
+          startTime: (isSchedule && scheduleDate) ? new Date(scheduleDate).toISOString() : null,
+          endTime: (isSchedule && scheduleDate) ? new Date(scheduleDate).toISOString() : null
         };
 
         await createPost(postData, mediaToUpload, mediaKey);
@@ -459,206 +501,199 @@ export default function CreatePostPage() {
               </button>
             </div>
 
-        {/* Title Input */}
-        <div className='form-group'>
-          <label htmlFor='post-title' className='form-label'>
-            Title <span className='required'>*</span>
-          </label>
-          <input
-            type='text'
-            id='post-title'
-            className='form-input'
-            placeholder='Enter post title'
-            value={title}
-            onChange={handleTitleChange}
-            maxLength={300}
-          />
-          <span className='char-count'>{titleLength}/300</span>
-        </div>
-
-        {/* Hashtags Input */}
-        <div className='form-group'>
-          <label htmlFor='post-hashtags' className='form-label'>
-            Hashtags
-          </label>
-          <input
-            type='text'
-            id='post-hashtags'
-            className='form-input'
-            placeholder='Add hashtags (comma-separated)'
-            value={hashtags}
-            onChange={(e) => setHashtags(e.target.value)}
-          />
-          <span className='field-hint'>Separate multiple hashtags with commas</span>
-        </div>
-
-        {/* Content Editor */}
-        <div className='form-group'>
-          <label htmlFor='post-content' className='form-label'>
-            Content Text (optional)
-          </label>
-          <div className='textarea-wrapper'>
-            <textarea
-              ref={textareaRef}
-              id='post-content'
-              className='form-textarea'
-              placeholder="What content are you posting?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={8}
-            />
-            {/* Date Picker Button - shown inside textarea area */}
-            {!showDatePicker && (
-              <button
-                type='button'
-                className='date-picker-trigger-btn'
-                onClick={handleDatePickerClick}
-                title='Add Schedule'
-              >
-                <EventRounded fontSize='small' />
-              </button>
-            )}
-            {/* Date Picker Popup */}
-            {showDatePicker && (
-              <div className='date-picker-popup'>
-                <input
-                  ref={datePickerRef}
-                  type='datetime-local'
-                  value={scheduleDate}
-                  onChange={handleDateChange}
-                  className='date-picker-input'
-                />
-                <div className='date-picker-actions'>
-                  <button type='button' className='date-btn cancel' onClick={handleCancelSchedule}>
-                    Cancel
-                  </button>
-                  <button type='button' className='date-btn apply' onClick={handleApplySchedule}>
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Poll Options */}
-        {postType === 'POLL' && (
-          <div className='form-group'>
-            <label className='form-label'>
-              Poll Options <span className='required'>*</span>
-            </label>
-            <span className='field-hint'>Start with 2 options. Type in an option to reveal the next one (max 4).</span>
-            <div className='poll-options-container'>
-              {pollOptions.map((option, index) => (
-                <div key={index} className='poll-option-input-wrapper'>
-                  <span className='poll-option-number'>{index + 1}.</span>
-                  <input
-                    type='text'
-                    className='poll-option-input'
-                    placeholder={`Option ${index + 1}`}
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...pollOptions];
-                      newOptions[index] = e.target.value;
-
-                      // If typing in the last option and we haven't reached max 4, add a new empty option
-                      if (index === pollOptions.length - 1 && e.target.value.trim() !== '' && pollOptions.length < 4) {
-                        newOptions.push('');
-                      }
-
-                      setPollOptions(newOptions);
-                    }}
-                    maxLength={100}
-                  />
-                  {index >= 2 && (
-                    <button
-                      type='button'
-                      className='remove-poll-option-btn'
-                      onClick={() => {
-                        const newOptions = pollOptions.filter((_, i) => i !== index);
-                        setPollOptions(newOptions);
-                      }}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Media Upload - Only for IMAGE and VIDEO types */}
-        {(postType === 'IMAGE' || postType === 'VIDEO') && (
-          <div className='form-group'>
-            <label className='form-label'>
-              {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}{' '}
-              {postType === 'VIDEO' && <span className='required'>*</span>}
-            </label>
-            <div className='media-upload-area'>
+            {/* Title Input */}
+            <div className='form-group title-group'>
               <input
-                type='file'
-                id='media-upload'
-                className='media-upload-input'
-                accept={postType === 'IMAGE' ? 'image/*' : 'video/*'}
-                multiple={postType === 'IMAGE'}
-                onChange={handleMediaChange}
+                type='text'
+                id='post-title'
+                className='title-input'
+                placeholder='Enter post title'
+                value={title}
+                onChange={handleTitleChange}
+                maxLength={300}
               />
-              <label htmlFor='media-upload' className='media-upload-btn'>
-                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
-                  <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
-                  <circle cx='8.5' cy='8.5' r='1.5' />
-                  <polyline points='21 15 16 10 5 21' />
-                </svg>
-                {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}
-              </label>
+              <span className='char-count'>{titleLength}/300</span>
             </div>
-            {mediaPreview.length > 0 && (
-              <div className='media-preview-grid'>
-                {mediaPreview.map((preview, index) => (
-                  <div key={index} className='media-preview-item'>
-                    {postType === 'IMAGE' ? (
-                      <img src={preview.url} alt={preview.name} />
-                    ) : (
-                      <video src={preview.url} controls />
-                    )}
-                    <button
-                      type='button'
-                      className='remove-media-btn'
-                      onClick={() => removeMediaFile(index)}
-                    >
-                      ×
-                    </button>
+
+            {/* Hashtags Input */}
+            <div className='form-group hashtags-group'>
+              <input
+                type='text'
+                id='post-hashtags'
+                className='hashtags-input'
+                placeholder='Add hashtags (comma-separated)'
+                value={hashtags}
+                onChange={(e) => setHashtags(e.target.value)}
+              />
+              <span className='field-hint'>Separate multiple hashtags with commas</span>
+            </div>
+            {/* Content Editor */}
+            <div className='form-group'>
+              <label htmlFor='post-content' className='form-label'>
+                Content Text (optional)
+              </label>
+              <div className='textarea-wrapper'>
+                <textarea
+                  ref={textareaRef}
+                  id='post-content'
+                  className='form-textarea'
+                  placeholder="What content are you posting?"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={8}
+                />
+                {/* Date Picker Button - shown inside textarea area */}
+                {!showDatePicker && (
+                  <button
+                    type='button'
+                    className='date-picker-trigger-btn'
+                    onClick={handleDatePickerClick}
+                    title='Add Schedule'
+                  >
+                    <EventRounded fontSize='small' />
+                  </button>
+                )}
+                {/* Date Picker Popup */}
+                {showDatePicker && (
+                  <div className='date-picker-popup'>
+                    <input
+                      ref={datePickerRef}
+                      type='datetime-local'
+                      value={scheduleDate}
+                      onChange={handleDateChange}
+                      className='date-picker-input'
+                    />
+                    <div className='date-picker-actions'>
+                      <button type='button' className='date-btn cancel' onClick={handleCancelSchedule}>
+                        Cancel
+                      </button>
+                      <button type='button' className='date-btn apply' onClick={handleApplySchedule}>
+                        Apply
+                      </button>
+                    </div>
                   </div>
-                ))}
+                )}
+              </div>
+            </div>
+
+            {/* Poll Options */}
+            {postType === 'POLL' && (
+              <div className='form-group'>
+                <label className='form-label'>
+                  Poll Options <span className='required'>*</span>
+                </label>
+                <span className='field-hint'>Start with 2 options. Type in an option to reveal the next one (max 4).</span>
+                <div className='poll-options-container'>
+                  {pollOptions.map((option, index) => (
+                    <div key={index} className='poll-option-input-wrapper'>
+                      <span className='poll-option-number'>{index + 1}.</span>
+                      <input
+                        type='text'
+                        className='poll-option-input'
+                        placeholder={`Option ${index + 1}`}
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...pollOptions];
+                          newOptions[index] = e.target.value;
+
+                          // If typing in the last option and we haven't reached max 4, add a new empty option
+                          if (index === pollOptions.length - 1 && e.target.value.trim() !== '' && pollOptions.length < 4) {
+                            newOptions.push('');
+                          }
+
+                          setPollOptions(newOptions);
+                        }}
+                        maxLength={100}
+                      />
+                      {index >= 2 && (
+                        <button
+                          type='button'
+                          className='remove-poll-option-btn'
+                          onClick={() => {
+                            const newOptions = pollOptions.filter((_, i) => i !== index);
+                            setPollOptions(newOptions);
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Action Buttons */}
-        <div className='form-actions'>
-          <button
-            className='cancel-btn'
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className='submit-btn'
-            onClick={handleSubmit}
-            disabled={submitting || !selectedFanHubId || !title.trim()}
-          >
-            {submitting ? (
-              <>
-                <span className='spinner' />
-                Creating...
-              </>
-            ) : (
-              'Create Post'
+            {/* Media Upload - Only for IMAGE and VIDEO types */}
+            {(postType === 'IMAGE' || postType === 'VIDEO') && (
+              <div className='form-group'>
+                <label className='form-label'>
+                  {postType === 'IMAGE' ? 'Images' : 'Upload Video'}{' '}
+                  {(postType === 'IMAGE' || postType === 'VIDEO') && <span className='required'>*</span>}
+                </label>
+                <div className='media-upload-area'>
+                  <input
+                    type='file'
+                    id='media-upload'
+                    className='media-upload-input'
+                    accept={postType === 'IMAGE' ? 'image/*' : 'video/*'}
+                    multiple={postType === 'IMAGE'}
+                    onChange={handleMediaChange}
+                  />
+                  <label htmlFor='media-upload' className='media-upload-btn'>
+                    <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                      <rect x='3' y='3' width='18' height='18' rx='2' ry='2' />
+                      <circle cx='8.5' cy='8.5' r='1.5' />
+                      <polyline points='21 15 16 10 5 21' />
+                    </svg>
+                    {postType === 'IMAGE' ? 'Add Image' : 'Upload Video'}
+                  </label>
+                </div>
+                {mediaPreview.length > 0 && (
+                  <div className='media-preview-grid'>
+                    {mediaPreview.map((preview, index) => (
+                      <div key={index} className='media-preview-item'>
+                        {postType === 'IMAGE' ? (
+                          <img src={preview.url} alt={preview.name} />
+                        ) : (
+                          <video src={preview.url} controls />
+                        )}
+                        <button
+                          type='button'
+                          className='remove-media-btn'
+                          onClick={() => removeMediaFile(index)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
-          </button>
-        </div>
+
+            {/* Action Buttons */}
+            <div className='form-actions'>
+              <button
+                className='cancel-btn'
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                className='submit-btn'
+                onClick={handleSubmit}
+                disabled={submitting || !selectedFanHubId || !title.trim()}
+              >
+                {submitting ? (
+                  <>
+                    <span className='spinner' />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Post'
+                )}
+              </button>
+            </div>
           </>
         )}
       </div>

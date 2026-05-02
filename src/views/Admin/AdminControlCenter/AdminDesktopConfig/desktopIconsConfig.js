@@ -4,6 +4,7 @@ import BannerManageContent from '../BannerManagement/BannerManagement';
 import AnalyticsContent from '../AdminAnalytics/AnalyticsContent';
 import AdminFeedback from '../AdminFeedback/AdminFeedback';
 import AdminHubManagement from '../AdminHubManagement/AdminHubManagement';
+import AdminItemManagement from '../AdminItemManagement/AdminItemManagement';
 
 import ApplicationIco from '../../../../assets/UI-Elements/note.svg';
 import ShopItemIco from '../../../../assets/UI-Elements/shopping-cart.svg';
@@ -33,6 +34,13 @@ export const DESKTOP_ICONS_CONFIG = [
         icon: <img src={FanHubIco.src} alt="Fan Hub Management" style={{ width: '42px', height: '42px' }} />,
         component: AdminHubManagement,
         windowTitle: 'ADMIN_HUB_MANAGER.exe'
+    },
+    {
+        id: 'item-management',
+        label: 'Item Management',
+        icon: <img src={BannerItemIco.src} alt="Item Management" style={{ width: '42px', height: '42px' }} />,
+        component: AdminItemManagement,
+        windowTitle: 'ITEM_MANAGEMENT.exe'
     },
     {
         id: 'shop-items',

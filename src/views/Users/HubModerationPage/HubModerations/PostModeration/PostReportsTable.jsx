@@ -299,6 +299,22 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
                   )}
                   <div className="report-info-item full-width"><span className="report-info-label">Content:</span><span className="report-info-value report-reason-text">{selectedPost.content}</span></div>
                 </div>
+
+                {/* Poll Details Section for Reported Post - Options Only */}
+                {selectedPost.postType === 'POLL' && selectedPost.voteOptions && (
+                  <div className="report-poll-section">
+                    <h3>Poll Options</h3>
+                    <div className="report-poll-options">
+                      {selectedPost.voteOptions.map((option, index) => (
+                        <div key={option.id} className="report-poll-option simple">
+                          <span className="report-poll-option-number">{index + 1}.</span>
+                          <span className="report-poll-option-text">{option.optionText}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedPost.mediaUrls && selectedPost.mediaUrls.length > 0 && (
                   <div className="report-media-section">
                     <span className="report-info-label">Post Media:</span>
