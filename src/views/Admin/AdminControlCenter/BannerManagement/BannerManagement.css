@@ -573,3 +573,7 @@
   background: #5e5d4e;
   cursor: not-allowed;
 }
+
+.items-summary {
+  color: #000;
+}

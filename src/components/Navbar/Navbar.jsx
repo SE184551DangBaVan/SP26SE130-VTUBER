@@ -484,7 +484,7 @@ const Navbar = () => {
                                                 </span>
                                                 <span className="coin-amount paid-coin-amount">{paidPoints ?? 0}</span>
                                             </div>
-                                            <button className="add-coins-btn" aria-label="Add coins">
+                                            <button className="add-coins-btn" aria-label="Add coins" onClick={() => router.push('/payment/packages')}>
                                                 <AddOutlined />
                                             </button>
                                         </div>

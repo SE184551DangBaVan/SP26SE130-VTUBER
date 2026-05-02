@@ -57,7 +57,7 @@ export default function NewsPage() {
 
       try {
         const promises = joinedHubs.map(hub => 
-          getAnnouncementsAndEvents(hub.fanHubId, 0, 50, 'createdAt')
+          getAnnouncementsAndEvents(hub.fanHubId, 0, 100, 'createdAt')
             .then(posts => posts.map(post => ({ ...post, fanHubThemeColor: hub.themeColor, fanHubAvatarUrl: hub.avatarUrl })))
         );
 
