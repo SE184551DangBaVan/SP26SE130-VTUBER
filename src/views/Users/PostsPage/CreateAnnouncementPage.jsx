@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useSideBar } from '@/contexts/SideBarContext.tsx';
 import { getMyHubAsOwner } from '@/services/FanHubController';
@@ -11,7 +11,8 @@ import './CreatePostPage.css';
 
 export default function CreateAnnouncementPage() {
   const router = useRouter();
-  const { userAuth } = useAuth();
+  const searchParams = useSearchParams();
+  const { userAuth, loading: authLoading } = useAuth();
   const { sideBarRetractor } = useSideBar();
 
   const [ownedHub, setOwnedHub] = useState(null);
@@ -35,6 +36,8 @@ export default function CreateAnnouncementPage() {
   // Fetch owned hub on mount
   useEffect(() => {
     const fetchOwnedHub = async () => {
+      if (authLoading) return;
+
       if (!userAuth) {
         showError('You must be logged in to create an announcement');
         router.push('/login');
@@ -49,9 +52,6 @@ export default function CreateAnnouncementPage() {
           return;
         }
         setOwnedHub(hub);
-
-        // Store pre-selected hub for navigation after post
-        sessionStorage.setItem('createPostPreSelectedHub', hub.fanHubId);
       } catch (error) {
         console.error('Error fetching owned hub:', error);
         showError('Failed to load your hub');
@@ -61,7 +61,7 @@ export default function CreateAnnouncementPage() {
     };
 
     fetchOwnedHub();
-  }, [userAuth, router]);
+  }, [userAuth, authLoading, router]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -72,18 +72,49 @@ export default function CreateAnnouncementPage() {
   };
 
   const handleMediaChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      const limitedFiles = postType === 'VIDEO' ? files.slice(0, 1) : files.slice(0, 4);
-      setMediaFiles(limitedFiles);
+    const newFiles = Array.from(e.target.files);
+    if (newFiles.length === 0) return;
 
-      const previews = limitedFiles.map(file => ({
+    if (postType === 'VIDEO') {
+      const file = newFiles[0];
+      setMediaFiles([file]);
+      
+      // Cleanup old previews
+      mediaPreview.forEach(p => URL.revokeObjectURL(p.url));
+      
+      setMediaPreview([{
+        name: file.name,
+        url: URL.createObjectURL(file),
+        type: file.type
+      }]);
+    } else {
+      // Calculate how many can be added
+      const currentCount = mediaFiles.length;
+      const remainingSlots = 4 - currentCount;
+      
+      if (remainingSlots <= 0) {
+        showError('You can only upload up to 4 images');
+        e.target.value = '';
+        return;
+      }
+      
+      const filesToAdd = newFiles.slice(0, remainingSlots);
+      if (newFiles.length > remainingSlots) {
+        showError(`Only the first ${remainingSlots} images were added (max 4 total)`);
+      }
+      
+      const newPreviews = filesToAdd.map(file => ({
         name: file.name,
         url: URL.createObjectURL(file),
         type: file.type
       }));
-      setMediaPreview(previews);
+      
+      setMediaFiles(prev => [...prev, ...filesToAdd]);
+      setMediaPreview(prev => [...prev, ...newPreviews]);
     }
+    
+    // Reset input value
+    e.target.value = '';
   };
 
   const removeMediaFile = (index) => {
@@ -125,12 +156,17 @@ export default function CreateAnnouncementPage() {
       return;
     }
 
+    if (postType === 'IMAGE' && mediaFiles.length === 0) {
+      showError('Please upload at least one image');
+      return;
+    }
+
     if (postType === 'VIDEO' && mediaFiles.length === 0) {
       showError('Please upload a video file');
       return;
     }
 
-    // Validation for schedule: if isSchedule is true, both dates must be provided
+    // Validation for schedule
     if (isSchedule) {
       if (!scheduleStartDate || !scheduleEndDate) {
         showError('Both start and end dates are required for scheduled posts');
@@ -353,8 +389,8 @@ export default function CreateAnnouncementPage() {
             {(postType === 'IMAGE' || postType === 'VIDEO') && (
               <div className='form-group'>
                 <label className='form-label'>
-                  {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}{' '}
-                  {postType === 'VIDEO' && <span className='required'>*</span>}
+                  {postType === 'IMAGE' ? 'Images' : 'Upload Video'}{' '}
+                  {(postType === 'IMAGE' || postType === 'VIDEO') && <span className='required'>*</span>}
                 </label>
                 <div className='media-upload-area'>
                   <input
@@ -371,7 +407,7 @@ export default function CreateAnnouncementPage() {
                       <circle cx='8.5' cy='8.5' r='1.5' />
                       <polyline points='21 15 16 10 5 21' />
                     </svg>
-                    {postType === 'IMAGE' ? 'Upload Images' : 'Upload Video'}
+                    {postType === 'IMAGE' ? 'Add Image' : 'Upload Video'}
                   </label>
                 </div>
                 {mediaPreview.length > 0 && (
