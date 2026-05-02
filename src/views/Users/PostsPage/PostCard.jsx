@@ -21,6 +21,7 @@ import './PostsPage.css';
  *  - onCommentsClick:   Called when the comments button is clicked
  *  - onShareClick:      Called when the share button is clicked
  *  - onHubClick:        Called when the hub name is clicked
+ *  - onHashtagClick:    Called when a hashtag is clicked (receives tag name)
  *  - userAuth:          External user auth object (falls back to context)
  *  - router:            External router (falls back to useRouter)
  *  - hubData:           Optional hub data object (used for themeColor in hub pages)
@@ -32,6 +33,7 @@ export default function PostCard({
   onCommentsClick,
   onShareClick,
   onHubClick,
+  onHashtagClick,
   userAuth: externalUserAuth,
   router: externalRouter,
   hubData,
@@ -403,6 +405,11 @@ export default function PostCard({
     setCurrentImageIndex(index);
   };
 
+  const handleHashtagClick = (e, tag) => {
+    e.stopPropagation();
+    onHashtagClick?.(e, tag);
+  };
+
   // ---------- Content renderer ----------
   const renderPostTypeContent = () => {
     const displayContent = isTranslated ? (translatedContent || post.content) : post.content;
@@ -410,18 +417,18 @@ export default function PostCard({
 
     switch (post.postType) {
       case 'IMAGE':
-        return <ImagePostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} currentImageIndex={currentImageIndex} onPrevImage={handlePrevImage} onNextImage={handleNextImage} onDotClick={handleDotClick} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
+        return <ImagePostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} currentImageIndex={currentImageIndex} onPrevImage={handlePrevImage} onNextImage={handleNextImage} onDotClick={handleDotClick} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'VIDEO':
-        return <VideoPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
+        return <VideoPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'TEXT':
-        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
+        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'POLL':
-        return <PollPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
+        return <PollPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'ANNOUNCEMENT':
       case 'EVENT_SCHEDULE':
         return null;
       default:
-        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} />;
+        return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
     }
   };
 
@@ -784,7 +791,7 @@ export default function PostCard({
 //  Content Sub-Components
 // ============================================================
 
-function ImagePostContent({ post, displayContent, displayTitle, isTranslated, currentImageIndex, onPrevImage, onNextImage, onDotClick, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
+function ImagePostContent({ post, displayContent, displayTitle, isTranslated, currentImageIndex, onPrevImage, onNextImage, onDotClick, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   // Single image — no carousel needed
   if (!post.mediaUrls || post.mediaUrls.length === 1) {
     return (
@@ -835,7 +842,7 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
         {post.hashtags && post.hashtags.length > 0 && (
           <div className='post-hashtags'>
             {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag'>#{tag}</span>
+              <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
             ))}
           </div>
         )}
@@ -916,7 +923,7 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag'>#{tag}</span>
+            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -924,7 +931,7 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
   );
 }
 
-function VideoPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
+function VideoPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   return (
     <div className='post-content'>
       {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
@@ -972,7 +979,7 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag'>#{tag}</span>
+            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -980,7 +987,7 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
   );
 }
 
-function TextPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
+function TextPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   return (
     <div className='post-content'>
       {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
@@ -1020,7 +1027,7 @@ function TextPostContent({ post, displayContent, displayTitle, isTranslated, isC
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag'>#{tag}</span>
+            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -1028,7 +1035,7 @@ function TextPostContent({ post, displayContent, displayTitle, isTranslated, isC
   );
 }
 
-function PollPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose }) {
+function PollPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
   const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
   const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
@@ -1191,7 +1198,7 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
       {post.hashtags && post.hashtags.length > 0 && (
         <div className='post-hashtags'>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag'>#{tag}</span>
+            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -1206,12 +1213,14 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
+  const seconds = Math.max(0, Math.floor((now - date) / 1000));
+  const days = Math.floor(seconds / 86400);
 
   if (seconds < 60) return 'Just now';
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
 
-  return date.toLocaleDateString();
+  return `${Math.floor(days / 365)}y ago`;
 }

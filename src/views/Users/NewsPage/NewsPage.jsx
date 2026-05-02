@@ -267,14 +267,18 @@ export default function NewsPage() {
                     <span className='other-news-time'>{formatTimeAgo(post.createdAt)}</span>
                   </div>
                 </div>
+                {post.postType != "TEXT" && 
                 <div 
                   className='other-news-thumbnail'
-                  style={{ backgroundColor: post.fanHubThemeColor + '40' }}
+                  style={{ border: `2px solid ${post.fanHubThemeColor}` }}
                 >
-                  {post.mediaUrls && post.mediaUrls.length > 0 && (
+                  {post.mediaUrls && post.mediaUrls.length > 0 && post.postType === "IMAGE" && (
                     <img src={post.mediaUrls[0]} alt={post.title} />
                   )}
-                </div>
+                  {post.mediaUrls && post.mediaUrls.length > 0 && post.postType === "VIDEO" && (
+                    <video src={post.mediaUrls[0]} alt={post.title} style={{height: '100%'}}/>
+                  )}
+                </div>}
               </div>
             ))}
           </div>

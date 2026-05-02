@@ -243,9 +243,10 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
       router.push(currentPath, { scroll: false });
     } else {
       // On posts page or other pages, navigate to /posts
-      router.push('/posts', { scroll: false });
+      const hashtag = searchParams.get('hashtag');
+      router.push(hashtag ? `/posts?hashtag=${encodeURIComponent(hashtag)}` : '/posts', { scroll: false });
     }
-  }, [router, scrollPositionRef, isPropBased, onClose]);
+  }, [router, scrollPositionRef, isPropBased, onClose, searchParams]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

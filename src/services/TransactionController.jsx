@@ -59,3 +59,26 @@ export const createPaymentLink = async (paymentData) => {
     throw err;
   }
 };
+
+/**
+ * Cancel a payment by order code
+ * @param {number|string} orderCode - The payment order code to cancel
+ * @returns {Promise<Object>} Cancel response with success status and message
+ */
+export const cancelPayment = async (orderCode) => {
+  try {
+    const res = await axiosInstance.get(`/payment/cancel/${orderCode}`);
+
+    console.log("cancelPayment response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Cancel payment error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+      orderCode,
+    });
+    throw err;
+  }
+};

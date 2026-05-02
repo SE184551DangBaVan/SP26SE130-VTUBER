@@ -13,6 +13,7 @@ export default function VtuberApplicationPage() {
   // Application form state
   const [channelName, setChannelName] = useState('');
   const [channelLink, setChannelLink] = useState('');
+  const [channelId, setChannelId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // History state
@@ -64,7 +65,12 @@ export default function VtuberApplicationPage() {
   const handleApplicationSubmit = async (e) => {
     e.preventDefault();
     
-    if (!channelName.trim() || !channelLink.trim()) {
+    if (!userId) {
+      showError('Please log in before submitting an application');
+      return;
+    }
+
+    if (!channelName.trim() || !channelLink.trim() || !channelId.trim()) {
       showError('Please fill in all fields');
       return;
     }
@@ -73,12 +79,18 @@ export default function VtuberApplicationPage() {
     const toastId = showLoading('Submitting application...');
 
     try {
-      const result = await registerVtuberApplication(userId, channelName, channelLink);
+      const result = await registerVtuberApplication({
+        userId,
+        channelName,
+        channelLink,
+        channelId
+      });
 
       if (result?.success) {
         updateToast(toastId, 'success', 'Application submitted successfully!');
         setChannelName('');
         setChannelLink('');
+        setChannelId('');
         
         // Switch to history to see the new application
         setActiveTab('history');
@@ -198,6 +210,19 @@ export default function VtuberApplicationPage() {
                         placeholder='e.g., https://www.youtube.com/@VTuberChannel'
                         value={channelLink}
                         onChange={(e) => setChannelLink(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className='form-group'>
+                      <label htmlFor='channelId'>Channel ID</label>
+                      <input
+                        id='channelId'
+                        type='password'
+                        className='form-input'
+                        placeholder='e.g., UC_x5XG1OV2P6uZZ5FSM9Ttw'
+                        value={channelId}
+                        onChange={(e) => setChannelId(e.target.value)}
                         required
                       />
                     </div>

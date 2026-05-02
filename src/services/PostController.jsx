@@ -8,13 +8,18 @@ import { parsePostsSchedule } from "@/utils/parseSchedule";
  * @param {number} pageNo - Page number
  * @param {number} pageSize - Page size
  * @param {string} sortBy - Sort by field (createdAt, etc.)
+ * @param {string} sortDir - Sort direction (asc, desc)
+ * @param {string} hashtag - Optional hashtag filter
  * @returns {Promise<Array>} Posts data
  */
-export const getPostsFeed = async (pageNo = 0, pageSize = 10, sortBy = "createdAt") => {
+export const getPostsFeed = async (pageNo = 0, pageSize = 10, sortBy = "createdAt", sortDir = "desc", hashtag = null) => {
   try {
-    const res = await axiosInstance.get(
-      `/posts/feed?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${sortBy}`
-    );
+    let url = `/posts/feed?pageNo=${pageNo}&pageSize=${pageSize}&sortBy=${encodeURIComponent(sortBy)}&sortDir=${encodeURIComponent(sortDir)}`;
+    if (hashtag) {
+      url += `&hashtag=${encodeURIComponent(hashtag)}`;
+    }
+
+    const res = await axiosInstance.get(url);
 
     console.log("getPostsFeed response:", res.data);
 

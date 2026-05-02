@@ -15,69 +15,77 @@ const POSTS_PER_PAGE = 4;
 export default function PostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hashtagParam = searchParams.get('hashtag');
   const { userAuth } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [sortOrder, setSortOrder] = useState('latest');
+  const [sortDir, setSortDir] = useState('desc');
+  const [activeHashtag, setActiveHashtag] = useState(null);
   const [serverPage, setServerPage] = useState(0);
   const observer = useRef();
+  const latestFeedRequestRef = useRef(0);
   const scrollPositionRef = useRef(0);
 
-  const fetchPosts = useCallback(async (pageNum, sortBy, append = true) => {
-    // Only show full page loader on initial load
-    if (pageNum === 0 && posts.length === 0) {
-      setLoading(true);
-    }
+  const fetchPosts = useCallback(async (pageNum, sortDirParam, hashtagFilter, append = true, requestId = latestFeedRequestRef.current) => {
+    setLoading(true);
 
     try {
-      const newPosts = await getPostsFeed(pageNum, POSTS_PER_PAGE, sortBy);
+      let pageToFetch = pageNum;
 
-      if (newPosts.length < POSTS_PER_PAGE) {
-        setHasMore(false);
-      }
+      while (true) {
+        const newPosts = await getPostsFeed(pageToFetch, POSTS_PER_PAGE, 'createdAt', sortDirParam, hashtagFilter);
 
-      const filteredPosts = newPosts.filter(
-        post => post.postType !== 'ANNOUNCEMENT' && post.postType !== 'EVENT_SCHEDULE'
-      );
+        if (requestId !== latestFeedRequestRef.current) return;
 
-      if (filteredPosts.length > 0) {
-        if (append && pageNum !== 0) {
-          setPosts(prev => {
-            // Deduplicate posts by postId
-            const existingIds = new Set(prev.map(p => p.postId));
-            const uniqueNewPosts = filteredPosts.filter(p => !existingIds.has(p.postId));
-            return [...prev, ...uniqueNewPosts];
-          });
-        } else {
-          setPosts(filteredPosts);
+        setHasMore(newPosts.length >= POSTS_PER_PAGE);
+
+        const filteredPosts = newPosts.filter(
+          post => post.postType !== 'ANNOUNCEMENT' && post.postType !== 'EVENT_SCHEDULE'
+        );
+
+        if (filteredPosts.length > 0 || newPosts.length < POSTS_PER_PAGE) {
+          if (append && pageNum !== 0) {
+            setPosts(prev => {
+              // Deduplicate posts by postId
+              const existingIds = new Set(prev.map(p => p.postId));
+              const uniqueNewPosts = filteredPosts.filter(p => !existingIds.has(p.postId));
+              return [...prev, ...uniqueNewPosts];
+            });
+          } else {
+            setPosts(filteredPosts);
+          }
+
+          setServerPage(pageToFetch + 1);
+          break;
         }
-        setServerPage(pageNum + 1);
-      } else if (newPosts.length === POSTS_PER_PAGE) {
-        const nextPage = pageNum + 1;
-        setServerPage(nextPage);
-        await fetchPosts(nextPage, sortBy, append);
-        return;
-      } else {
-        if (pageNum === 0) setPosts([]);
-        setServerPage(pageNum + 1);
+
+        pageToFetch += 1;
+        if (requestId === latestFeedRequestRef.current) {
+          setServerPage(pageToFetch);
+        } else {
+          return;
+        }
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
-      // Only hide loader on initial load
-      if (pageNum === 0 && posts.length === 0) {
+      if (requestId === latestFeedRequestRef.current) {
         setLoading(false);
       }
     }
-  }, [posts.length]);
+  }, []);
 
   useEffect(() => {
-    const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
+    const requestId = latestFeedRequestRef.current + 1;
+    latestFeedRequestRef.current = requestId;
+
+    setActiveHashtag(hashtagParam || null);
+    setPosts([]);
     setServerPage(0);
     setHasMore(true);
-    fetchPosts(0, sortBy);
-  }, [sortOrder]);
+    fetchPosts(0, sortDir, hashtagParam, false, requestId);
+  }, [fetchPosts, hashtagParam, sortDir]);
 
   const lastPostElementRef = useCallback(
     (node) => {
@@ -86,24 +94,31 @@ export default function PostsPage() {
 
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          const sortBy = sortOrder === 'latest' ? 'createdAt' : 'createdAt';
-          fetchPosts(serverPage, sortBy);
+          fetchPosts(serverPage, sortDir, activeHashtag);
         }
       }, { rootMargin: '200px' });
 
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore, serverPage, sortOrder, fetchPosts]
+    [loading, hasMore, serverPage, sortDir, activeHashtag, fetchPosts]
   );
 
   const handleSortChange = (e) => {
-    setSortOrder(e.target.value);
+    setSortDir(e.target.value);
+  };
+
+  const handleHashtagClick = (e, tag) => {
+    e.stopPropagation();
+    router.push(`/posts?hashtag=${encodeURIComponent(tag)}`, { scroll: false });
   };
 
   const handlePostClick = (post) => {
     localStorage.setItem(`post_${post.postId}`, JSON.stringify(post));
     scrollPositionRef.current = window.scrollY;
-    router.push(`/posts?id=${post.postId}`, { scroll: false });
+    const params = new URLSearchParams();
+    if (activeHashtag) params.set('hashtag', activeHashtag);
+    params.set('id', post.postId);
+    router.push(`/posts?${params.toString()}`, { scroll: false });
   };
 
   const handleCommentsClick = (post) => {
@@ -112,7 +127,10 @@ export default function PostsPage() {
       return;
     }
     scrollPositionRef.current = window.scrollY;
-    router.push(`/posts?id=${post.postId}`, { scroll: false });
+    const params = new URLSearchParams();
+    if (activeHashtag) params.set('hashtag', activeHashtag);
+    params.set('id', post.postId);
+    router.push(`/posts?${params.toString()}`, { scroll: false });
   };
 
   const handleShareClick = (post) => {
@@ -167,9 +185,9 @@ export default function PostsPage() {
         <div className='posts-sort-bar'>
           <div className='sort-controls'>
             <label>Sort by:</label>
-            <select value={sortOrder} onChange={handleSortChange} className='sort-select'>
-              <option value='latest'>Latest</option>
-              <option value='oldest'>Oldest</option>
+            <select value={sortDir} onChange={handleSortChange} className='sort-select'>
+              <option value='desc'>Latest</option>
+              <option value='asc'>Oldest</option>
             </select>
           </div>
         </div>
@@ -194,6 +212,7 @@ export default function PostsPage() {
                       onCommentsClick={() => handleCommentsClick(post)}
                       onShareClick={() => handleShareClick(post)}
                       onHubClick={handleHubClick}
+                      onHashtagClick={handleHashtagClick}
                       userAuth={userAuth}
                       router={router}
                     />
@@ -208,6 +227,7 @@ export default function PostsPage() {
                     onCommentsClick={() => handleCommentsClick(post)}
                     onShareClick={() => handleShareClick(post)}
                     onHubClick={handleHubClick}
+                    onHashtagClick={handleHashtagClick}
                     userAuth={userAuth}
                     router={router}
                   />
@@ -233,12 +253,14 @@ export default function PostsPage() {
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
+  const seconds = Math.max(0, Math.floor((now - date) / 1000));
+  const days = Math.floor(seconds / 86400);
 
   if (seconds < 60) return 'Just now';
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
 
-  return date.toLocaleDateString();
+  return `${Math.floor(days / 365)}y ago`;
 }

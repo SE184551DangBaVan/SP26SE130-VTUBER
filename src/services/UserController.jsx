@@ -113,22 +113,24 @@ export const getUserByUsername = async (username) => {
  * @param {number} userId - User ID
  * @param {string} channelName - YouTube channel name
  * @param {string} channelLink - YouTube channel link
+ * @param {string} channelId - YouTube channel ID
  * @returns {Promise<Object>} Application result
  */
-export const registerVtuberApplication = async (userId, channelName, channelLink) => {
+export const registerVtuberApplication = async ({ userId, channelName, channelLink, channelId }) => {
   try {
     const res = await axiosInstance.post(
       `/vtuber-application/register-vtuber`,
       {
-        userId,
-        channelName,
-        channelLink
+        userId: Number(userId),
+        channelName: channelName.trim(),
+        channelLink: channelLink.trim(),
+        channelId: channelId.trim()
       }
     );
 
     console.log("registerVtuberApplication response:", res.data);
 
-    return res.data;
+    return res.data?.success !== undefined ? res.data : { success: true, data: res.data };
   } catch (err) {
     console.error("Register VTuber application error:", {
       message: err.message,
