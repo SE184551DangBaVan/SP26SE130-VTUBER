@@ -503,6 +503,22 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
                   </div>
                 </div>
               </div>
+
+              {/* Poll Details Section - Only show options in moderation */}
+              {selectedPost.postType === 'POLL' && selectedPost.voteOptions && (
+                <div className="pm-poll-section">
+                  <h3>Poll Options</h3>
+                  <div className="pm-poll-options-list">
+                    {selectedPost.voteOptions.map((option, index) => (
+                      <div key={option.id} className="pm-poll-option-item simple">
+                        <span className="pm-poll-option-number">{index + 1}.</span>
+                        <span className="pm-poll-option-text">{option.optionText}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="pm-media-section">
                 <h3>Media ({selectedPost.media?.length || 0})</h3>
                 {selectedPost.media && selectedPost.media.length > 0 ? (

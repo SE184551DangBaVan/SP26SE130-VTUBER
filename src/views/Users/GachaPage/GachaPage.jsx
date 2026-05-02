@@ -17,6 +17,7 @@ export default function GachaPage() {
 
   // Carousel state
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Summon confirmation modal
   const [showSummonModal, setShowSummonModal] = useState(false);
@@ -55,7 +56,7 @@ export default function GachaPage() {
     fetchData();
   }, []);
 
-  // Calculate duration text from startTime to endTime
+  // Calculate duration text
   const getDurationText = useCallback((startTime, endTime) => {
     if (!startTime || !endTime) return 'Permanent';
     const now = new Date();
@@ -68,7 +69,7 @@ export default function GachaPage() {
     return `${hours}h left`;
   }, []);
 
-  // Carousel navigation (infinite cycle)
+  // Carousel navigation
   const handlePrev = useCallback(() => {
     setSelectedIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   }, [banners.length]);
@@ -76,6 +77,17 @@ export default function GachaPage() {
   const handleNext = useCallback(() => {
     setSelectedIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   }, [banners.length]);
+
+  // Autoplay
+  useEffect(() => {
+    if (banners.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      handleNext();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [banners.length, isPaused, handleNext]);
 
   // Tooltip handlers
   const handleTooltipMove = useCallback((e, item) => {
@@ -86,13 +98,12 @@ export default function GachaPage() {
     setTooltip({ visible: false, x: 0, y: 0, item: null });
   }, []);
 
-  // Summon click -> show confirmation modal
+  // Summon logic
   const handleSummon = (count) => {
     setSummonCount(count);
     setShowSummonModal(true);
   };
 
-  // Confirm summon -> perform all pulls, then start reveal
   const handleConfirmSummon = async () => {
     setShowSummonModal(false);
     if (!selectedBanner) return;
@@ -102,26 +113,22 @@ export default function GachaPage() {
 
     for (let i = 0; i < totalPulls; i++) {
       const result = await doGachaPull(selectedBanner.bannerId);
-      if (result) {
-        results.push(result);
-      }
+      if (result) results.push(result);
     }
 
     setGachaResults(results);
     setShowGachaResult(true);
 
     if (results.length <= 1) {
-      // x1: go straight to summary
       setRevealPhase('summary');
       setRevealedItems(results);
     } else {
-      // x10: start reveal phase one by one
       setRevealPhase('reveal');
       setRevealIndex(0);
       setRevealedItems([]);
     }
 
-    // Refresh user points
+    // Refresh points
     try {
       const profile = await getCurrentUserProfile();
       if (profile) setUserPoints(profile.points || 0);
@@ -130,23 +137,18 @@ export default function GachaPage() {
     }
   };
 
-  const handleCancelSummon = () => {
-    setShowSummonModal(false);
-  };
+  const handleCancelSummon = () => setShowSummonModal(false);
 
-  // Advance to next item in reveal phase
   const handleNextReveal = useCallback(() => {
     if (revealIndex < gachaResults.length - 1) {
       setRevealedItems((prev) => [...prev, gachaResults[revealIndex]]);
       setRevealIndex((prev) => prev + 1);
     } else {
-      // Last item, move to summary
       setRevealedItems((prev) => [...prev, gachaResults[revealIndex]]);
       setRevealPhase('summary');
     }
   }, [revealIndex, gachaResults]);
 
-  // Click on backdrop: reveal phase = next item, summary phase = close
   const handleBackdropClick = useCallback(() => {
     if (revealPhase === 'summary') {
       handleGachaResultClose();
@@ -189,7 +191,7 @@ export default function GachaPage() {
 
   return (
     <div className={`gacha-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
-      {/* SVG Filters for MAIN_REWARD glow */}
+      {/* SVG Filters for glow */}
       <svg style={{ position: 'absolute', width: 0, height: 0 }}>
         <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq">
           <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 9 0" />
@@ -197,13 +199,10 @@ export default function GachaPage() {
         <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq2">
           <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 3 0" />
         </filter>
-        <filter width="300%" x="-100%" height="300%" y="-100%" id="unopaq3">
-          <feColorMatrix values="1 0 0 0.2 0 0 1 0 0.2 0 0 0 1 0.2 0 0 0 0 2 0" />
-        </filter>
       </svg>
 
-      {/* Left Sidebar - Banner List */}
-      {!sideBarRetractor && banners.length > 1 && (
+      {/* Sidebar List */}
+      {banners.length > 1 && (
         <div className="gacha-banner-sidebar">
           {banners.map((banner, index) => (
             <button
@@ -217,9 +216,9 @@ export default function GachaPage() {
         </div>
       )}
 
-      {/* Main Banner Area */}
+      {/* Main Container */}
       <div className="gacha-banner-area">
-        {/* Points Display */}
+        {/* Points */}
         <div className="gacha-points-display">
           <img className="points-icon" src={PointsIco.src} alt="Points" />
           <span className="points-value">{userPoints}</span>
@@ -238,66 +237,56 @@ export default function GachaPage() {
           </div>
         )}
 
-        {/* Banner Carousel */}
-        <div className="banner-carousel">
+        {/* Carousel */}
+        <div 
+          className="banner-carousel"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           {banners.length > 1 && (
             <>
               <button className="banner-arrow banner-arrow-left" onClick={handlePrev}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
               <button className="banner-arrow banner-arrow-right" onClick={handleNext}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
             </>
           )}
 
-          {/* Carousel Track */}
           <div
             className="banner-carousel-track"
             style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
           >
             {banners.map((banner) => (
-              <div key={banner.bannerId} className="banner-slide" style={{background: `url('${banner.bannerImgUrl}')`, backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundSize: 'cover', imageRendering: 'pixelated'}}>
+              <div key={banner.bannerId} className="banner-slide">
+                <div 
+                  className="banner-background" 
+                  style={{ background: `url('${banner.bannerImgUrl}')` }}
+                />
                 <div className="banner-text-overlay">
-                  <h1 className="banner-title">{banner.name}</h1>
                   <span className="banner-duration">
                     {getDurationText(banner.startTime, banner.endTime)}
                   </span>
+                  <h1 className="banner-title">{banner.name}</h1>
                   <p className="banner-description">{banner.description}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Bottom Action Bar */}
+          {/* Controls Bar */}
           <div className="banner-bottom-bar">
             <div className="banner-icon-buttons">
               <button className="icon-btn" title="Info">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <circle cx="10" cy="9" r="1" />
-                </svg>
-              </button>
-              <button className="icon-btn" title="Shop">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                </svg>
-              </button>
-              <button className="icon-btn" title="History">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <circle cx="12" cy="16" r="1" />
-                  <line x1="12" y1="12" x2="12" y2="15" />
+                  <circle cx="12" cy="13" r="3" />
                 </svg>
               </button>
             </div>
@@ -314,18 +303,14 @@ export default function GachaPage() {
         </div>
       </div>
 
-      {/* Summon Confirmation Modal */}
-      {showSummonModal && selectedBanner && (
+      {/* Confirmation Modal */}
+      {showSummonModal && (
         <div className="summon-modal-backdrop" onClick={handleCancelSummon}>
           <div className="summon-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="summon-modal-corner-tl"></div>
-            <div className="summon-modal-corner-br"></div>
-            <div className="summon-modal-info">
-              <h2 className="summon-modal-banner-name">{selectedBanner.name}</h2>
-              <p className="summon-modal-question">
-                Spend <span className="summon-modal-cost">{totalCost}</span> Pts to do a x{summonCount} roll?
-              </p>
-            </div>
+            <h2 className="summon-modal-banner-name">{selectedBanner?.name}</h2>
+            <p className="summon-modal-question">
+              Spend <span className="summon-modal-cost">{totalCost}</span> Pts for x{summonCount} rolls?
+            </p>
             <div className="summon-modal-actions">
               <button className="summon-modal-btn summon-modal-btn-cancel" onClick={handleCancelSummon}>
                 Cancel
@@ -338,37 +323,16 @@ export default function GachaPage() {
         </div>
       )}
 
-      {/* Gacha Result Popup */}
+      {/* Result Popup */}
       {showGachaResult && (
-        <div
-          className="gacha-result-backdrop"
-          onClick={handleBackdropClick}
-        >
+        <div className="gacha-result-backdrop" onClick={handleBackdropClick}>
           <div className="gacha-result-content" onClick={(e) => e.stopPropagation()}>
             {revealPhase === 'reveal' && gachaResults[revealIndex] && (
               <>
-                <h2 className="gacha-result-title">
-                  Obtained
-                </h2>
-                <div
-                  key={revealIndex}
-                  className={`gacha-result-card ${gachaResults[revealIndex].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-reveal-card`}
-                  onMouseMove={(e) => handleTooltipMove(e, gachaResults[revealIndex])}
-                  onMouseLeave={handleTooltipLeave}
-                >
+                <h2 className="gacha-result-title">New Item!</h2>
+                <div className={`gacha-result-card ${gachaResults[revealIndex].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'}`}>
                   <div className="gacha-result-card-inner">
-                    {gachaResults[revealIndex].type === 'MAIN_REWARD' && (
-                      <div className="gacha-spin-wrap">
-                        <div className="gacha-backdrop"></div>
-                        <div className="gacha-spin gacha-spin-blur"></div>
-                        <div className="gacha-spin gacha-spin-intense"></div>
-                      </div>
-                    )}
-                    <img
-                      src={gachaResults[revealIndex].imageUrl || '/gacha/item-default.jpg'}
-                      alt={gachaResults[revealIndex].itemName}
-                      className="gacha-result-image"
-                    />
+                    <img src={gachaResults[revealIndex].imageUrl} alt={gachaResults[revealIndex].itemName} className="gacha-result-image" />
                     <span className="gacha-result-name">{gachaResults[revealIndex].itemName}</span>
                   </div>
                 </div>
@@ -376,79 +340,30 @@ export default function GachaPage() {
               </>
             )}
 
-            {/* SUMMARY PHASE: Grid of all items */}
             {revealPhase === 'summary' && (
               <>
-                <h2 className="gacha-result-title">
-                  {revealedItems.length > 1 ? `Items Obtained` : 'Summon Result'}
-                </h2>
-                {revealedItems.length === 1 ? (
-                  <div className="gacha-single-result">
-                    <div
-                      className={`gacha-result-card ${revealedItems[0].type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-summary-card`}
-                      onMouseMove={(e) => handleTooltipMove(e, revealedItems[0])}
-                      onMouseLeave={handleTooltipLeave}
-                    >
+                <h2 className="gacha-result-title">Summon Results</h2>
+                <div className="gacha-items-summary">
+                  {revealedItems.map((item, index) => (
+                    <div key={index} className={`gacha-result-card ${item.type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'}`}>
                       <div className="gacha-result-card-inner">
-                        {revealedItems[0].type === 'MAIN_REWARD' && (
-                          <div className="gacha-spin-wrap">
-                            <div className="gacha-backdrop"></div>
-                            <div className="gacha-spin gacha-spin-blur"></div>
-                            <div className="gacha-spin gacha-spin-intense"></div>
-                          </div>
-                        )}
-                        <img
-                          src={revealedItems[0].imageUrl || '/gacha/item-default.jpg'}
-                          alt={revealedItems[0].itemName}
-                          className="gacha-result-image"
-                        />
-                        <span className="gacha-result-name">{revealedItems[0].itemName}</span>
+                        <img src={item.imageUrl} alt={item.itemName} className="gacha-result-image" />
+                        <span className="gacha-result-name">{item.itemName}</span>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="gacha-items-summary">
-                    {revealedItems.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`gacha-result-card ${item.type === 'MAIN_REWARD' ? 'main-reward' : 'good-luck'} gacha-summary-card`}
-                        style={{ animationDelay: `${index * 0.08}s` }}
-                        onMouseMove={(e) => handleTooltipMove(e, item)}
-                        onMouseLeave={handleTooltipLeave}
-                      >
-                        <div className="gacha-result-card-inner">
-                          {item.type === 'MAIN_REWARD' && (
-                            <div className="gacha-spin-wrap">
-                              <div className="gacha-backdrop"></div>
-                              <div className="gacha-spin gacha-spin-blur"></div>
-                              <div className="gacha-spin gacha-spin-intense"></div>
-                            </div>
-                          )}
-                          <img
-                            src={item.imageUrl || '/gacha/item-default.jpg'}
-                            alt={item.itemName}
-                            className="gacha-result-image"
-                          />
-                          <span className="gacha-result-name">{item.itemName}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="gacha-result-hint">Click anywhere to exit</p>
+                  ))}
+                </div>
+                <p className="gacha-result-hint">Click anywhere to close</p>
               </>
             )}
           </div>
         </div>
       )}
 
-      {/* Item Tooltip */}
+      {/* Tooltip */}
       {tooltip.visible && tooltip.item && (
-        <div
-          className="gacha-item-tooltip"
-          style={{ left: tooltip.x + 16, top: tooltip.y - 10 }}
-        >
-          <span >{tooltip.item.itemName}</span> <br/>
+        <div className="gacha-item-tooltip" style={{ left: tooltip.x + 16, top: tooltip.y - 10 }}>
+          <span>{tooltip.item.itemName}</span> <br/>
           <span className="tooltip-cost">{tooltip.item.cost} Pts</span>
         </div>
       )}
