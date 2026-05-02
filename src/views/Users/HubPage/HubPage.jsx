@@ -114,10 +114,8 @@ export default function HubPage({ ownedHub }) {
     if (!canCreatePost) {
       setShowCreatePostModal(true);
     } else {
-      // Store the fanHubId in session storage for auto-selection
-      sessionStorage.setItem('createPostPreSelectedHub', activeFanHubId);
-      // Navigate to create post page
-      router.push(`/create-post`);
+      // Navigate to create post page with fanHubId param
+      router.push(`/create-post?fanHubId=${activeFanHubId}`);
     }
   };
 
@@ -480,8 +478,7 @@ export default function HubPage({ ownedHub }) {
                 <button
                   className='create-announcement-header-btn'
                   onClick={() => {
-                    sessionStorage.setItem('createPostPreSelectedHub', activeFanHubId);
-                    router.push('/create-announcement');
+                    router.push(`/create-announcement?fanHubId=${activeFanHubId}`);
                   }}
                   title='Create Announcement'
                 >

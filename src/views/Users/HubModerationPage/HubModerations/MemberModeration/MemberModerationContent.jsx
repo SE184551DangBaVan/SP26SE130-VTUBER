@@ -5,6 +5,7 @@ import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { banFanHubMember, getHubMembers, getPendingMembers, reviewMember, removeModerator, getMemberDetail, kickMember } from "@/services/MemberController.jsx";
 import MemberReportsTable from "./MemberReportsTable";
 import PendingMembersTable from "./PendingMembersTable";
+import { useHubModeration } from "@/contexts/HubModerationContext";
 import UserAvatar from "@/components/UserAvatar/UserAvatar";
 import "./MemberModerationContent.css";
 
@@ -16,6 +17,7 @@ const BAN_TYPE_OPTIONS = [
 const PAGE_SIZE = 10;
 
 export default function MemberModerationContent({ fanHubId, isOwner }) {
+  const { counts } = useHubModeration();
   const [activeSubTab, setActiveSubTab] = useState("moderators");
 
   return (
@@ -37,13 +39,13 @@ export default function MemberModerationContent({ fanHubId, isOwner }) {
           className={`sub-nav-btn ${activeSubTab === "pending" ? "active" : ""}`}
           onClick={() => setActiveSubTab("pending")}
         >
-          Requiring Approval
+          Requiring Approval {counts.pendingMembers > 0 && <span className="count-badge">{counts.pendingMembers}</span>}
         </button>
         <button 
           className={`sub-nav-btn ${activeSubTab === "memberReports" ? "active" : ""}`}
           onClick={() => setActiveSubTab("memberReports")}
         >
-          Member Reports
+          Member Reports {counts.memberReports > 0 && <span className="count-badge">{counts.memberReports}</span>}
         </button>
       </div>
 

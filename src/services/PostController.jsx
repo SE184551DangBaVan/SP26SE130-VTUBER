@@ -648,4 +648,40 @@ export const searchContent = async (keyword, searchType = "All", pageNo = 0, pag
   }
 };
 
+/**
+ * Get count of Post Reports of a fanhub
+ * @param {number} fanHubId 
+ * @returns {Promise<number>} Count
+ */
+export const getPostReportsCount = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/posts/count-report-posts/${fanHubId}`);
+    if (res.data?.success) {
+      return res.data.data;
+    }
+    return 0;
+  } catch (err) {
+    console.error("Get post reports count error:", err);
+    return 0;
+  }
+};
+
+/**
+ * Get count of Pending Post (posts requiring review)
+ * @param {number} fanHubId 
+ * @returns {Promise<number>} Count
+ */
+export const getPendingPostsCount = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/posts/count-pending-posts/${fanHubId}`);
+    if (res.data?.success) {
+      return res.data.data;
+    }
+    return 0;
+  } catch (err) {
+    console.error("Get pending posts count error:", err);
+    return 0;
+  }
+};
+
 

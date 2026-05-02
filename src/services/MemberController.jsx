@@ -378,12 +378,48 @@ export const reviewMember = async (fanHubMemberId, status) => {
     }
 
     return { success: false, message: "Failed to review membership request" };
-  } catch (err) {
+    } catch (err) {
     console.error("Review member error:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,
     });
     return err.response?.data || { success: false, message: err.message };
-  }
-};
+    }
+    };
+
+    /**
+    * Get count of Member Reports
+    * @param {number} fanHubId 
+    * @returns {Promise<number>} Count
+    */
+    export const getMemberReportsCount = async (fanHubId) => {
+    try {
+    const res = await axiosInstance.get(`/fan-hub-member/count-report-members/${fanHubId}`);
+    if (res.data?.success) {
+      return res.data.data;
+    }
+    return 0;
+    } catch (err) {
+    console.error("Get member reports count error:", err);
+    return 0;
+    }
+    };
+
+    /**
+    * Get count of Pending Members (Members requiring approval)
+    * @param {number} fanHubId 
+    * @returns {Promise<number>} Count
+    */
+    export const getPendingMembersCount = async (fanHubId) => {
+    try {
+    const res = await axiosInstance.get(`/fan-hub-member/count-pending-members/${fanHubId}`);
+    if (res.data?.success) {
+      return res.data.data;
+    }
+    return 0;
+    } catch (err) {
+    console.error("Get pending members count error:", err);
+    return 0;
+    }
+    };
