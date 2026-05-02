@@ -9,12 +9,13 @@ import { createPost, createPollPost } from '@/services/PostController';
 import { checkIsMember } from '@/services/FanHubController';
 import { showSuccess, showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamError } from '@/utils/SteamNotification';
+import { EventRounded } from '@mui/icons-material';
 import './CreatePostPage.css';
 
 export default function CreatePostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { userAuth } = useAuth();
+  const { userAuth, loading: authLoading } = useAuth();
   const { sideBarRetractor } = useSideBar();
 
   const [joinedHubs, setJoinedHubs] = useState([]);
@@ -35,10 +36,68 @@ export default function CreatePostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [titleLength, setTitleLength] = useState(0);
 
-  // Poll options state
   const [pollOptions, setPollOptions] = useState(['', '']);
+  const [isAnnouncement, setIsAnnouncement] = useState(false);
+  const [isSchedule, setIsSchedule] = useState(false);
+  const [isHubOwner, setIsHubOwner] = useState(false);
+  const [checkingOwnership, setCheckingOwnership] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
   const dropdownRef = useRef(null);
   const textareaRef = useRef(null);
+  const datePickerRef = useRef(null);
+
+  // Check if current user is owner of selected hub
+  useEffect(() => {
+    const checkOwnership = async () => {
+      if (!selectedFanHubId || !userAuth) {
+        setIsHubOwner(false);
+        return;
+      }
+
+      setCheckingOwnership(true);
+      try {
+        const memberData = await checkIsMember(selectedFanHubId);
+        if (memberData && (memberData.roleInHub === 'OWNER' || memberData.roleInHub === 'VTUBER')) {
+          setIsHubOwner(true);
+        } else {
+          setIsHubOwner(false);
+        }
+      } catch (error) {
+        console.error('Error checking ownership:', error);
+        setIsHubOwner(false);
+      } finally {
+        setCheckingOwnership(false);
+      }
+    };
+
+    checkOwnership();
+  }, [selectedFanHubId, userAuth]);
+
+  const handleScheduleToggle = () => {
+    setIsSchedule(!isSchedule);
+  };
+
+  const handleDatePickerClick = () => {
+    setShowDatePicker(!showDatePicker);
+  };
+
+  const handleDateChange = (e) => {
+    setScheduleDate(e.target.value);
+  };
+
+  const handleApplySchedule = () => {
+    if (scheduleDate) {
+      setIsSchedule(true);
+      setShowDatePicker(false);
+    }
+  };
+
+  const handleCancelSchedule = () => {
+    setIsSchedule(false);
+    setScheduleDate('');
+    setShowDatePicker(false);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -54,6 +113,9 @@ export default function CreatePostPage() {
   // Fetch joined hubs on mount
   useEffect(() => {
     const fetchJoinedHubs = async () => {
+      // Don't do anything if auth is still loading
+      if (authLoading) return;
+
       if (!userAuth) {
         showError('You must be logged in to create a post');
         router.push('/login');
@@ -64,14 +126,24 @@ export default function CreatePostPage() {
         const hubs = await getMyJoinedHubs();
         setJoinedHubs(hubs);
 
-        // Check if there's a pre-selected hub from navigation
-        const preSelectedHubId = sessionStorage.getItem('createPostPreSelectedHub');
+        // Check search params first (more ethical/explicit) then fallback to session storage
+        const preSelectedHubId = searchParams?.get('fanHubId') || sessionStorage.getItem('createPostPreSelectedHub');
+        
         if (preSelectedHubId) {
-          const hubExists = hubs.some(h => h.fanHubId === parseInt(preSelectedHubId));
-          if (hubExists) {
-            setSelectedFanHubId(parseInt(preSelectedHubId));
+          const targetHubId = parseInt(preSelectedHubId);
+          const selectedHub = hubs.find(h => h.fanHubId === targetHubId);
+          
+          if (selectedHub) {
+            setSelectedFanHubId(targetHubId);
+            setSelectedFanHubSubdomain(selectedHub.subdomain);
+            setSelectedHubData(selectedHub);
+          } else {
+            // User tried to use an ID of a hub they haven't joined
+            showError('Invalid FanHub: You must be a member of this hub to post.');
+            setSelectedFanHubId(null);
+            setSelectedHubData(null);
           }
-          // Clear the session storage after using it
+          // Clear session storage if it was used
           sessionStorage.removeItem('createPostPreSelectedHub');
         }
       } catch (error) {
@@ -83,7 +155,7 @@ export default function CreatePostPage() {
     };
 
     fetchJoinedHubs();
-  }, [userAuth, router]);
+  }, [userAuth, authLoading, router, searchParams]);
 
   useEffect(() => {
     if (!loadingHubs && joinedHubs.length === 0) {

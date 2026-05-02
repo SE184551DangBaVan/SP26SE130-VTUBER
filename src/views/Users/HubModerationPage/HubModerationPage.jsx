@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSideBar } from "@/contexts/SideBarContext.tsx";
+import { HubModerationProvider, useHubModeration } from "@/contexts/HubModerationContext";
 import { getFanHubBySubdomain } from "@/services/FanHubController";
 import PostModerationContent from "./HubModerations/PostModeration/PostModerationContent.jsx";
 import MemberModerationContent from "./HubModerations/MemberModeration/MemberModerationContent.jsx";
@@ -79,6 +80,37 @@ export default function HubModerationPage() {
   }
 
   return (
+    <HubModerationProvider fanHubId={fanHubId}>
+      <HubModerationPageContent 
+        hubData={hubData}
+        subdomain={subdomain}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        sideBarRetractor={sideBarRetractor}
+        isOwner={isOwner}
+        isVTuber={isVTuber}
+        fanHubId={fanHubId}
+      />
+    </HubModerationProvider>
+  );
+}
+
+function HubModerationPageContent({ 
+  hubData, 
+  subdomain, 
+  activeTab, 
+  setActiveTab, 
+  sideBarRetractor, 
+  isOwner, 
+  isVTuber,
+  fanHubId 
+}) {
+  const { counts } = useHubModeration();
+  const totalModItems = counts.pendingPosts + counts.pendingMembers + counts.postReports + counts.memberReports;
+  const totalPostsItems = counts.pendingPosts + counts.postReports;
+  const totalMembersItems = counts.pendingMembers + counts.memberReports;
+
+  return (
     <div className={`hub-moderation-page ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
       <div className="moderation-layout-container">
         {/* Sidebar */}
@@ -103,19 +135,19 @@ export default function HubModerationPage() {
                 className={`tab-btn ${activeTab === "modQueue" ? "active" : ""}`}
                 onClick={() => setActiveTab("modQueue")}
               >
-                Mod Queue
+                Mod Queue {totalModItems > 0 && <span className="count-badge">{totalModItems}</span>}
               </button>
               <button
                 className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
                 onClick={() => setActiveTab("posts")}
               >
-                Posts
+                Posts {totalPostsItems > 0 && <span className="count-badge">{totalPostsItems}</span>}
               </button>
               <button
                 className={`tab-btn ${activeTab === "members" ? "active" : ""}`}
                 onClick={() => setActiveTab("members")}
               >
-                Members & Mods
+                Members & Mods {totalMembersItems > 0 && <span className="count-badge">{totalMembersItems}</span>}
               </button>
               <button
                 className={`tab-btn ${activeTab === "bans" ? "active" : ""}`}

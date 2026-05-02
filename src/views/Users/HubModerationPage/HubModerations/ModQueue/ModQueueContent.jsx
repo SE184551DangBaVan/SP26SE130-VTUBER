@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useHubModeration } from "@/contexts/HubModerationContext";
 import PostModerationContent from "../PostModeration/PostModerationContent";
 import PostReportsTable from "../PostModeration/PostReportsTable";
 import MemberReportsTable from "../MemberModeration/MemberReportsTable";
@@ -9,6 +10,7 @@ import "./ModQueueContent.css";
 
 export default function ModQueueContent({ fanHubId, isOwner }) {
   const [activeSubTab, setActiveSubTab] = useState("postReview");
+  const { counts } = useHubModeration();
 
   return (
     <div className="mod-queue-content">
@@ -17,25 +19,25 @@ export default function ModQueueContent({ fanHubId, isOwner }) {
           className={`sub-nav-btn ${activeSubTab === "postReview" ? "active" : ""}`}
           onClick={() => setActiveSubTab("postReview")}
         >
-          Post Review
+          Post Review {counts.pendingPosts > 0 && <span className="count-badge">{counts.pendingPosts}</span>}
         </button>
         <button 
           className={`sub-nav-btn ${activeSubTab === "memberApproval" ? "active" : ""}`}
           onClick={() => setActiveSubTab("memberApproval")}
         >
-          Member Approval
+          Member Approval {counts.pendingMembers > 0 && <span className="count-badge">{counts.pendingMembers}</span>}
         </button>
         <button 
           className={`sub-nav-btn ${activeSubTab === "postReports" ? "active" : ""}`}
           onClick={() => setActiveSubTab("postReports")}
         >
-          Post Reports
+          Post Reports {counts.postReports > 0 && <span className="count-badge">{counts.postReports}</span>}
         </button>
         <button 
           className={`sub-nav-btn ${activeSubTab === "memberReports" ? "active" : ""}`}
           onClick={() => setActiveSubTab("memberReports")}
         >
-          Member Reports
+          Member Reports {counts.memberReports > 0 && <span className="count-badge">{counts.memberReports}</span>}
         </button>
       </div>
 

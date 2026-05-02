@@ -6,6 +6,7 @@ import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services/ModeratorController.jsx";
 import { getPostsByFanHub, getRejectedPostsByFanHub, retryAiValidation, approveAllAiSafePosts, rejectAllAiUnsafePosts } from "@/services/PostController.jsx";
 import { getPostsWithReports, bulkResolveReports } from "@/services/ReportController";
+import { useHubModeration } from "@/contexts/HubModerationContext";
 import PostReportsTable from "./PostReportsTable";
 import "./PostModerationContent.css";
 
@@ -26,6 +27,7 @@ const STATUS_OPTIONS = [
 const PAGE_SIZE = 10;
 
 export default function PostModerationContent({ fanHubId, isOwner, initialStatus = "PENDING", hideTabs = false }) {
+  const { counts } = useHubModeration();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -346,7 +348,7 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
             className={`sub-nav-btn ${statusFilter === "PENDING" ? "active" : ""}`}
             onClick={() => setStatusFilter("PENDING")}
           >
-            Needs Review
+            Needs Review {counts.pendingPosts > 0 && <span className="count-badge">{counts.pendingPosts}</span>}
           </button>
           <button 
             className={`sub-nav-btn ${statusFilter === "REJECTED" ? "active" : ""}`}
@@ -358,7 +360,7 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
             className={`sub-nav-btn ${statusFilter === "REPORTS" ? "active" : ""}`}
             onClick={() => setStatusFilter("REPORTS")}
           >
-            Post Reports
+            Post Reports {counts.postReports > 0 && <span className="count-badge">{counts.postReports}</span>}
           </button>
         </div>
       )}
