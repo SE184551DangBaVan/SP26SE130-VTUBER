@@ -89,7 +89,7 @@
 
 .page-module-background-2 .page-module-background-first {
   position: absolute;
-  height: 120px;
+  height: 160px;
   left: 0;
   bottom: 0;
   transform: translateX(0px);
@@ -117,7 +117,7 @@
 }
 
 .page-module.focused:nth-child(2):hover .page-module-background-first {
-  opacity: 0.4;
+  height: 100px;
   transform: translate(-30px, 20px);
 }
 

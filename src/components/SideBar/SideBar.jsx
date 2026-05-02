@@ -63,10 +63,13 @@ export default function SideBar() {
     // Check if current route matches VTuber hub
     const isVtuberHubRoute = vtuberHub && decodeURI(pathname) === `/hub/${vtuberHub.subdomain}`;
     const currentRoute = isVtuberHubRoute ? 'my-hub' : (routeToKeyMap[pathname] || pathname.replace('/', '') || 'home');
-    
+
     if (sideBarSelected !== currentRoute) {
       setSideBarSelected(currentRoute);
     }
+
+    const newsMatch = pathname.match(/^\/news-feed\/(.+)$/);
+    if (newsMatch) {setSideBarSelected('news');}
   }, [pathname, vtuberHub]);
 
   const handleNavigation = (page, route) => {

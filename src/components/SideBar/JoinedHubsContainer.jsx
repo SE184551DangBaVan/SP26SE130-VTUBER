@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getMyJoinedHubs } from '@/services/FanHubController';
+import { getMyHubAsOwner } from '@/services/FanHubController'
 import { useAuth } from '@/functions/Auth/useAuth';
 import './JoinedHubsContainer.css';
 
@@ -26,8 +27,14 @@ export default function JoinedHubsContainer() {
             setLoading(true);
             // Fetch 6 hubs to check if there are more than 5
             const hubs = await getMyJoinedHubs(0, 6, 'createdAt');
-            // Store all fetched hubs
-            setJoinedHubs(hubs);
+            const myHub = await getMyHubAsOwner();
+
+
+            const filteredHubs = myHub
+            ? hubs.filter(hub => hub.ownerUserId !== myHub.ownerUserId)
+            : hubs;
+
+            setJoinedHubs(filteredHubs);
         } catch (error) {
             console.error('Error fetching joined hubs:', error);
             setJoinedHubs([]);

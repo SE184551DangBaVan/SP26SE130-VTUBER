@@ -1,24 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import './PaymentCancel.css';
+import UserLayout from '@/components/UserLayout/UserLayout';
+import PaymentCancelPage from '@/views/Users/PaymentPage/PaymentCancelPage/PaymentCancelPage';
 
-export default function PaymentCancelPage() {
-  const router = useRouter();
-
+export default function PaymentCancelRoute() {
   return (
-    <div className='payment-result-page payment-cancel-page'>
-      <div className='result-container'>
-        <div className='result-icon cancel-icon'>✕</div>
-        <h1 className='result-title cancel-title'>Transaction Cancelled</h1>
-        <p className='result-message'>Your payment was not processed. Please try again.</p>
-        <button 
-          className='result-return-btn'
-          onClick={() => router.push('/home')}
-        >
-          ← Return to Home
-        </button>
-      </div>
-    </div>
+    <UserLayout>
+      <PaymentCancelPage />
+    </UserLayout>
   );
 }

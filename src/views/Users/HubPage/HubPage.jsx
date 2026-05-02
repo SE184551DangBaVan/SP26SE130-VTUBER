@@ -388,6 +388,11 @@ export default function HubPage({ ownedHub }) {
     }
   };
 
+  const handleHashtagClick = (e, tag) => {
+    e.stopPropagation();
+    router.push(`/posts?hashtag=${tag}`, { scroll: false });
+  };
+
   if (!hubData) {
     return (
       <div className='hub-page-container'>
@@ -611,6 +616,7 @@ export default function HubPage({ ownedHub }) {
                         onClick={() => handlePostClick(post)}
                         onCommentsClick={() => handlePostClick(post)}
                         onShareClick={() => handleShareClick(post)}
+                        onHashtagClick={handleHashtagClick}
                       />
                     </div>
                   );
@@ -624,6 +630,7 @@ export default function HubPage({ ownedHub }) {
                       onClick={() => handlePostClick(post)}
                       onCommentsClick={() => handlePostClick(post)}
                       onShareClick={() => handleShareClick(post)}
+                      onHashtagClick={handleHashtagClick}
                     />
                   );
                 }
