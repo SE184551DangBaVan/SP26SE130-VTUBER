@@ -194,7 +194,6 @@ export default function GeneralSettingsContent({ fanHubId, hubData, isVTuber }) 
           <div className="form-group">
             <label>Subdomain</label>
             <div className="input-prefix-wrapper">
-              <span className="prefix">@</span>
               <input
                 type="text"
                 value={subdomain}

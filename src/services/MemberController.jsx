@@ -388,8 +388,69 @@ export const reviewMember = async (fanHubMemberId, status) => {
     }
     };
 
-    /**
-    * Get count of Member Reports
+/**
+ * Check if the current user has already made a join request for a fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Result with data as boolean
+ */
+export const checkJoinRequest = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub-member/${fanHubId}/check-join-request`);
+    return res.data;
+  } catch (err) {
+    console.error("Check join request error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Delete (cancel) a join request
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const deleteJoinRequest = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.delete(`/fan-hub-member/${fanHubId}/join-request`);
+    return res.data;
+  } catch (err) {
+    console.error("Delete join request error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get user's join request answers for a specific fan hub
+ * @param {number} fanHubId - Fan Hub ID
+ * @returns {Promise<Object>} Result with data as Array of answers
+ */
+export const getMyJoinRequestAnswers = async (fanHubId) => {
+  try {
+    const res = await axiosInstance.get(`/fan-hub-member/my-answers?fanHubId=${fanHubId}`);
+    return res.data;
+  } catch (err) {
+    console.error("Get my join request answers error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Edit user's join request answers
+ * @param {number} fanHubId - Fan Hub ID
+ * @param {Array} answers - Array of { answerId, content }
+ * @returns {Promise<Object>} Result of the update
+ */
+export const editJoinRequestAnswers = async (fanHubId, answers) => {
+  try {
+    const res = await axiosInstance.put(`/fan-hub-member/answers?fanHubId=${fanHubId}`, answers);
+    return res.data;
+  } catch (err) {
+    console.error("Edit join request answers error:", err);
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Get count of Member Reports
     * @param {number} fanHubId 
     * @returns {Promise<number>} Count
     */
