@@ -76,6 +76,41 @@ body:has(.desktop-container) .logout__btn-container .logout__btn {
   pointer-events: none;
 }
 
+.desktop-top-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1001;
+  display: flex;
+  gap: 10px;
+}
+
+.mute-toggle-btn {
+  background: #A3A283;
+  border-top: 3px solid #CBC9AA;
+  border-left: 3px solid #CBC9AA;
+  border-right: 2px solid #65664D;
+  border-bottom: 2px solid #4B4A34;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  box-shadow: 2px 2px 0px #00000040;
+  transition: transform 0.1s;
+}
+
+.mute-toggle-btn:hover {
+  background: #b4b394;
+}
+
+.mute-toggle-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #00000040;
+}
+
 .desktop {
   position: relative;
   width: 100%;
