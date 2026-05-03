@@ -274,3 +274,103 @@ export const deactivateBanner = async (bannerId) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Edit a banner item
+ * @param {number} bannerItemId - Banner Item ID to edit
+ * @param {Object} payload - Banner item data
+ * @returns {Promise<Object>} Update result
+ */
+export const editBannerItem = async (bannerItemId, {
+  itemName,
+  description,
+  category,
+  multiplier,
+  type,
+  size,
+  xaxis,
+  yaxis,
+  imageFile,
+}) => {
+  try {
+    const formData = new FormData();
+
+    const requestPayload = {
+      itemName,
+      description,
+      category: category?.toUpperCase?.() || '',
+      multiplier: Number(multiplier),
+      type: type?.toUpperCase?.() || 'MAIN_REWARD',
+      size: Number(size),
+      xaxis: Number(xaxis),
+      yaxis: Number(yaxis),
+    };
+
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(requestPayload)], { type: 'application/json' })
+    );
+
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    const res = await axiosInstance.put(
+      `/banners/items/${bannerItemId}/edit`,
+      formData
+    );
+
+    console.log('editBannerItem response:', res.data);
+    return res.data;
+  } catch (err) {
+    console.error('Edit banner item error:', {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Delete a banner
+ * @param {number} bannerId - Banner ID to delete
+ * @returns {Promise<Object>} Deletion result
+ */
+export const deleteBanner = async (bannerId) => {
+  try {
+    const res = await axiosInstance.delete(`/banners/${bannerId}/delete`);
+
+    console.log('deleteBanner response:', res.data);
+    return res.data;
+  } catch (err) {
+    console.error('Delete banner error:', {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
+ * Delete an item from a gacha banner
+ * @param {number} bannerItemId - Banner Item ID to delete
+ * @returns {Promise<Object>} Deletion result
+ */
+export const deleteBannerItem = async (bannerItemId) => {
+  try {
+    const res = await axiosInstance.delete(`/banners/items/${bannerItemId}/delete`);
+
+    console.log('deleteBannerItem response:', res.data);
+    return res.data;
+  } catch (err) {
+    console.error('Delete banner item error:', {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+

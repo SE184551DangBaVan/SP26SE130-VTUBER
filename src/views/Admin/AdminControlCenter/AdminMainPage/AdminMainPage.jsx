@@ -7,6 +7,7 @@ import AdminIco from '../../../../assets/UI-Elements/admin-logo.svg';
 export default function AdminMainPage() {
   const [showWindow, setShowWindow] = useState(false);
   const [activeWindowId, setActiveWindowId] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -15,6 +16,14 @@ export default function AdminMainPage() {
       audioRef.current.play().catch(() => {});
     }
   }, []);
+
+  const toggleMute = () => {
+    if (audioRef.current) {
+      const newMutedState = !isMuted;
+      audioRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+    }
+  };
 
   const handleDesktopIconClick = (iconId) => {
     setActiveWindowId(iconId);
@@ -35,6 +44,14 @@ export default function AdminMainPage() {
   return (
     <div className="desktop-container">
       <audio ref={audioRef} src="/sfx/Safety_First-Home_Safety_Hotline_OST-David_Johnsen-VHS.mp3" loop />
+      
+      {/* Top Right Controls */}
+      <div className="desktop-top-controls">
+        <button className="mute-toggle-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
+          {isMuted ? "🔇" : "🔊"}
+        </button>
+      </div>
+
       <div className="desktop-container-loader">
         <img className='admin-logo' src={AdminIco.src} />
         <div className='desktop-container-loader-watermark'>
