@@ -4,8 +4,18 @@ import { useState } from 'react';
 import { GroupRounded } from '@mui/icons-material';
 import './JoinQuestionnaireModal.css';
 
-export default function JoinQuestionnaireModal({ questions, onSubmit, onCancel, submitting }) {
-  const [answers, setAnswers] = useState({});
+export default function JoinQuestionnaireModal({ questions, initialAnswers = [], onSubmit, onCancel, submitting }) {
+  const [answers, setAnswers] = useState(() => {
+    const initial = {};
+    if (initialAnswers.length > 0) {
+      initialAnswers.forEach(ans => {
+        initial[ans.questionId] = ans.content;
+      });
+    }
+    return initial;
+  });
+
+  const isEditing = initialAnswers.length > 0;
 
   const handleAnswerChange = (questionId, value) => {
     setAnswers(prev => ({
@@ -20,10 +30,23 @@ export default function JoinQuestionnaireModal({ questions, onSubmit, onCancel, 
     e.preventDefault();
     if (!isAllAnswered || submitting) return;
 
-    const formattedAnswers = questions.map(q => ({
-      questionId: q.id,
-      content: answers[q.id].trim()
-    }));
+    let formattedAnswers;
+    if (isEditing) {
+      // For editing: { answerId, content }
+      formattedAnswers = questions.map(q => {
+        const existingAns = initialAnswers.find(ans => ans.questionId === q.id);
+        return {
+          answerId: existingAns?.id,
+          content: answers[q.id].trim()
+        };
+      }).filter(ans => ans.answerId); // Ensure we have answerId
+    } else {
+      // For new join: { questionId, content }
+      formattedAnswers = questions.map(q => ({
+        questionId: q.id,
+        content: answers[q.id].trim()
+      }));
+    }
 
     onSubmit(formattedAnswers);
   };
@@ -34,7 +57,7 @@ export default function JoinQuestionnaireModal({ questions, onSubmit, onCancel, 
         <div className="join-modal-header">
           <div className="header-title">
             <GroupRounded className="header-icon" />
-            <h2>Join Community</h2>
+            <h2>{isEditing ? 'Edit Join Request' : 'Join Community'}</h2>
           </div>
           <button className="join-modal-close" onClick={onCancel}>×</button>
         </div>
@@ -42,7 +65,9 @@ export default function JoinQuestionnaireModal({ questions, onSubmit, onCancel, 
         <form onSubmit={handleSubmit}>
           <div className="join-modal-body">
             <p className="join-modal-intro">
-              This FanHub requires approval. Please answer the following questions to submit your join request.
+              {isEditing 
+                ? 'Update your answers to the community questions below.' 
+                : 'This FanHub requires approval. Please answer the following questions to submit your join request.'}
             </p>
 
             <div className="questions-form-list">
@@ -81,10 +106,10 @@ export default function JoinQuestionnaireModal({ questions, onSubmit, onCancel, 
               {submitting ? (
                 <>
                   <span className="join-spinner" />
-                  Submitting...
+                  {isEditing ? 'Updating...' : 'Submitting...'}
                 </>
               ) : (
-                'Submit Request'
+                isEditing ? 'Save Changes' : 'Submit Request'
               )}
             </button>
           </div>

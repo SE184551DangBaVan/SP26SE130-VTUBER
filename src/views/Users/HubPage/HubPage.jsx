@@ -4,7 +4,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { getPostsByFanHub } from '@/services/PostController';
-import { getHubMembers, joinFanHub, joinFanhubWithAnswers, leaveFanHub } from '@/services/MemberController';
+import { 
+  getHubMembers, 
+  joinFanHub, 
+  joinFanhubWithAnswers, 
+  leaveFanHub,
+  checkJoinRequest,
+  deleteJoinRequest,
+  getMyJoinRequestAnswers,
+  editJoinRequestAnswers
+} from '@/services/MemberController';
 import { checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { getJoinQuestions } from '@/services/HubQuestionnaireController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
@@ -55,11 +64,51 @@ export default function HubPage({ ownedHub }) {
 
   // State for join fan hub
   const [isMember, setIsMember] = useState(false);
+  const [hasRequest, setHasRequest] = useState(false);
+  const [requestData, setRequestData] = useState(null);
+  const [userAnswers, setUserAnswers] = useState([]);
   const [joining, setJoining] = useState(false);
   const [showJoinQuestions, setShowJoinQuestions] = useState(false);
   const [joinQuestions, setJoinQuestions] = useState([]);
   const [showExtraOptions, setShowExtraOptions] = useState(false);
   const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
+
+  // Get current user ID from storage
+  const currentUserId = parseInt(
+    sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
+  );
+  const currentUsername =
+    sessionStorage.getItem("username") || localStorage.getItem("username") || "";
+
+  // Check if current user is the owner of this hub
+  const isOwner = hubData && (
+    hubData.ownerUserId === currentUserId ||
+    hubData.ownerUsername === currentUsername
+  );
+
+  // Determine which fanHubId to use
+  const activeFanHubId = hubData?.fanHubId || ownedHub?.fanHubId;
+
+  // Track current user's role in this hub (for moderators)
+  const [roleInHub, setRoleInHub] = useState(null);
+
+  const checkJoinRequestStatus = useCallback(async () => {
+    if (!activeFanHubId || !currentUserId) return;
+    try {
+      const result = await checkJoinRequest(activeFanHubId);
+      if (result?.success) {
+        setHasRequest(result.data); // result.data is boolean
+      }
+    } catch (error) {
+      console.error('Error checking join request:', error);
+    }
+  }, [activeFanHubId, currentUserId]);
+
+  useEffect(() => {
+    if (!isMember && !isOwner) {
+      checkJoinRequestStatus();
+    }
+  }, [isMember, isOwner, checkJoinRequestStatus]);
 
   const [navScrollOffset, setNavScrollOffset] = useState(0);
   const rafRef = useRef(null);
@@ -89,22 +138,6 @@ export default function HubPage({ ownedHub }) {
 
   // State for create post modal
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-
-  // Get current user ID from storage
-  const currentUserId = parseInt(
-    sessionStorage.getItem("userID") || localStorage.getItem("userID") || "0"
-  );
-  const currentUsername =
-    sessionStorage.getItem("username") || localStorage.getItem("username") || "";
-
-  // Check if current user is the owner of this hub
-  const isOwner = hubData && (
-    hubData.ownerUserId === currentUserId ||
-    hubData.ownerUsername === currentUsername
-  );
-
-  // Track current user's role in this hub (for moderators)
-  const [roleInHub, setRoleInHub] = useState(null);
 
   // Check if user can create posts (Owner, Moderator, or Member)
   const canCreatePost = isOwner || roleInHub === 'MODERATOR' || roleInHub === 'MEMBER';
@@ -140,9 +173,6 @@ export default function HubPage({ ownedHub }) {
       fetchHubData();
     }
   }, [subdomainFromParams, ownedHub]);
-
-  // Determine which fanHubId to use (from fetched hubData or ownedHub)
-  const activeFanHubId = hubData?.fanHubId || ownedHub?.fanHubId;
 
   // Infinite scroll state
   const [hasMore, setHasMore] = useState(true);
@@ -256,18 +286,51 @@ export default function HubPage({ ownedHub }) {
   const handleJoinFanHub = async () => {
     if (!activeFanHubId) return;
 
+    if (hasRequest) {
+      setJoining(true);
+      const toastId = showLoading('Fetching your request...');
+      try {
+        const questions = await getJoinQuestions(activeFanHubId);
+        const answersResult = await getMyJoinRequestAnswers(activeFanHubId);
+        
+        updateToast(toastId, 'dismiss');
+
+        if (questions && questions.length > 0) {
+          setJoinQuestions(questions);
+          
+          // Simplified matching: take the first item as it's already filtered by fanHubId
+          const hubRequest = answersResult.data?.[0];
+
+          if (hubRequest) {
+            setUserAnswers(hubRequest.answers || []);
+            setShowJoinQuestions(true);
+          } else {
+            showSteamError('Could not find your previous answers.', 'Error');
+          }
+        } else {
+          showSteamError('No questions found for this request.', 'Error');
+        }
+      } catch (error) {
+        console.error('Error fetching request details:', error);
+        updateToast(toastId, 'error', 'Failed to fetch request details');
+      } finally {
+        setJoining(false);
+      }
+      return;
+    }
+
     if (hubData.requiresApproval) {
       setJoining(true);
       const toastId = showLoading('Checking requirements...');
       try {
         const questions = await getJoinQuestions(activeFanHubId);
-        updateToast(toastId, 'dismiss'); // Close the "Checking..." toast
+        updateToast(toastId, 'dismiss'); 
 
         if (questions && questions.length > 0) {
           setJoinQuestions(questions);
+          setUserAnswers([]); 
           setShowJoinQuestions(true);
         } else {
-          // No questions, but requires approval
           await handleQuestionnaireSubmit([]);
         }
       } catch (error) {
@@ -277,7 +340,6 @@ export default function HubPage({ ownedHub }) {
         setJoining(false);
       }
     } else {
-      // Normal join (requiresApproval is false)
       setJoining(true);
       const toastId = showLoading('Joining FanHub...');
 
@@ -299,6 +361,27 @@ export default function HubPage({ ownedHub }) {
       } finally {
         setJoining(false);
       }
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!activeFanHubId) return;
+
+    setJoining(true);
+    const toastId = showLoading('Cancelling request...');
+    try {
+      const result = await deleteJoinRequest(activeFanHubId);
+      if (result?.success) {
+        updateToast(toastId, 'success', 'Join request cancelled.');
+        setHasRequest(false);
+      } else {
+        updateToast(toastId, 'error', result?.message || 'Failed to cancel request');
+      }
+    } catch (error) {
+      console.error('Cancel request error:', error);
+      updateToast(toastId, 'error', 'Network error. Please try again.');
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -328,18 +411,24 @@ export default function HubPage({ ownedHub }) {
 
   const handleQuestionnaireSubmit = async (answers) => {
     setJoining(true);
-    const toastId = showLoading('Submitting request...');
+    const toastId = showLoading(hasRequest ? 'Updating request...' : 'Submitting request...');
     try {
-      const result = await joinFanhubWithAnswers(activeFanHubId, answers);
-      if (result?.success) {
-        updateToast(toastId, 'success', result.data || 'Request submitted successfully!');
-        setShowJoinQuestions(false);
-        // If it's awaiting approval, we don't set isMember to true yet
+      let result;
+      if (hasRequest) {
+        result = await editJoinRequestAnswers(activeFanHubId, answers);
       } else {
-        updateToast(toastId, 'error', result?.message || 'Failed to submit request');
+        result = await joinFanhubWithAnswers(activeFanHubId, answers);
+      }
+
+      if (result?.success) {
+        updateToast(toastId, 'success', result.data || (hasRequest ? 'Request updated successfully!' : 'Request submitted successfully!'));
+        setShowJoinQuestions(false);
+        setHasRequest(true); 
+      } else {
+        updateToast(toastId, 'error', result?.message || `Failed to ${hasRequest ? 'update' : 'submit'} request`);
       }
     } catch (error) {
-      console.error('Join with answers error:', error);
+      console.error('Questionnaire error:', error);
       updateToast(toastId, 'error', 'Network error. Please try again.');
     } finally {
       setJoining(false);
@@ -490,7 +579,7 @@ export default function HubPage({ ownedHub }) {
                   <img className='btn-icon' src={SpeakerIco.src} alt='Announce'/>
                 </button>
               )}
-              {!isOwner && !isMember && (
+              {!isOwner && !isMember && !hasRequest && (
                 <button
                   className='join-fanhub-btn header-join-btn'
                   onClick={handleJoinFanHub}
@@ -509,6 +598,27 @@ export default function HubPage({ ownedHub }) {
                     </>
                   )}
                 </button>
+              )}
+              {!isOwner && !isMember && hasRequest && (
+                <div className="pending-request-container">
+                  <button
+                    className='join-fanhub-btn header-join-btn pending'
+                    onClick={handleJoinFanHub}
+                    disabled={joining}
+                    title="Edit join request"
+                    style={{background: '#838261'}}
+                  >
+                    {joining ? '...' : 'Pending Review'}
+                  </button>
+                  <button
+                    className="cancel-request-btn"
+                    onClick={handleCancelRequest}
+                    disabled={joining}
+                    title="Cancel join request"
+                  >
+                    ×
+                  </button>
+                </div>
               )}
               {!isOwner && isMember && (
                 <button
@@ -706,7 +816,6 @@ export default function HubPage({ ownedHub }) {
                 ) : (
                   <div className='members-list'>
                     {members.map((member) => {
-                      const isAlreadyModerator = member.roleInHub === 'MODERATOR';
                       return (
                         <div key={member.id} className='member-item'>
                           <img
@@ -778,6 +887,7 @@ export default function HubPage({ ownedHub }) {
       {showJoinQuestions && (
         <JoinQuestionnaireModal
           questions={joinQuestions}
+          initialAnswers={userAnswers}
           onSubmit={handleQuestionnaireSubmit}
           onCancel={() => setShowJoinQuestions(false)}
           submitting={joining}
