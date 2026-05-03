@@ -22,10 +22,18 @@ export default function MainPage() {
   const [time, setTime] = useState(new Date());
   
   // News carousel states
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [allAnnouncements, setAllAnnouncements] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    const storedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+    if (storedUserId) {
+      setLoggedInUserId(parseInt(storedUserId, 10));
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -269,9 +277,14 @@ export default function MainPage() {
                             ))}
                           </div>
                         ) : (
-                          <div className='agenda-empty-state'>
+                          loggedInUserId ?  
+                          (<div className='agenda-empty-state'>
                             <p>No upcoming schedules</p>
+                          </div>) : (
+                          <div className='agenda-empty-state'>
+                            <p>Need to be logged in to track agenda.</p>
                           </div>
+                          )
                         )}
                       </div>
                     </div>
@@ -379,9 +392,14 @@ export default function MainPage() {
                           </div>
                         </>
                       ) : (
-                        <div className='news-empty-state'>
-                          <p>No announcements available</p>
-                        </div>
+                        loggedInUserId ?  
+                          (<div className='news-empty-state'>
+                            <p>No announcements available</p>
+                          </div>) : (
+                          <div className='news-empty-state'>
+                            <p>Need to be logged in to view announcements.</p>
+                          </div>
+                          )
                       )}
                     </div>
                   }
