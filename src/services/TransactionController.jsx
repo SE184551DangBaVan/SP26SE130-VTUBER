@@ -26,6 +26,45 @@ export const getPaymentPackages = async () => {
 };
 
 /**
+ * Create a new paid points package
+ * @param {Object} packageData - Package data
+ * @param {string} packageData.packageName - Unique package name
+ * @param {number} packageData.price - Price in VND
+ * @param {number} packageData.paidPoints - Paid points granted
+ * @param {string} packageData.description - Package description
+ * @returns {Promise<Object>} Create result
+ */
+export const createPaidPackage = async (packageData) => {
+  try {
+    const res = await axiosInstance.post(
+      '/payment/package/add',
+      {
+        packageName: packageData.packageName,
+        price: Number(packageData.price),
+        paidPoints: Number(packageData.paidPoints),
+        description: packageData.description
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log("createPaidPackage response:", res.data);
+
+    return res.data?.success !== undefined ? res.data : { success: true, data: res.data };
+  } catch (err) {
+    console.error("Create paid package error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
  * Create a payment link for purchasing paid points
  * @param {Object} paymentData - Payment data including userId, paidPackageId, price, etc.
  * @returns {Promise<string>} Payment link URL

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useSideBar } from '@/contexts/SideBarContext';
 import { getUserById } from '@/services/UserController';
-import { getAnnouncementsAndEvents } from '@/services/PostController';
-import { ChevronLeft, ChevronRight, EventRounded } from '@mui/icons-material';
+import { getAnnouncementsAndEvents, pinPost, unpinPost } from '@/services/PostController';
+import { showError } from '@/utils/toastUtils';
+import { CalendarTodayRounded, CheckRounded, ChevronLeft, ChevronRight, EventAvailableRounded, EventRounded, NotificationsRounded } from '@mui/icons-material';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import './NewsPage.css';
 
@@ -15,7 +16,6 @@ export default function NewsPage() {
   const { sideBarRetractor } = useSideBar();
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
 
   const selectedFanHubId = params?.fanHubId ? parseInt(params.fanHubId) : null;
   const selectedPostId = params?.postId ? parseInt(params.postId) : null;
@@ -25,6 +25,7 @@ export default function NewsPage() {
   const [allAnnouncements, setAllAnnouncements] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [interestLoading, setInterestLoading] = useState(false);
 
   // Fetch joined hubs on mount
   useEffect(() => {
@@ -105,6 +106,40 @@ export default function NewsPage() {
     router.push(`/news-feed/${post.fanHubId}/${post.postId}`);
   };
 
+  const updatePostInterestState = (postId, isPinned) => {
+    setAllAnnouncements(prev => prev.map(post =>
+      post.postId === postId ? { ...post, isPinned } : post
+    ));
+    setSelectedPost(prev =>
+      prev?.postId === postId ? { ...prev, isPinned } : prev
+    );
+  };
+
+  const handleInterestClick = async () => {
+    if (!selectedPost || interestLoading) return;
+
+    const nextPinnedState = !selectedPost.isPinned;
+    setInterestLoading(true);
+    updatePostInterestState(selectedPost.postId, nextPinnedState);
+
+    try {
+      const result = nextPinnedState
+        ? await pinPost(selectedPost.postId)
+        : await unpinPost(selectedPost.postId);
+
+      if (!result?.success) {
+        updatePostInterestState(selectedPost.postId, !nextPinnedState);
+        showError(result?.message || 'Failed to update interest status');
+      }
+    } catch (error) {
+      console.error('Error updating interest status:', error);
+      updatePostInterestState(selectedPost.postId, !nextPinnedState);
+      showError('Failed to update interest status');
+    } finally {
+      setInterestLoading(false);
+    }
+  };
+
   // Image carousel handlers
   const handlePrevImage = () => {
     if (!selectedPost?.mediaUrls || selectedPost.mediaUrls.length <= 1) return;
@@ -133,6 +168,28 @@ export default function NewsPage() {
 
     return date.toLocaleDateString();
   };
+
+  const formatScheduleDateTime = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString([], {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatScheduleRange = (startTime, endTime) => {
+    if (startTime && endTime) {
+      return `${formatScheduleDateTime(startTime)} - ${formatScheduleDateTime(endTime)}`;
+    }
+    if (startTime) return `Starts ${formatScheduleDateTime(startTime)}`;
+    if (endTime) return `Ends ${formatScheduleDateTime(endTime)}`;
+    return '';
+  };
+
+  const hasScheduleRange = Boolean(selectedPost?.startTime || selectedPost?.endTime);
 
   if (loading) {
     return (
@@ -234,20 +291,30 @@ export default function NewsPage() {
               </div>
             )}
 
-            {selectedPost.appendSchedule && (
+            {hasScheduleRange && (
               <div className='news-schedule-display'>
-                <EventRounded className='schedule-icon' />
-                <div className='schedule-info'>
-                  <span className='schedule-label'>Scheduled</span>
-                  <span className='schedule-date'>{new Date(selectedPost.appendSchedule).toLocaleString()}</span>
+                <div className='schedule-main'>
+                  <EventRounded className='schedule-icon' />
+                  <div className='schedule-info'>
+                    <span className='schedule-label'>Scheduled</span>
+                    <span className='schedule-date'>{formatScheduleRange(selectedPost.startTime, selectedPost.endTime)}</span>
+                  </div>
                 </div>
+                <button
+                  className={`interested-btn ${selectedPost.isPinned ? 'active' : ''}`}
+                  onClick={handleInterestClick}
+                  disabled={interestLoading}
+                >
+                  {selectedPost.isPinned ? <CheckRounded /> : <NotificationsRounded />}
+                  <span>Interested</span>
+                </button>
               </div>
             )}
           </div>
         )}
 
         <div className='news-sidebar'>
-          <h3 className='sidebar-title'>Other News</h3>
+          <h3 className='sidebar-title'>NEWS BULLETIN</h3>
           <div className='other-news-list'>
             {otherNews.map((post) => (
               <div 
@@ -256,7 +323,7 @@ export default function NewsPage() {
                 onClick={() => handlePostClick(post)}
                 style={{ borderLeftColor: selectedPost?.postId === post.postId ? post.fanHubThemeColor : 'transparent' }}
               >
-                <div className='other-news-content'>
+                <div className='other-news-content' style={{border: `2px solid ${post.fanHubThemeColor}`}}>
                   <h4 className='other-news-title'>{post.title}</h4>
                   <div className='other-news-meta'>
                     <UserAvatar 
@@ -268,17 +335,20 @@ export default function NewsPage() {
                   </div>
                 </div>
                 {post.postType != "TEXT" && 
-                <div 
-                  className='other-news-thumbnail'
-                  style={{ border: `2px solid ${post.fanHubThemeColor}` }}
-                >
+                <div className='other-news-thumbnail'>
                   {post.mediaUrls && post.mediaUrls.length > 0 && post.postType === "IMAGE" && (
                     <img src={post.mediaUrls[0]} alt={post.title} />
                   )}
                   {post.mediaUrls && post.mediaUrls.length > 0 && post.postType === "VIDEO" && (
-                    <video src={post.mediaUrls[0]} alt={post.title} style={{height: '100%'}}/>
+                    <video src={post.mediaUrls[0]} alt={post.title} />
                   )}
                 </div>}
+                {(post.startTime || post.endTime) &&
+                  (post.isPinned ?
+                    (<EventAvailableRounded className='other-news-schedule-available pinned' />)
+                    :
+                    (<CalendarTodayRounded className='other-news-schedule-available' />)
+                )}
               </div>
             ))}
           </div>

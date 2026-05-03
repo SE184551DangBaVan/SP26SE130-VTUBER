@@ -1,57 +1,108 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { createAnimationController } from "../../engine/AnimationController";
+import { createGremlinBrain } from "../../engine/GremlinBrain";
 import { useGameLoop } from "../../hooks/useGameLoop";
 import "./VirtualGremlin.css";
 
-import SpriteSheet from "../../assets/sprites/idle.png";
+import SpriteSheetIdle from "../../assets/sprites/idle.png";
+import SpriteSheetWalkLeft from "../../assets/sprites/walkLeft.png";
+import SpriteSheetWalkRight from "../../assets/sprites/walkRight.png";
 
 export default function VirtualGremlin() {
-  const [controller, setController] = useState(null);
+  const brainRef = useRef(null);
+  const [controllers, setControllers] = useState(null);
+  const [spriteKey, setSpriteKey] = useState("idle");
   const [frame, setFrame] = useState(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [error, setError] = useState(null);
 
-  // load animation data ONCE
   useEffect(() => {
-    console.log("Loading sprite sheet:", SpriteSheet);
-    
-    createAnimationController({
-      imageSrc: SpriteSheet.src,
-      frameWidth: 350,
-      frameHeight: 350,
-      totalFrames: 340
-    })
-      .then((ctrl) => {
-        console.log("Sprite sheet loaded successfully:", ctrl);
-        setController(ctrl);
-      })
-      .catch((err) => {
-        console.error("Failed to create animation controller:", err);
-        setError(err.message);
-      });
+    let cancelled = false;
+
+    async function loadAnimations() {
+      try {
+        const [idleCtrl, walkLeftCtrl, walkRightCtrl] = await Promise.all([
+          createAnimationController({
+            imageSrc: SpriteSheetIdle.src,
+            frameWidth: 350,
+            frameHeight: 350,
+            totalFrames: 340
+          }),
+          createAnimationController({
+            imageSrc: SpriteSheetWalkLeft.src,
+            frameWidth: 350,
+            frameHeight: 350,
+            totalFrames: 90
+          }),
+          createAnimationController({
+            imageSrc: SpriteSheetWalkRight.src,
+            frameWidth: 350,
+            frameHeight: 350,
+            totalFrames: 90
+          })
+        ]);
+
+        if (cancelled) return;
+
+        setControllers({
+          idle: idleCtrl,
+          walkLeft: walkLeftCtrl,
+          walkRight: walkRightCtrl
+        });
+
+        const brain = createGremlinBrain({
+          initialX: Math.max(24, Math.floor(window.innerWidth * 0.05)),
+          width: 350,
+          height: 350
+        });
+
+        brainRef.current = brain;
+        setPosition({ x: Math.round(brain.x), y: Math.round(brain.y) });
+        setSpriteKey(brain.getSpriteKey());
+      } catch (err) {
+        console.error("Failed to initialize virtual gremlin:", err);
+        setError(err?.message || "Unable to load gremlin animations.");
+      }
+    }
+
+    loadAnimations();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useGameLoop(() => {
-    if (controller) {
-      setFrame(f => (f + 1) % controller.totalFrames);
-    }
+    const brain = brainRef.current;
+    if (!brain || !controllers) return;
+
+    brain.update();
+    const key = brain.getSpriteKey();
+    const activeController = controllers[key];
+
+    setSpriteKey(key);
+    setFrame((previousFrame) => (previousFrame + 1) % activeController.totalFrames);
+    setPosition({ x: Math.round(brain.x), y: Math.round(brain.y) });
   }, 24);
 
   if (error) {
-    return (
-      <></>
-    );
+    return <div className="pet-error">Gremlin failed to load: {error}</div>;
   }
 
-  if (!controller) return null;
+  if (!controllers) return null;
 
-  const { x, y } = controller.getFramePosition(frame);
+  const activeController = controllers[spriteKey];
+  const framePosition = activeController.getFramePosition(frame);
 
   return (
     <div
       className="pet"
       style={{
-        backgroundImage: `url(${SpriteSheet.src})`,
-        backgroundPosition: `${x}px ${y}px`
+        left: `${position.x}px`,
+        backgroundImage: `url(${activeController.image.src})`,
+        backgroundPosition: `${framePosition.x}px ${framePosition.y}px`
       }}
     />
   );
