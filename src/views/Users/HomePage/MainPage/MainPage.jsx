@@ -1,15 +1,22 @@
 import './MainPage.css'
 import { useSideBar } from '@/contexts/SideBarContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { EventCalendar } from '@mui/x-scheduler/event-calendar';
 
-import FirstPageModuleBg from '../../../../assets/Decor/uma-musume-pretty-derby-zeno-rob-roy.png'
-import FirstPageModuleBg2 from '../../../../assets/Decor/hand-drawn-hieroglyph.png'
+import FirstPageModuleBg from '@/assets/Decor/uma-musume-pretty-derby-zeno-rob-roy.png'
+import FirstPageModuleBg2 from '@/assets/Decor/hand-drawn-hieroglyph.png'
 
-import SecondPageModuleBg2 from '../../../../assets/Decor/Kobayashi-Newspaper.png'
+import AbstractArtifact1 from '@/assets/Decor/futuristic-warning-sign-secure-area-frame-banner-decal-1-Photoroom.png'
+import AbstractArtifact2 from '@/assets/Decor/futuristic-style-warning-signs-futuristic-inscriptions-and-technical-symbols-japanese-hieroglyphs-decals-2-Photoroom.png'
 
-import SecondPageModuleIco from '../../../../assets/UI-Elements/announce-svgrepo-com.svg'
+import SecondPageModuleBg2 from '@/assets/Decor/Kobayashi-Newspaper.png'
+
+import SecondPageModuleIco from '@/assets/UI-Elements/announce-svgrepo-com.svg'
 import VirtualGremlin from '@/components/Gremlin_V-Pet/VirtualGremlin';
+
+import PetBGCanvas from '@/assets/UI-Elements/Summer5.png'
+
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
@@ -22,10 +29,18 @@ export default function MainPage() {
   const [time, setTime] = useState(new Date());
   
   // News carousel states
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [allAnnouncements, setAllAnnouncements] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    const storedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
+    if (storedUserId) {
+      setLoggedInUserId(parseInt(storedUserId, 10));
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -181,6 +196,56 @@ export default function MainPage() {
     });
   };
 
+  const pinnedAgendaItems = useMemo(() => getPinnedAgendaItems(), [allAnnouncements]);
+
+  const agendaResources = useMemo(() => {
+    const eventColors = ['blue', 'green', 'purple', 'orange', 'pink', 'teal', 'amber', 'indigo'];
+    const uniqueHubs = [];
+
+    pinnedAgendaItems.forEach((agenda) => {
+      if (!uniqueHubs.some(hub => hub.id === String(agenda.fanHubId))) {
+        uniqueHubs.push({
+          id: String(agenda.fanHubId),
+          title: agenda.fanHubName || 'FanHub',
+          eventColor: eventColors[uniqueHubs.length % eventColors.length]
+        });
+      }
+    });
+
+    return uniqueHubs;
+  }, [pinnedAgendaItems]);
+
+  const agendaEvents = useMemo(() => {
+    return pinnedAgendaItems
+      .map((agenda) => {
+        const start = new Date(agenda.startTime || agenda.endTime);
+        const end = new Date(agenda.endTime || start.getTime() + 60 * 60 * 1000);
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+        if (end <= start) end.setHours(start.getHours() + 1);
+
+        return {
+          id: agenda.postId,
+          title: agenda.title,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          resource: String(agenda.fanHubId),
+          readOnly: true
+        };
+      })
+      .filter(Boolean);
+  }, [pinnedAgendaItems]);
+
+  const agendaDefaultVisibleDate = useMemo(() => {
+    const now = new Date();
+    const upcomingEvent = agendaEvents
+      .map(event => new Date(event.start))
+      .filter(date => date >= now)
+      .sort((a, b) => a - b)[0];
+
+    return upcomingEvent || now;
+  }, [agendaEvents]);
+
   // Check if announcement is expired
   const isExpired = (endTime) => {
     if (!endTime) return false;
@@ -199,10 +264,10 @@ export default function MainPage() {
   };
 
   const pageModules = [
-    { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2]},
+    { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2, AbstractArtifact2]},
     { id: 2, title: 'News', textColor: '#FFF', color: '#E8B84D', gridColumn: '3 / 7', gridRow: '1', backgroundList: [SecondPageModuleBg2] },
-    { id: 3, title: 'Workshop', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2' },
-    { id: 4, title: 'My Collections', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
+    { id: 3, title: 'Workshop', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
+    { id: 4, title: 'My Playlist', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
   ];
 
   return (
@@ -231,13 +296,17 @@ export default function MainPage() {
               style={{ 
                 backgroundColor: pageModule.color,
                 gridColumn: pageModule.gridColumn,
-                gridRow: pageModule.gridRow
+                gridRow: pageModule.gridRow,
+                backgroundImage: `url(${pageModule.backgroundImg?.src})`,
+                backgroundSize: pageModule.backgroundImg && 'cover',
+                backgroundPosition: pageModule.backgroundImg && 'center'
               }}
             >
               {pageModule.backgroundList && 
               <div className={`page-module-background-${pageModule.id}`}>
                 {pageModule.backgroundList[0] && <img className="page-module-background-first" src={pageModule.backgroundList[0].src}/>}
                 {pageModule.backgroundList[1] && <img className="page-module-background-second" src={pageModule.backgroundList[1].src} />}
+                {pageModule.backgroundList[2] && <img className="page-module-background-third" src={pageModule.backgroundList[2].src} />}
               </div>}
               <div className="page-module-content"
                 style={{
@@ -246,32 +315,39 @@ export default function MainPage() {
               >
                 <h3 className='module-title'>{pageModule.title} {pageModule.id === 2 && <img className='news-speaker' src={SecondPageModuleIco.src}/>}</h3>
                 <div className='module-main-content'>
-                  {pageModule.id === 1 && 
+                  {pageModule.id === 1 && selectedCard === pageModule.id &&
                     <div className='agenda-schedule-container'>
                       {/* Agenda only shows in focused mode */}
                       <div className='agenda-wrapper'>
-                        {getPinnedAgendaItems().length > 0 ? (
-                          <div className='agenda-list'>
-                            {getPinnedAgendaItems().map((agenda) => (
-                              <div key={agenda.postId} className='agenda-item'>
-                                <div className='agenda-title-section'>
-                                  <h5 className='agenda-title'>{agenda.title}</h5>
-                                  {isExpired(agenda.endTime) && (
-                                    <span className='agenda-expired-badge'>Expired</span>
-                                  )}
-                                </div>
-                                <div className='agenda-date-section'>
-                                  <span className='agenda-date-label'>
-                                    {formatAgendaDate(agenda.startTime)} - {formatAgendaDate(agenda.endTime)}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                        {agendaEvents.length > 0 ? (
+                          <div className='agenda-calendar-shell'>
+                            <EventCalendar
+                              events={agendaEvents}
+                              resources={agendaResources}
+                              views={['week', 'month']}
+                              defaultView='week'
+                              defaultVisibleDate={agendaDefaultVisibleDate}
+                              showCurrentTimeIndicator
+                              readOnly
+                              areEventsDraggable={false}
+                              areEventsResizable={false}
+                              defaultPreferences={{
+                                ampm: false,
+                                isSidePanelOpen: false,
+                                showWeekends: true,
+                                showWeekNumber: false
+                              }}
+                            />
                           </div>
                         ) : (
-                          <div className='agenda-empty-state'>
+                          loggedInUserId ?  
+                          (<div className='agenda-empty-state'>
                             <p>No upcoming schedules</p>
+                          </div>) : (
+                          <div className='agenda-empty-state'>
+                            <p>Need to be logged in to track agenda.</p>
                           </div>
+                          )
                         )}
                       </div>
                     </div>
@@ -379,9 +455,14 @@ export default function MainPage() {
                           </div>
                         </>
                       ) : (
-                        <div className='news-empty-state'>
-                          <p>No announcements available</p>
-                        </div>
+                        loggedInUserId ?  
+                          (<div className='news-empty-state'>
+                            <p>No announcements available</p>
+                          </div>) : (
+                          <div className='news-empty-state'>
+                            <p>Need to be logged in to view announcements.</p>
+                          </div>
+                          )
                       )}
                     </div>
                   }
@@ -389,7 +470,7 @@ export default function MainPage() {
                     <VirtualGremlin />
                   }
                   {pageModule.id === 4 && 
-                    <p>Main content placeholder</p>
+                    <p>Music playlist here</p>
                   }
                 </div>
               </div>

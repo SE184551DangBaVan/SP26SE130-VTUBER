@@ -5,13 +5,16 @@ import AnalyticsContent from '../AdminAnalytics/AnalyticsContent';
 import AdminFeedback from '../AdminFeedback/AdminFeedback';
 import AdminHubManagement from '../AdminHubManagement/AdminHubManagement';
 import AdminItemManagement from '../AdminItemManagement/AdminItemManagement';
+import AdminPaidPackageManagement from '../AdminPaidPackageManagement/AdminPaidPackageManagement';
 
 import ApplicationIco from '../../../../assets/UI-Elements/note.svg';
+import ItemIco from '../../../../assets/UI-Elements/cardboard.svg';
 import ShopItemIco from '../../../../assets/UI-Elements/shopping-cart.svg';
 import BannerItemIco from '../../../../assets/UI-Elements/stock.svg';
 import AnalyticIco from '../../../../assets/UI-Elements/analytics.svg';
 import FeedbackIco from '../../../../assets/UI-Elements/feedback.svg';
 import FanHubIco from '../../../../assets/UI-Elements/fanhub.svg';
+import PaidPackageIco from '../../../../assets/UI-Elements/credit-card-payment.svg';
 
 export const DESKTOP_ICONS_CONFIG = [
     {
@@ -38,7 +41,7 @@ export const DESKTOP_ICONS_CONFIG = [
     {
         id: 'item-management',
         label: 'Item Management',
-        icon: <img src={BannerItemIco.src} alt="Item Management" style={{ width: '42px', height: '42px' }} />,
+        icon: <img src={ItemIco.src} alt="Item Management" style={{ width: '42px', height: '42px' }} />,
         component: AdminItemManagement,
         windowTitle: 'ITEM_MANAGEMENT.exe'
     },
@@ -59,8 +62,15 @@ export const DESKTOP_ICONS_CONFIG = [
     {
         id: 'view-feedback',
         label: 'View Feedback',
-        icon: <img src={FeedbackIco.src} alt="View Feedback" style={{ width: '52px', height: '52px', transform: 'translate(12%, 0)' }} />,
+        icon: <img src={FeedbackIco.src} alt="View Feedback" style={{ width: '50px', height: '50px', transform: 'translate(12%, 0) rotate(-15deg)' }} />,
         component: AdminFeedback,
         windowTitle: 'VIEW_FEEDBACK.exe'
+    },
+    {
+        id: 'view-paidpackage',
+        label: 'Paid Packages',
+        icon: <img src={PaidPackageIco.src} alt="View Feedback" style={{ width: '60px', height: '60px', transform: 'translate(2%, 8px)' }} />,
+        component: AdminPaidPackageManagement,
+        windowTitle: 'PAID_PACKAGES_MANAGER.exe'
     }
 ];

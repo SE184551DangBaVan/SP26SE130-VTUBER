@@ -1,8 +1,11 @@
-pet.x += pet.vx;
-pet.y += pet.vy;
+export function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
-// Gravity-lite
-pet.vy += 0.2;
+export function applyHorizontalBounds(pet, width = window.innerWidth) {
+  pet.x = clamp(pet.x, 0, width - pet.width);
+}
 
-// Screen bounds
-pet.x = clamp(pet.x, 0, window.innerWidth - pet.width);
+export function createPhysicsState({ x = 0, y = 0, width = 350, height = 350 }) {
+  return { x, y, vx: 0, vy: 0, width, height };
+}

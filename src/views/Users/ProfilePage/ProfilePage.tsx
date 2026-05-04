@@ -711,7 +711,7 @@ export default function ProfilePage({ username }: { username: string }) {
               <h2>Select Display Badges</h2>
               <button className="profile-modal-close" onClick={handleCloseModal}>×</button>
             </div>
-            <div className="profile-modal-body">
+            <div className="profile-modal-body retro-custom-scroll">
               <p className="profile-modal-hint">Select up to 3 badges to display on your profile</p>
               <p className="profile-modal-hint">Selected: {selectedBadges.length}/3</p>
               <div className="badge-selection-grid">
@@ -754,7 +754,7 @@ export default function ProfilePage({ username }: { username: string }) {
               <h2>Change Profile Picture</h2>
               <button className="profile-modal-close" onClick={handleCloseAvatarUploadModal}>×</button>
             </div>
-            <div className="profile-modal-body">
+            <div className="profile-modal-body retro-custom-scroll">
               <div
                 className={`avatar-dropzone ${isDragging ? 'dragging' : ''}`}
                 onDragEnter={handleDragEnter}
@@ -790,7 +790,7 @@ export default function ProfilePage({ username }: { username: string }) {
               <h2>Preview Avatar</h2>
               <button className="profile-modal-close" onClick={handlePreviewCancel}>×</button>
             </div>
-            <div className="profile-modal-body avatar-preview-body">
+            <div className="profile-modal-body avatar-preview-body retro-custom-scroll">
               <div className="avatar-preview-container">
                 <UserAvatar 
                   avatarUrl={previewUrl} 
@@ -820,7 +820,7 @@ export default function ProfilePage({ username }: { username: string }) {
               <h2>Change Avatar Frame</h2>
               <button className="profile-modal-close" onClick={handleCloseFrameModal}>×</button>
             </div>
-            <div className="profile-modal-body">
+            <div className="profile-modal-body retro-custom-scroll">
               <div className="frame-preview-section">
                 <UserAvatar
                   avatarUrl={userData.avatar}

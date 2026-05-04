@@ -6,10 +6,10 @@
   background-repeat: no-repeat;
   overflow: hidden;
   image-rendering: pixelated !important;
+  pointer-events: none;
+  will-change: left, transform;
 
-  right: -120px;
-  bottom: -40px;
-
+  bottom: -45px;
   transform: scale(0.8);
 
   /* animation: sheet-row 1.2s steps(9, end) infinite; */
