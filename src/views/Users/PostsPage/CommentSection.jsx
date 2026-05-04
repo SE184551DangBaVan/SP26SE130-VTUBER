@@ -18,6 +18,7 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist } from '@mui/icons-material';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
+import styles from './CommentSection.module.css';
 
 const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
@@ -220,9 +221,6 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     }
 
     // Prevent self-gifting
-      console.log("gifting comment id:" + commentId)
-      console.log("author id: " + authorId);
-    console.log("curernt logged in uesr id: " + userAuth.userId);
     if (userAuth.userId === authorId) {
       showSteamError("You cannot gift yourself", "Warning");
       return;
@@ -274,17 +272,17 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   };
 
   return (
-    <div className='comment-section'>
-      <div className='comment-section-header'>
+    <div className={styles.commentSection}>
+      <div className={styles.commentSectionHeader}>
         {commentCount > 0 ? `${commentCount} Comment${commentCount > 1 ? 's' : ''}` : 'Comments'}
       </div>
 
-      <div className='comments-list'>
+      <div className={styles.commentsList}>
         {comments.length === 0 && !loading ? (
-          <div className='no-comments'>
+          <div className={styles.noComments}>
             <ChatBubbleOutline />
             <p>No comments yet</p>
-            <p className='subtitle'>Be the first to comment.</p>
+            <p className={styles.subtitle}>Be the first to comment.</p>
           </div>
         ) : (
           <>
@@ -311,7 +309,7 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
               />
             ))}
             {hasMore && (
-              <button className='load-more-comments' onClick={handleLoadMore} disabled={loading}>
+              <button className={styles.loadMoreComments} onClick={handleLoadMore} disabled={loading}>
                 {loading ? 'Loading...' : 'Load more comments'}
               </button>
             )}
@@ -319,21 +317,21 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
         )}
       </div>
 
-      <div className='comment-input-container'>
-        <div className='comment-input-wrapper'>
+      <div className={styles.commentInputContainer}>
+        <div className={styles.commentInputWrapper}>
           {(fanHubId && isHubMember && !checkingMembership) && 
           <UserAvatar
-            className='comment-input-avatar'
+            className={styles.commentInputAvatar}
             avatarUrl={avatarUrl}
             avatarFrame={avatarFrame}
             size="small"
           />}
-          <div className='comment-input-box'>
+          <div className={styles.commentInputBox}>
             {fanHubId && !isHubMember && !checkingMembership ? (
-              <div className='comment-membership-required'>
+              <div className={styles.commentMembershipRequired}>
                 <p>You must be a member of this hub to comment.</p>
                 <button 
-                  className='join-hub-btn' 
+                  className={styles.joinHubBtn} 
                   onClick={handleJoinHub}
                   disabled={joiningHub}
                 >
@@ -343,7 +341,7 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
             ) : (
               <>
                 <textarea
-                  className='comment-textarea'
+                  className={styles.commentTextarea}
                   placeholder='Write a comment...'
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
@@ -356,15 +354,15 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
                   rows={1}
                 />
                 {commentText.trim() && (
-                  <div className='comment-input-actions'>
+                  <div className={styles.commentInputActions}>
                     <button
-                      className='comment-cancel-btn'
+                      className={styles.commentCancelBtn}
                       onClick={() => setCommentText('')}
                     >
                       Cancel
                     </button>
                     <button
-                      className='comment-send-btn'
+                      className={styles.commentSendBtn}
                       onClick={() => handleSendComment()}
                       disabled={!commentText.trim()}
                     >
@@ -470,27 +468,27 @@ function CommentItem({
 
   return (
     <>
-      <div className='comment-item' style={{ paddingLeft: depth > 0 ? `${depth * 24 + 16}px` : '16px' }}>
-        <div className='comment-content'>
+      <div className={styles.commentItem} style={{ paddingLeft: depth > 0 ? `${depth * 24 + 16}px` : '16px' }}>
+        <div className={styles.commentContent}>
           <UserAvatar
-            className='comment-avatar'
+            className={styles.commentAvatar}
             avatarUrl={comment.avatarUrl}
             onClick={() => onAuthorClick(comment.username)}
             size="small"
           />
-          <div className='comment-body'>
-            <div className='comment-header'>
-              <span className='comment-author' onClick={() => onAuthorClick(comment.username)}>
+          <div className={styles.commentBody}>
+            <div className={styles.commentHeader}>
+              <span className={styles.commentAuthor} onClick={() => onAuthorClick(comment.username)}>
                 {comment.displayName}
               </span>
-              <span className='comment-time'>{formatTimeAgo(comment.createdAt)}</span>
-              <div className='comment-menu-wrapper' ref={commentMenuRef}>
-                <button className='comment-menu-btn' onClick={handleCommentMenuToggle} title='More options'>
+              <span className={styles.commentTime}>{formatTimeAgo(comment.createdAt)}</span>
+              <div className={styles.commentMenuWrapper} ref={commentMenuRef}>
+                <button className={styles.commentMenuBtn} onClick={handleCommentMenuToggle} title='More options'>
                   <MoreHoriz fontSize='small' />
                 </button>
                 {commentMenuOpen && (
-                  <div className='comment-dropdown'>
-                    <button className='dropdown-item' onClick={handleReportUser}>
+                  <div className={styles.commentDropdown}>
+                    <button className={styles.dropdownItem} onClick={handleReportUser}>
                       <Flag fontSize='small' />
                       <span>Report user</span>
                     </button>
@@ -498,10 +496,10 @@ function CommentItem({
                 )}
               </div>
             </div>
-            <p className='comment-text'>{comment.content}</p>
-            <div className='comment-actions'>
+            <p className={styles.commentText}>{comment.content}</p>
+            <div className={styles.commentActions}>
               <button
-                className={`comment-action-btn ${comment.isLikedByCurrentUser ? 'liked' : ''}`}
+                className={`${styles.commentActionBtn} ${comment.isLikedByCurrentUser ? styles.liked : ''}`}
                 onClick={() => onLike(comment.commentId, comment.isLikedByCurrentUser)}
                 title={`${comment.isLikedByCurrentUser ? 'unlike' : 'like'}`}
               >
@@ -514,7 +512,7 @@ function CommentItem({
               </button>
 
               <button
-                className={`comment-action-btn gift-btn`}
+                className={`${styles.commentActionBtn} gift-btn`}
                 onClick={async () => {
                   if (giftLoading) return;
                   setGiftLoading(true);
@@ -525,7 +523,7 @@ function CommentItem({
                 title={`Send a rose (${COMMENT_GIFTING_COST} points)`}
               >
                 {giftLoading ? (
-                  <div className="gift-loading-spinner-small" />
+                  <div className={styles.giftLoadingSpinnerSmall} />
                 ) : (
                   <LocalFlorist fontSize='small' style={{ color: '#e91e63' }} />
                 )}
@@ -534,7 +532,7 @@ function CommentItem({
 
               {depth < MAX_NEST_DEPTH && (
                 <button
-                  className='comment-action-btn'
+                  className={styles.commentActionBtn}
                   onClick={() => onReply(comment.commentId)}
                 >
                   <Reply fontSize='small' />
@@ -545,10 +543,10 @@ function CommentItem({
 
             {isReplying && depth < MAX_NEST_DEPTH && (
               <div className='comment-reply-input' style={{ marginTop: 8 }}>
-                <div className='comment-input-wrapper'>
-                  <div className='comment-input-box'>
+                <div className={styles.commentInputWrapper}>
+                  <div className={styles.commentInputBox}>
                     <textarea
-                      className='comment-textarea'
+                      className={styles.commentTextarea}
                       placeholder='Write a reply...'
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
@@ -561,15 +559,15 @@ function CommentItem({
                       rows={1}
                     />
                     {replyText.trim() && (
-                      <div className='comment-input-actions'>
+                      <div className={styles.commentInputActions}>
                         <button
-                          className='comment-cancel-btn'
+                          className={styles.commentCancelBtn}
                           onClick={() => onReply(null)}
                         >
                           Cancel
                         </button>
                         <button
-                          className='comment-send-btn'
+                          className={styles.commentSendBtn}
                           onClick={onSendReply}
                           disabled={!replyText.trim()}
                         >
@@ -586,7 +584,7 @@ function CommentItem({
       </div>
 
       {replies.length > 0 && (
-        <div className='comment-replies'>
+        <div className={styles.commentReplies}>
           {replies.map(reply => (
             <CommentItem
               key={reply.commentId}
@@ -609,7 +607,7 @@ function CommentItem({
       )}
 
       {comment.hasChildren && (
-        <button className='view-replies-btn' onClick={handleViewReplies}>
+        <button className={styles.viewRepliesBtn} onClick={handleViewReplies}>
           {replies.length > 0 ? (
             <>Hide replies {loadingReplies && '...'}</>
           ) : (

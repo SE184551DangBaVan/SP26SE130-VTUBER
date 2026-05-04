@@ -1,0 +1,914 @@
+/* Post Details Overlay */
+.postDetailsOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.postDetailsContainer {
+  background: #aaaaaa43;
+  backdrop-filter: blur(2px);
+  width: 95vw;
+  height: 90vh;
+  max-width: 1400px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.postViewClose {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 10px #00000080;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.postViewClose:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.postDetailsContent {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+}
+
+/* Left Panel - Media */
+.postDetailsLeft {
+  flex: 1;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #fff;
+  box-shadow: 0 0 10px #00000080;
+  border-radius: 12px;
+}
+
+.postDetailsMedia {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.postDetailsMedia img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.postDetailsMedia video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Post Details Carousel */
+.postDetailsCarousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.carouselImageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carouselImageContainer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.carouselBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.carouselBtn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carouselBtn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.carouselBtn svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
+.carouselPrev {
+  left: 16px;
+}
+
+.carouselNext {
+  right: 16px;
+}
+
+.carouselIndicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.indicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.indicatorDot:hover {
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
+.indicatorDot.active {
+  background-color: #fff;
+  border-color: #fff;
+  transform: scale(1.2);
+}
+
+.postDetailsTextOnly {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 40px;
+}
+
+.textOnlyContent {
+  color: #000;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+
+.textOnlyContent h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.textOnlyContent p {
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.textOnlyContent .postHashtags {
+  margin-top: 16px;
+}
+
+.textOnlyContent .hashtag {
+  color: #8ab4f8;
+}
+
+/* Right Panel - Post Info + Comments */
+.postDetailsRight {
+  width: 400px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #d7d7d7;
+  background: #f5f5f5;
+  box-shadow: 0 0 10px #00000080;
+  overflow: hidden;
+}
+
+.postViewHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.postViewAuthorInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.postViewAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.postViewAuthorDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fanhubName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #323232;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.fanhubName:hover {
+  color: #2d8cf0;
+  text-decoration: underline;
+}
+
+.postTime {
+  font-size: 12px;
+  color: #878a8c;
+}
+
+.postViewActionsMenu {
+  display: flex;
+  gap: 4px;
+}
+
+.menuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #666;
+  transition: background 0.2s;
+}
+
+.menuBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.extraMenuWrapper {
+  position: relative;
+}
+
+.extraDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #323232;
+  transition: background 0.15s;
+}
+
+.dropdownItem:hover {
+  background: #f5f5f5;
+}
+
+.dropdownItem svg {
+  color: #e53935;
+}
+
+.deleteOption {
+  color: #ff4d4f !important;
+}
+
+.deleteOption:hover {
+  background-color: #fff1f0 !important;
+}
+
+.postDetailsTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #323232;
+  margin: 0;
+  padding: 16px 16px 8px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.postDetailsText {
+  font-size: 14px;
+  color: #323232;
+  margin: 0;
+  padding: 0 16px 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.postDetailsText.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.postDetailsSeeMoreBtn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 16px 12px;
+  transition: color 0.2s;
+  display: block;
+  width: fit-content;
+}
+
+.postDetailsSeeMoreBtn:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+/* Summary Section for PostDetails */
+.summarySection {
+  margin: 0 16px 12px;
+  padding: 0.75rem 1rem;
+  background: rgba(144, 202, 249, 0.15);
+  border-radius: 0.5rem;
+  border-left: 3px solid #90caf9;
+}
+
+.summaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.summaryTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.summaryTitle::before {
+  content: '✨';
+  font-size: 0.9rem;
+}
+
+.summaryCloseBtn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.summaryCloseBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.summaryContent {
+  font-size: 0.875rem;
+  color: #424242;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Loading Spinners */
+.summaryLoadingSpinner,
+.translateLoadingSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.postDetailsFooter {
+  padding: 12px 16px 12px;
+}
+
+.postDetailsFooterLeft {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  max-height: 32px;
+  border: none;
+  cursor: pointer;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #323232;
+  border: 2px solid #000;
+  box-shadow: 2px 1px 0px #000;
+  background: #eeeeee;
+  transform: translate(-2px, -1px);
+  transition: all 0.2s;
+}
+
+.actionBtn.shareBtn {
+  border: 2px solid #000;
+}
+
+.actionBtn:hover {
+  background: red;
+  color: #fff;
+  box-shadow: 4px 2px 0px #000;
+  transform: translate(-4px, -2px);
+}
+
+.actionBtn svg {
+  font-size: 18px;
+}
+
+.actionCount {
+  font-weight: 600;
+}
+
+.likeBtn.liked {
+  box-shadow: 1px 0.5px 0px #000;
+}
+
+.likeBtn.liked:hover {
+  color: #000;
+  background-color: #fff;
+  box-shadow: 2px 1px 0px #000;
+  transform: translate(-2px, -1px);
+}
+
+.likeBtn.liked:hover svg {
+  stroke: #000;
+  fill: #ccc;
+}
+
+.likeBtn.liked svg {
+  stroke: red;
+  fill: pink;
+}
+
+.likeLoadingSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d7d7d7;
+  border-top-color: #323232;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.postDetailsDivider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 0 16px;
+}
+
+.postDetailsLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-size: 16px;
+}
+
+/* Poll in Post Details */
+.postDetailsPollWrapper {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  padding: 80px;
+}
+
+.pollDisplayTitle {
+  font-size: 64px;
+  font-weight: 700;
+  font-family: 'jersey 20';
+  color: #000;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.pollDisplayContent {
+  font-size: 15px;
+  color: #f0f0f0;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.pollDisplayDetails {
+  width: 100%;
+  background: #f0f7f9;
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.pollOptionsList {
+  width: 100%;
+  margin: 25px 0;
+}
+
+.pollOptionItem {
+  position: relative;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #55555546;
+  background: #fff;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.pollOptionItem:hover:not(.voting) {
+  border-color: #2d8cf0;
+  box-shadow: 0 2px 8px rgba(45, 140, 240, 0.15);
+  transform: translateY(-1px);
+}
+
+.pollOptionItem.selected {
+  border-color: #2d8cf0;
+  background: #e8f4fd;
+}
+
+.pollOptionItem.voting {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pollOptionBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(45, 140, 240, 0.1) 0%, rgba(45, 140, 240, 0.2) 100%);
+  transition: width 0.4s ease;
+  z-index: 0;
+}
+
+.pollOptionItem.selected .pollOptionBar {
+  background: linear-gradient(90deg, rgba(45, 140, 240, 0.2) 0%, rgba(45, 140, 240, 0.3) 100%);
+}
+
+.pollOptionContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 16px;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pollOptionTextWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pollOptionText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #323232;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pollOptionItem.selected .pollOptionText {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.pollOptionPercentage {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.pollOptionIcon {
+  font-size: 22px;
+  color: #b0b0b0;
+}
+
+.pollTotalVotes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 20px 0;
+  border-top: 1px solid #e0e8ea;
+}
+
+.pollTotalVotes span {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.pollUnvoteBtn {
+  margin-top: 0;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #d32f2f;
+  border-radius: 4px;
+  color: #d32f2f;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  max-width: 200px;
+  height: 30px;
+  transition: all 0.2s;
+}
+
+.pollUnvoteBtn:hover:not(:disabled) {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.pollUnvoteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Delete Post Styles */
+.postDeletedView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.postDeletedTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2a2b33;
+  margin-bottom: 8px;
+}
+
+.postDeletedText {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.postDeletedBackBtn {
+  padding: 10px 24px;
+  background: #2a2b33;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.postDeletedBackBtn:hover {
+  background: #444;
+  transform: translateY(-2px);
+}
+
+/* Pin/Delete Confirmation Overlay */
+.pinConfirmOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 0.75rem;
+  backdrop-filter: blur(2px);
+}
+
+.pinConfirmDialog {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.deleteConfirmDialog {
+  border-top: 4px solid #ff4d4f !important;
+}
+
+.pinConfirmIcon {
+  color: #1976d2;
+  margin-bottom: 0.75rem;
+}
+
+.deleteIconBg {
+  background-color: #fff1f0 !important;
+  color: #ff4d4f !important;
+}
+
+.pinConfirmTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #323232;
+  margin: 0 0 0.5rem;
+}
+
+.pinConfirmText {
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.pinConfirmActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.pinConfirmBtn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.pinConfirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pinConfirmCancel {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.pinConfirmCancel:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.pinConfirmUnpin {
+  background: #e65100;
+  color: white;
+}
+
+.pinConfirmUnpin:hover:not(:disabled) {
+  background: #bf360c;
+}
+
+/* Hashtags */
+.postHashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.hashtag {
+  font-size: 13px;
+  color: #2d8cf0;
+  font-weight: 500;
+}
+
+.hashtag:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .postDetailsContent {
+    flex-direction: column;
+  }
+
+  .postDetailsLeft {
+    flex: none;
+    height: 40vh;
+  }
+
+  .postDetailsRight {
+    width: 100%;
+    min-width: 100%;
+  }
+}

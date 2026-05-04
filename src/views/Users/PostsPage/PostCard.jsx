@@ -10,7 +10,7 @@ import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { ShareRounded, CommentRounded, AutoAwesome, Translate, MoreHoriz, Flag, SwapHoriz, Close, PushPin, LocalFlorist, DeleteOutline } from '@mui/icons-material';
 import { votePoll, unVotePoll } from '@/services/PostController';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
-import './PostsPage.css';
+import styles from './PostCard.module.css';
 
 /**
  * Shared PostCard component used across PostsPage, HubPage, and other pages.
@@ -26,6 +26,7 @@ import './PostsPage.css';
  *  - router:            External router (falls back to useRouter)
  *  - hubData:           Optional hub data object (used for themeColor in hub pages)
  *  - variant:           'feed' (default) | 'hub' — controls header layout & like style
+ *  - showPinned:        Controls whether to show the pinned badge (defaults to true)
  */
 export default function PostCard({
   post,
@@ -38,6 +39,7 @@ export default function PostCard({
   router: externalRouter,
   hubData,
   variant = 'feed',
+  showPinned = true,
 }) {
   const router = externalRouter || useRouter();
   const { userAuth: contextUserAuth } = useAuth();
@@ -437,31 +439,31 @@ export default function PostCard({
     if (variant === 'hub') {
       // HubPage layout: author display name + username, themed timestamp
       return (
-        <div className='post-header'>
-          <div className='post-author-info'>
+        <div className={styles.postHeader}>
+          <div className={styles.postAuthorInfo}>
             <UserAvatar
-              className='post-author-avatar'
+              className={styles.postAuthorAvatar}
               avatarUrl={post.authorAvatarUrl}
               onClick={handleAvatarClick}
               size="small"
             />
-            <div className='post-author-details'>
-              <span className='author-display-name'>{post.authorDisplayName}</span>
-              <span className='author-username' style={hubData?.themeColor ? { color: hubData.themeColor } : {}}>
+            <div className={styles.postAuthorDetails}>
+              <span className={styles.authorDisplayName}>{post.authorDisplayName}</span>
+              <span className={styles.authorUsername} style={hubData?.themeColor ? { color: hubData.themeColor } : {}}>
                 {formatTimeAgo(post.createdAt)}
               </span>
             </div>
-            {isPinned && (
-              <span className='pinned-badge'>
+            {showPinned && isPinned && (
+              <span className={styles.pinnedBadge}>
                 <PushPin fontSize='inherit' />
                 Pinned
               </span>
             )}
           </div>
-          <div className='post-actions-menu'>
+          <div className={styles.postActionsMenu}>
             {canPinPost && (
               <button
-                className='menu-btn'
+                className={styles.menuBtn}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowPinConfirm(true);
@@ -470,50 +472,50 @@ export default function PostCard({
                 title={isPinned ? 'Unpin post' : 'Pin post'}
               >
                 {pinLoading ? (
-                  <span className='pin-loading-spinner' />
+                  <span className={styles.pinLoadingSpinner} />
                 ) : (
-                  <PushPin fontSize='small' className={isPinned ? 'pin-icon-pinned' : ''} />
+                  <PushPin fontSize='small' className={isPinned ? styles.pinIconPinned : ''} />
                 )}
               </button>
             )}
             <button
-              className='menu-btn'
+              className={styles.menuBtn}
               onClick={handleAISummary}
               title={showSummary ? 'Hide Summary' : 'AI Summary'}
               disabled={summaryLoading}
             >
               {summaryLoading ? (
-                <span className='summary-loading-spinner' />
+                <span className={styles.summaryLoadingSpinner} />
               ) : (
                 <AutoAwesome fontSize='small' />
               )}
             </button>
             <button 
-              className='menu-btn' 
+              className={styles.menuBtn} 
               onClick={handleAITranslate} 
               title={isTranslated ? 'Show Original' : 'AI Translate'}
               disabled={translateLoading}
             >
               {translateLoading ? (
-                <span className='translate-loading-spinner' />
+                <span className={styles.translateLoadingSpinner} />
               ) : isTranslated ? (
                 <SwapHoriz fontSize='small' />
               ) : (
                 <Translate fontSize='small' />
               )}
             </button>
-            <div className='extra-menu-wrapper' ref={menuRef}>
-              <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+            <div className={styles.extraMenuWrapper} ref={menuRef}>
+              <button className={styles.menuBtn} onClick={handleExtraOptionsToggle} title='More options'>
                 <MoreHoriz fontSize='small' />
               </button>
               {extraMenuOpen && (
-                <div className='extra-dropdown'>
-                  <button className='dropdown-item' onClick={handleReportPost}>
+                <div className={styles.extraDropdown}>
+                  <button className={styles.dropdownItem} onClick={handleReportPost}>
                     <Flag fontSize='small' />
                     <span>Report post</span>
                   </button>
                   {userAuth?.userId === post.authorId && (
-                    <button className='dropdown-item delete-option' onClick={handleOpenDeleteConfirm}>
+                    <button className={`${styles.dropdownItem} ${styles.deleteOption}`} onClick={handleOpenDeleteConfirm}>
                       <DeleteOutline fontSize='small' />
                       <span>Delete post</span>
                     </button>
@@ -528,64 +530,64 @@ export default function PostCard({
 
     // Feed layout: hub name + timestamp
     return (
-      <div className='post-header'>
-        <div className='post-author-info'>
+      <div className={styles.postHeader}>
+        <div className={styles.postAuthorInfo}>
           <UserAvatar
-            className='post-author-avatar'
+            className={styles.postAuthorAvatar}
             avatarUrl={post.authorAvatarUrl}
             onClick={handleAvatarClick}
             size="small"
           />
-          <div className='post-author-details'>
-            <span className='fanhub-name' onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
-            <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
-            {isPinned && (
-              <span className='pinned-badge'>
+          <div className={styles.postAuthorDetails}>
+            <span className={styles.fanhubName} onClick={handleHubClick} title="Go to hub">h/{post.fanHubName}</span>
+            <span className={styles.postTime}>{formatTimeAgo(post.createdAt)}</span>
+            {showPinned && isPinned && (
+              <span className={styles.pinnedBadge}>
                 <PushPin fontSize='inherit' />
                 Pinned
               </span>
             )}
           </div>
         </div>
-        <div className='post-actions-menu'>
+        <div className={styles.postActionsMenu}>
           <button
-            className='menu-btn'
+            className={styles.menuBtn}
             onClick={handleAISummary}
             title={showSummary ? 'Hide Summary' : 'AI Summary'}
             disabled={summaryLoading}
           >
             {summaryLoading ? (
-              <span className='summary-loading-spinner' />
+              <span className={styles.summaryLoadingSpinner} />
             ) : (
               <AutoAwesome fontSize='small' />
             )}
           </button>
           <button 
-            className='menu-btn' 
+            className={styles.menuBtn} 
             onClick={handleAITranslate} 
             title={isTranslated ? 'Show Original' : 'AI Translate'}
             disabled={translateLoading}
           >
             {translateLoading ? (
-              <span className='translate-loading-spinner' />
+              <span className={styles.translateLoadingSpinner} />
             ) : isTranslated ? (
               <SwapHoriz fontSize='small' />
             ) : (
               <Translate fontSize='small' />
             )}
           </button>
-          <div className='extra-menu-wrapper' ref={menuRef}>
-            <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+          <div className={styles.extraMenuWrapper} ref={menuRef}>
+            <button className={styles.menuBtn} onClick={handleExtraOptionsToggle} title='More options'>
               <MoreHoriz fontSize='small' />
             </button>
             {extraMenuOpen && (
-              <div className='extra-dropdown'>
-                <button className='dropdown-item' onClick={handleReportPost}>
+              <div className={styles.extraDropdown}>
+                <button className={styles.dropdownItem} onClick={handleReportPost}>
                   <Flag fontSize='small' />
                   <span>Report post</span>
                 </button>
                 {userAuth?.userId === post.authorId && (
-                  <button className='dropdown-item delete-option' onClick={handleOpenDeleteConfirm}>
+                  <button className={`${styles.dropdownItem} ${styles.deleteOption}`} onClick={handleOpenDeleteConfirm}>
                     <DeleteOutline fontSize='small' />
                     <span>Delete post</span>
                   </button>
@@ -603,42 +605,40 @@ export default function PostCard({
     if (variant === 'hub') {
       // HubPage uses heart-checkbox style for like button
       return (
-        <div className='post-actions'>
-          <div className='post-footer-left'>
-            <div className='post-vote-section'>
-              <div className='like-button' title={`${isLiked ? 'unlike' : 'like'}`} 
-                onClick={(e) => e.stopPropagation()}>
-                <input
-                  className='heart-checkbox'
-                  id={`heart-${post.postId}`}
-                  type='checkbox'
-                  checked={isLiked}
-                  onChange={handleLike}
-                  disabled={likeLoading}
-                />
-                <label className='like-label' htmlFor={`heart-${post.postId}`}>
-                  {likeLoading ? (
-                    <span className='like-loading-spinner' />
-                  ) : (
-                    <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
-                    </svg>
-                  )}
-                </label>
-                <div className='like-count-container'>
-                  <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
-                  {animatingCount !== null && (
-                    <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
-                  )}
-                </div>
+        <div className={styles.postActions}>
+          <div className={styles.postFooterLeft}>
+            <div className={styles.likeButton} title={`${isLiked ? 'unlike' : 'like'}`} 
+              onClick={(e) => e.stopPropagation()}>
+              <input
+                className={styles.heartCheckbox}
+                id={`heart-${post.postId}`}
+                type='checkbox'
+                checked={isLiked}
+                onChange={handleLike}
+                disabled={likeLoading}
+              />
+              <label className={styles.likeLabel} htmlFor={`heart-${post.postId}`}>
+                {likeLoading ? (
+                  <span className={styles.likeLoadingSpinner} />
+                ) : (
+                  <svg className={styles.likeIcon} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                  </svg>
+                )}
+              </label>
+              <div className={styles.likeCountContainer}>
+                <span className={`${styles.likeCountDisplay} ${animationDirection ? styles[`slide${animationDirection === 'up' ? 'Up' : 'Down'}Out`] : ''}`}>{displayCount}</span>
+                {animatingCount !== null && (
+                  <span className={`${styles.likeCountAnimating} ${animationDirection ? styles[`slide${animationDirection === 'up' ? 'Up' : 'Down'}In`] : ''}`}>{animatingCount}</span>
+                )}
               </div>
             </div>
-            <button className='action-btn' onClick={handleCommentsClick}>
+            <button className={styles.actionBtn} onClick={handleCommentsClick}>
               <CommentRounded fontSize='small' />
               <span>Comments</span>
             </button>
           </div>
-          <button className='action-btn share-btn' onClick={(e) => {
+          <button className={`${styles.actionBtn} ${styles.shareBtn}`} onClick={(e) => {
             e.stopPropagation();
             onShareClick?.(post);
           }}>
@@ -650,40 +650,40 @@ export default function PostCard({
 
     // Feed layout: heart SVG button with animated count
     return (
-      <div className='post-footer'>
-        <div className='post-footer-left'>
-          <div className='like-button' title={`${isLiked ? 'unlike' : 'like'}`}
+      <div className={styles.postFooter}>
+        <div className={styles.postFooterLeft}>
+          <div className={styles.likeButton} title={`${isLiked ? 'unlike' : 'like'}`}
             onClick={(e) => e.stopPropagation()}>
             <input
-              className='heart-checkbox'
+              className={styles.heartCheckbox}
               id={`heart-${post.postId}`}
               type='checkbox'
               checked={isLiked}
               onChange={handleLike}
               disabled={likeLoading}
             />
-            <label className='like-label' htmlFor={`heart-${post.postId}`}>
+            <label className={styles.likeLabel} htmlFor={`heart-${post.postId}`}>
               {likeLoading ? (
-                <span className='like-loading-spinner' />
+                <span className={styles.likeLoadingSpinner} />
               ) : (
-                <svg className='like-icon' viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className={styles.likeIcon} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
                 </svg>
               )}
             </label>
-            <div className='like-count-container'>
-              <span className={`like-count-display ${animationDirection ? `slide-${animationDirection}-out` : ''}`}>{displayCount}</span>
+            <div className={styles.likeCountContainer}>
+              <span className={`${styles.likeCountDisplay} ${animationDirection ? styles[`slide${animationDirection === 'up' ? 'Up' : 'Down'}Out`] : ''}`}>{displayCount}</span>
               {animatingCount !== null && (
-                <span className={`like-count-animating slide-${animationDirection}-in`}>{animatingCount}</span>
+                <span className={`${styles.likeCountAnimating} ${animationDirection ? styles[`slide${animationDirection === 'up' ? 'Up' : 'Down'}In`] : ''}`}>{animatingCount}</span>
               )}
             </div>
           </div>
-          <button className='action-btn' onClick={handleCommentsClick}>
+          <button className={styles.actionBtn} onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
             <span>Comment</span>
           </button>
         </div>
-        <button className='action-btn share-btn' onClick={(e) => {
+        <button className={`${styles.actionBtn} ${styles.shareBtn}`} onClick={(e) => {
           e.stopPropagation();
           onShareClick?.(post);
         }}>
@@ -694,9 +694,9 @@ export default function PostCard({
   };
 
   return (
-    <div className='post-card' onClick={onClick}>
+    <div className={styles.postCard} onClick={onClick}>
       {isDeleted ? (
-        <div className='post-deleted-placeholder'>
+        <div className={styles.postDeletedPlaceholder}>
           <DeleteOutline />
           <span>Post has been deleted</span>
         </div>
@@ -710,20 +710,20 @@ export default function PostCard({
       
       {/* Pin Confirmation Dialog */}
       {showPinConfirm && (
-        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
-          <div className='pin-confirm-dialog'>
-            <div className='pin-confirm-icon'>
+        <div className={styles.pinConfirmOverlay} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.pinConfirmDialog}>
+            <div className={styles.pinConfirmIcon}>
               <PushPin fontSize='large' />
             </div>
-            <h4 className='pin-confirm-title'>{isPinned ? 'Unpin this post?' : 'Pin this post?'}</h4>
-            <p className='pin-confirm-text'>
+            <h4 className={styles.pinConfirmTitle}>{isPinned ? 'Unpin this post?' : 'Pin this post?'}</h4>
+            <p className={styles.pinConfirmText}>
               {isPinned
                 ? 'This post will be unpinned and return to its normal position in the feed.'
                 : 'This post will be pinned to the top of the hub for all members to see.'}
             </p>
-            <div className='pin-confirm-actions'>
+            <div className={styles.pinConfirmActions}>
               <button
-                className='pin-confirm-btn pin-confirm-cancel'
+                className={`${styles.pinConfirmBtn} ${styles.pinConfirmCancel}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowPinConfirm(false);
@@ -733,7 +733,7 @@ export default function PostCard({
                 Cancel
               </button>
               <button
-                className={`pin-confirm-btn ${isPinned ? 'pin-confirm-unpin' : 'pin-confirm-pin'}`}
+                className={`${styles.pinConfirmBtn} ${isPinned ? styles.pinConfirmUnpin : styles.pinConfirmPin}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePinPost();
@@ -749,18 +749,18 @@ export default function PostCard({
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
-          <div className='pin-confirm-dialog delete-confirm-dialog'>
-            <div className='pin-confirm-icon delete-icon-bg'>
+        <div className={styles.pinConfirmOverlay} onClick={(e) => e.stopPropagation()}>
+          <div className={`${styles.pinConfirmDialog} ${styles.deleteConfirmDialog}`}>
+            <div className={`${styles.pinConfirmIcon} ${styles.deleteIconBg}`}>
               <DeleteOutline fontSize='large' />
             </div>
-            <h4 className='pin-confirm-title'>Delete this post?</h4>
-            <p className='pin-confirm-text'>
+            <h4 className={styles.pinConfirmTitle}>Delete this post?</h4>
+            <p className={styles.pinConfirmText}>
               Are you sure you want to delete your post? This action cannot be undone.
             </p>
-            <div className='pin-confirm-actions'>
+            <div className={styles.pinConfirmActions}>
               <button
-                className='pin-confirm-btn pin-confirm-cancel'
+                className={`${styles.pinConfirmBtn} ${styles.pinConfirmCancel}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteConfirm(false);
@@ -770,7 +770,7 @@ export default function PostCard({
                 Cancel
               </button>
               <button
-                className='pin-confirm-btn pin-confirm-unpin'
+                className={`${styles.pinConfirmBtn} ${styles.pinConfirmUnpin}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeletePost();
@@ -795,29 +795,29 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
   // Single image — no carousel needed
   if (!post.mediaUrls || post.mediaUrls.length === 1) {
     return (
-      <div className='post-content'>
-        {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+      <div className={styles.postContent}>
+        {displayTitle && <h3 className={styles.postTitle}>{displayTitle}</h3>}
         {displayContent && (
           <>
             <p 
               ref={contentRef}
-              className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+              className={`${styles.postText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
             >
               {displayContent}
             </p>
             {needsSeeMore && (
-              <button className='see-more-btn' onClick={onToggleContent}>
+              <button className={styles.seeMoreBtn} onClick={onToggleContent}>
                 {isContentExpanded ? 'Show less' : 'See more...'}
               </button>
             )}
           </>
         )}
         {showSummary && summaryContent && (
-          <div className='summary-section'>
-            <div className='summary-header'>
-              <h4 className='summary-title'>AI Summary</h4>
+          <div className={styles.summarySection}>
+            <div className={styles.summaryHeader}>
+              <h4 className={styles.summaryTitle}>AI Summary</h4>
               <button 
-                className='summary-close-btn' 
+                className={styles.summaryCloseBtn} 
                 onClick={(e) => {
                   e.stopPropagation();
                   onSummaryClose();
@@ -827,11 +827,11 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
                 <Close fontSize='small' />
               </button>
             </div>
-            <p className='summary-content'>{summaryContent}</p>
+            <p className={styles.summaryContent}>{summaryContent}</p>
           </div>
         )}
         {post.mediaUrls && post.mediaUrls.length > 0 && (
-          <div className='post-media image-media'>
+          <div className={`${styles.postMedia} ${styles.imageMedia}`}>
             <img
               src={post.mediaUrls[0]}
               alt={displayTitle || 'Post image'}
@@ -840,9 +840,9 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
           </div>
         )}
         {post.hashtags && post.hashtags.length > 0 && (
-          <div className='post-hashtags'>
+          <div className={styles.postHashtags}>
             {post.hashtags.map((tag, idx) => (
-              <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
+              <span key={idx} className={styles.hashtag} onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
             ))}
           </div>
         )}
@@ -852,29 +852,29 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
 
   // Multiple images — carousel
   return (
-    <div className='post-content'>
-      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+    <div className={styles.postContent}>
+      {displayTitle && <h3 className={styles.postTitle}>{displayTitle}</h3>}
       {displayContent && (
         <>
           <p 
             ref={contentRef}
-            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+            className={`${styles.postText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
           >
             {displayContent}
           </p>
           {needsSeeMore && (
-            <button className='see-more-btn' onClick={onToggleContent}>
+            <button className={styles.seeMoreBtn} onClick={onToggleContent}>
               {isContentExpanded ? 'Show less' : 'See more...'}
             </button>
           )}
         </>
       )}
       {showSummary && summaryContent && (
-        <div className='summary-section'>
-          <div className='summary-header'>
-            <h4 className='summary-title'>AI Summary</h4>
+        <div className={styles.summarySection}>
+          <div className={styles.summaryHeader}>
+            <h4 className={styles.summaryTitle}>AI Summary</h4>
             <button 
-              className='summary-close-btn' 
+              className={styles.summaryCloseBtn} 
               onClick={(e) => {
                 e.stopPropagation();
                 onSummaryClose();
@@ -884,18 +884,18 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
               <Close fontSize='small' />
             </button>
           </div>
-          <p className='summary-content'>{summaryContent}</p>
+          <p className={styles.summaryContent}>{summaryContent}</p>
         </div>
       )}
-      <div className='post-media image-gallery'>
-        <div className='image-carousel'>
-          <button className='carousel-btn carousel-prev' onClick={onPrevImage}>
+      <div className={`${styles.postMedia} ${styles.imageGallery}`}>
+        <div className={styles.imageCarousel}>
+          <button className={`${styles.carouselBtn} ${styles.carouselPrev}`} onClick={onPrevImage}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
 
-          <div className='carousel-image-container'>
+          <div className={styles.carouselImageContainer}>
             <img
               src={post.mediaUrls[currentImageIndex]}
               alt={`${displayTitle || 'Post'} - Image ${currentImageIndex + 1}`}
@@ -903,17 +903,17 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
             />
           </div>
 
-          <button className='carousel-btn carousel-next' onClick={onNextImage}>
+          <button className={`${styles.carouselBtn} ${styles.carouselNext}`} onClick={onNextImage}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
 
-          <div className='carousel-indicators'>
+          <div className={styles.carouselIndicators}>
             {post.mediaUrls.map((_, index) => (
               <button
                 key={index}
-                className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                className={`${styles.indicatorDot} ${index === currentImageIndex ? styles.active : ''}`}
                 onClick={(e) => onDotClick(e, index)}
               />
             ))}
@@ -921,9 +921,9 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
         </div>
       </div>
       {post.hashtags && post.hashtags.length > 0 && (
-        <div className='post-hashtags'>
+        <div className={styles.postHashtags}>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
+            <span key={idx} className={styles.hashtag} onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -933,29 +933,29 @@ function ImagePostContent({ post, displayContent, displayTitle, isTranslated, cu
 
 function VideoPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   return (
-    <div className='post-content'>
-      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+    <div className={styles.postContent}>
+      {displayTitle && <h3 className={styles.postTitle}>{displayTitle}</h3>}
       {displayContent && (
         <>
           <p 
             ref={contentRef}
-            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+            className={`${styles.postText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
           >
             {displayContent}
           </p>
           {needsSeeMore && (
-            <button className='see-more-btn' onClick={onToggleContent}>
+            <button className={styles.seeMoreBtn} onClick={onToggleContent}>
               {isContentExpanded ? 'Show less' : 'See more...'}
             </button>
           )}
         </>
       )}
       {showSummary && summaryContent && (
-        <div className='summary-section'>
-          <div className='summary-header'>
-            <h4 className='summary-title'>AI Summary</h4>
+        <div className={styles.summarySection}>
+          <div className={styles.summaryHeader}>
+            <h4 className={styles.summaryTitle}>AI Summary</h4>
             <button 
-              className='summary-close-btn' 
+              className={styles.summaryCloseBtn} 
               onClick={(e) => {
                 e.stopPropagation();
                 onSummaryClose();
@@ -965,11 +965,11 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
               <Close fontSize='small' />
             </button>
           </div>
-          <p className='summary-content'>{summaryContent}</p>
+          <p className={styles.summaryContent}>{summaryContent}</p>
         </div>
       )}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <div className='post-media video-media'>
+        <div className={styles.postMedia}>
           <video controls>
             <source src={post.mediaUrls[0]} type='video/mp4' />
             Your browser does not support the video tag.
@@ -977,9 +977,9 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
         </div>
       )}
       {post.hashtags && post.hashtags.length > 0 && (
-        <div className='post-hashtags'>
+        <div className={styles.postHashtags}>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
+            <span key={idx} className={styles.hashtag} onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -989,29 +989,29 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
 
 function TextPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   return (
-    <div className='post-content'>
-      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+    <div className={styles.postContent}>
+      {displayTitle && <h3 className={styles.postTitle}>{displayTitle}</h3>}
       {displayContent && (
         <>
           <p 
             ref={contentRef}
-            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+            className={`${styles.postText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
           >
             {displayContent}
           </p>
           {needsSeeMore && (
-            <button className='see-more-btn' onClick={onToggleContent}>
+            <button className={styles.seeMoreBtn} onClick={onToggleContent}>
               {isContentExpanded ? 'Show less' : 'See more...'}
             </button>
           )}
         </>
       )}
       {showSummary && summaryContent && (
-        <div className='summary-section'>
-          <div className='summary-header'>
-            <h4 className='summary-title'>AI Summary</h4>
+        <div className={styles.summarySection}>
+          <div className={styles.summaryHeader}>
+            <h4 className={styles.summaryTitle}>AI Summary</h4>
             <button 
-              className='summary-close-btn' 
+              className={styles.summaryCloseBtn} 
               onClick={(e) => {
                 e.stopPropagation();
                 onSummaryClose();
@@ -1021,13 +1021,13 @@ function TextPostContent({ post, displayContent, displayTitle, isTranslated, isC
               <Close fontSize='small' />
             </button>
           </div>
-          <p className='summary-content'>{summaryContent}</p>
+          <p className={styles.summaryContent}>{summaryContent}</p>
         </div>
       )}
       {post.hashtags && post.hashtags.length > 0 && (
-        <div className='post-hashtags'>
+        <div className={styles.postHashtags}>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
+            <span key={idx} className={styles.hashtag} onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
@@ -1093,29 +1093,29 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
   };
 
   return (
-    <div className='post-content'>
-      {displayTitle && <h3 className='post-title'>{displayTitle}</h3>}
+    <div className={styles.postContent}>
+      {displayTitle && <h3 className={styles.postTitle}>{displayTitle}</h3>}
       {displayContent && (
         <>
           <p 
             ref={contentRef}
-            className={`post-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+            className={`${styles.postText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
           >
             {displayContent}
           </p>
           {needsSeeMore && (
-            <button className='see-more-btn' onClick={onToggleContent}>
+            <button className={styles.seeMoreBtn} onClick={onToggleContent}>
               {isContentExpanded ? 'Show less' : 'See more...'}
             </button>
           )}
         </>
       )}
       {showSummary && summaryContent && (
-        <div className='summary-section'>
-          <div className='summary-header'>
-            <h4 className='summary-title'>AI Summary</h4>
+        <div className={styles.summarySection}>
+          <div className={styles.summaryHeader}>
+            <h4 className={styles.summaryTitle}>AI Summary</h4>
             <button 
-              className='summary-close-btn' 
+              className={styles.summaryCloseBtn} 
               onClick={(e) => {
                 e.stopPropagation();
                 onSummaryClose();
@@ -1125,12 +1125,12 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
               <Close fontSize='small' />
             </button>
           </div>
-          <p className='summary-content'>{summaryContent}</p>
+          <p className={styles.summaryContent}>{summaryContent}</p>
         </div>
       )}
       {post.voteOptions && (
-        <div className='poll-display'>
-          <div className='poll-options-list'>
+        <div className={styles.pollDisplay}>
+          <div className={styles.pollOptionsList}>
             {post.voteOptions.map((option) => {
               const isObject = typeof option === 'object' && option !== null;
               const optionId = isObject ? option.id : option;
@@ -1144,31 +1144,31 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
               return (
                 <div
                   key={optionId}
-                  className={`poll-option-item ${isSelected ? 'selected' : ''} ${voting ? 'voting' : ''}`}
+                  className={`${styles.pollOptionItem} ${isSelected ? styles.selected : ''} ${voting ? styles.voting : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleOptionClick(optionId);
                   }}
                 >
                   {hasVoted && (
-                    <div className='poll-option-bar' style={{ width: `${percentage}%` }} />
+                    <div className={styles.pollOptionBar} style={{ width: `${percentage}%` }} />
                   )}
-                  <div className='poll-option-content'>
+                  <div className={styles.pollOptionContent}>
                     {thumbnailUrl && (
                       <img
                         src={thumbnailUrl}
                         alt={optionText}
-                        className='poll-option-thumbnail'
+                        className={styles.pollOptionThumbnail}
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     )}
-                    <div className='poll-option-text-wrapper'>
-                      <span className='poll-option-text'>{optionText}</span>
+                    <div className={styles.pollOptionTextWrapper}>
+                      <span className={styles.pollOptionText}>{optionText}</span>
                       {hasVoted && (
-                        <span className='poll-option-percentage'>{percentage}%</span>
+                        <span className={styles.pollOptionPercentage}>{percentage}%</span>
                       )}
                       {!hasVoted && (
-                        <span className='poll-option-icon'>○</span>
+                        <span className={styles.pollOptionIcon}>○</span>
                       )}
                     </div>
                   </div>
@@ -1178,11 +1178,11 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
           </div>
           {selectedOption && (
             <>
-              <div className='poll-total-votes'>
+              <div className={styles.pollTotalVotes}>
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
               </div>
               <button
-                className='poll-unvote-btn'
+                className={styles.pollUnvoteBtn}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleUnvote();
@@ -1196,9 +1196,9 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
         </div>
       )}
       {post.hashtags && post.hashtags.length > 0 && (
-        <div className='post-hashtags'>
+        <div className={styles.postHashtags}>
           {post.hashtags.map((tag, idx) => (
-            <span key={idx} className='hashtag' onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
+            <span key={idx} className={styles.hashtag} onClick={(e) => onHashtagClick?.(e, tag)}>#{tag}</span>
           ))}
         </div>
       )}
