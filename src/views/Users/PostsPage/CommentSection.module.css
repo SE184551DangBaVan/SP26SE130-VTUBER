@@ -420,8 +420,131 @@
   animation: spin 0.8s linear infinite;
 }
 
+/* Role Badges */
+.roleBadge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.vtuber {
+  background: #ff4081;
+  color: white;
+  box-shadow: 0 0 5px rgba(255, 64, 129, 0.4);
+}
+
+.moderator {
+  background: #2d8cf0;
+  color: white;
+}
+
+.member {
+  background: #f0f0f0;
+  color: #666;
+}
+
+/* Edit Comment */
+.editCommentContainer {
+  margin: 8px 0;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cancelEditBtn, .saveEditBtn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cancelEditBtn {
+  background: #f5f5f5;
+  color: #666;
+  border-color: #e0e0e0;
+}
+
+.saveEditBtn {
+  background: #2d8cf0;
+  color: white;
+}
+
+.saveEditBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Hidden Comments Section */
+.hiddenCommentsSection {
+  margin-top: 16px;
+  padding: 0 16px;
+  border-top: 1px dashed #ccc;
+}
+
+.hiddenCommentsHeader {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+  margin: 12px 0 8px 0;
+  text-transform: uppercase;
+}
+
+.showHiddenBtn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 16px 0;
+  transition: background 0.2s;
+}
+
+.showHiddenBtn:hover {
+  background: #f0f0f0;
+  color: #323232;
+}
+
+.hideHiddenBtn {
+  display: block;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 8px auto;
+  text-decoration: underline;
+}
+
+.hiddenRepliesSection {
+  margin-top: 4px;
+}
+
+/* Delete dropdown item */
+.deleteItem:hover {
+  background: #fff5f5;
+}
+
+.deleteItem:hover span {
+  color: #e53935;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+

@@ -7,6 +7,7 @@ import { getPendingPostsByFanHub, reviewPost, reviewPostsBulk } from "@/services
 import { getPostsByFanHub, getRejectedPostsByFanHub, retryAiValidation, approveAllAiSafePosts, rejectAllAiUnsafePosts } from "@/services/PostController.jsx";
 import { getPostsWithReports, bulkResolveReports } from "@/services/ReportController";
 import { useHubModeration } from "@/contexts/HubModerationContext";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 import PostReportsTable from "./PostReportsTable";
 import "./PostModerationContent.css";
 
@@ -414,7 +415,7 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
                     <th className="sortable" onClick={() => handleSort("postType")}>Type{getSortIcon("postType")}</th>
                     <th>Content</th>
                     <th className="sortable" onClick={() => handleSort("status")}>Approval Status{getSortIcon("status")}</th>
-                    <th className="sortable" onClick={() => handleSort("aiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
+                    <th className="sortable" onClick={() => handleSort("finalAiValidationStatus")}>AI Validation{getSortIcon("aiValidationStatus")}</th>
                     <th className="sortable" onClick={() => handleSort("createdAt")}>Created Date{getSortIcon("createdAt")}</th>
                   </tr>
                 </thead>
@@ -429,7 +430,20 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
                         />
                       </td>
                       <td className="post-id">#{post.postId}</td>
-                      <td className="author-display-name">{post.authorDisplayName}</td>
+                      <td className="member-cell">
+                        <UserAvatar
+                          avatarUrl={post.authorAvatarUrl}
+                          avatarFrame={post.authorFrameUrl}
+                          frameSize={post.authorFrameSize}
+                          frameX={post.authorFrameXAxis}
+                          frameY={post.authorFrameYAxis}
+                          size="small"
+                          className="member-avatar-component"
+                        />
+                        <span className="member-name">
+                          {post.authorDisplayName || post.authorUsername}
+                        </span>
+                      </td>
                       <td className="post-type"><span className="post-type-badge">{getPostTypeLabel(post.postType)}</span></td>
                       <td className="post-content">
                         <div className="post-title" title={post.title}>{post.title}</div>
@@ -476,7 +490,20 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
             <div className="pm-modal-body">
               <div className="pm-info-grid">
                 <div className="pm-info-item"><span className="pm-info-label">Post ID:</span><span className="pm-info-value">#{selectedPost.postId}</span></div>
-                <div className="pm-info-item"><span className="pm-info-label">Author:</span><span className="pm-info-value">{selectedPost.authorDisplayName}</span></div>
+                <div className="pm-info-item">
+                  <span className="pm-info-label">Author:</span>
+                  <div className="pm-info-value" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <UserAvatar
+                      avatarUrl={selectedPost.authorAvatarUrl}
+                      avatarFrame={selectedPost.authorFrameUrl}
+                      frameSize={selectedPost.authorFrameSize}
+                      frameX={selectedPost.authorFrameXAxis}
+                      frameY={selectedPost.authorFrameYAxis}
+                      size="small"
+                    />
+                    <span>{selectedPost.authorDisplayName || selectedPost.authorUsername}</span>
+                  </div>
+                </div>
                 <div className="pm-info-item"><span className="pm-info-label">Member ID:</span><span className="pm-info-value">#{selectedPost.authorMemberId || "N/A"}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Approval Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>

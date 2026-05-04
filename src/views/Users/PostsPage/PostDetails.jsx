@@ -9,6 +9,7 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { BASE_URL } from '@/config';
 import CommentSection from './CommentSection';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import styles from './PostDetails.module.css';
 import {
   ShareRounded,
@@ -536,13 +537,14 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                   {/* Post Header */}
                   <div className={styles.postViewHeader}>
                     <div className={styles.postViewAuthorInfo}>
-                      <img
+                      <UserAvatar
                         className={styles.postViewAvatar}
-                        src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-                        alt={post.authorDisplayName}
-                        onError={(e) => {
-                          e.target.src = '/profile-pic-undefined.jpg';
-                        }}
+                        avatarUrl={post.authorAvatarUrl}
+                        avatarFrame={post.authorFrameUrl}
+                        frameSize={post.authorFrameSize}
+                        frameX={post.authorFrameXAxis}
+                        frameY={post.authorFrameYAxis}
+                        size="small"
                       />
                       <div className={styles.postViewAuthorDetails}>
                         <span className={styles.fanhubName}>h/{post.fanHubName}</span>

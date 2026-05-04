@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getFanHubBans, revokeBan } from "@/services/MemberController.jsx";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 import "./BansManagementContent.css";
 
 const PAGE_SIZE = 10;
@@ -169,7 +170,7 @@ export default function BansManagementContent({ fanHubId }) {
             <thead>
               <tr>
                 <th>User ID</th>
-                <th>Display Name</th>
+                <th>Member</th>
                 <th>Username</th>
                 <th>Reason</th>
                 <th>Banned By</th>
@@ -181,7 +182,20 @@ export default function BansManagementContent({ fanHubId }) {
               {bans.map((ban) => (
                 <tr key={ban.banId}>
                   <td className="user-id">#{ban.userId}</td>
-                  <td className="display-name">{ban.displayName || "-"}</td>
+                  <td className="member-cell">
+                    <UserAvatar
+                      avatarUrl={ban.avatarUrl}
+                      avatarFrame={ban.frameUrl}
+                      frameSize={ban.frameSize}
+                      frameX={ban.frameXAxis}
+                      frameY={ban.frameYAxis}
+                      size="small"
+                      className="member-avatar-component"
+                    />
+                    <span className="member-name">
+                      {ban.displayName || ban.username}
+                    </span>
+                  </td>
                   <td className="username">{ban.username || "-"}</td>
                   <td className="ban-reason-cell" title={ban.reason}>
                     <span className="reason-text">{ban.reason}</span>

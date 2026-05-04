@@ -650,11 +650,8 @@ body:has(#side-bar.rebound-animation) .hub-page-container {
   background: #f5f5f5;
 }
 
-.member-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+.member-avatar-component {
+  /* Handled by UserAvatar size="medium" */
 }
 
 .member-info {

@@ -9,6 +9,11 @@ import {
   likeComment,
   unlikeComment,
   giftComment,
+  editComment,
+  deleteComment,
+  hideComment,
+  getHiddenComments,
+  getHiddenReplies,
 } from '@/services/CommentController';
 import { COMMENT_GIFTING_COST } from '@/constants/giftingConstants';
 import { checkIsMember } from '@/services/FanHubController';
@@ -16,7 +21,7 @@ import { joinFanHub } from '@/services/MemberController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
-import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist } from '@mui/icons-material';
+import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist, Edit, Delete, VisibilityOff } from '@mui/icons-material';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import styles from './CommentSection.module.css';
 
@@ -36,14 +41,22 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isHubMember, setIsHubMember] = useState(false);
+  const [roleInHub, setRoleInHub] = useState(null); // 'MEMBER', 'MODERATOR', 'VTUBER'
   const [checkingMembership, setCheckingMembership] = useState(false);
   const [joiningHub, setJoiningHub] = useState(false);
+
+  // Hidden comments state
+  const [hiddenComments, setHiddenComments] = useState([]);
+  const [showHidden, setShowHidden] = useState(false);
+  const [loadingHidden, setLoadingHidden] = useState(false);
+  const [totalHidden, setTotalHidden] = useState(0);
 
   // Check hub membership when fanHubId is provided
   useEffect(() => {
     const checkMembership = async () => {
       if (!fanHubId || !userAuth) {
         setIsHubMember(false);
+        setRoleInHub(null);
         return;
       }
 
@@ -51,9 +64,11 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       try {
         const memberData = await checkIsMember(fanHubId);
         setIsHubMember(memberData?.isMember || false);
+        setRoleInHub(memberData?.roleInHub || 'MEMBER');
       } catch (error) {
         console.error('Error checking hub membership:', error);
         setIsHubMember(false);
+        setRoleInHub(null);
       } finally {
         setCheckingMembership(false);
       }
@@ -72,6 +87,7 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       if (result?.success) {
         showSteamSuccess('Joined hub successfully! You can now comment.', 'Success');
         setIsHubMember(true);
+        setRoleInHub('MEMBER');
       } else {
         showSteamError(result?.message || 'Failed to join hub', 'Error');
       }
@@ -86,6 +102,8 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   useEffect(() => {
     if (!postId) return;
     setComments([]);
+    setHiddenComments([]);
+    setShowHidden(false);
     setOffset(0);
     setHasMore(true);
     fetchComments(0);
@@ -103,6 +121,11 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
         setComments(prev => currentOffset === 0 ? newComments : [...prev, ...newComments]);
         setHasMore(more);
         setOffset(currentOffset + newComments.length);
+
+        // If no more regular comments, try to fetch hidden ones
+        if (!more) {
+          fetchHiddenComments();
+        }
       } catch (error) {
         console.error('Error fetching comments:', error);
       } finally {
@@ -111,6 +134,19 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     },
     [postId]
   );
+
+  const fetchHiddenComments = async () => {
+    setLoadingHidden(true);
+    try {
+      const { comments: hiddens, totalHidden: total } = await getHiddenComments(postId, 0, 100);
+      setHiddenComments(hiddens);
+      setTotalHidden(total);
+    } catch (error) {
+      console.error('Error fetching hidden comments:', error);
+    } finally {
+      setLoadingHidden(false);
+    }
+  };
 
   const handleLoadMore = () => {
     fetchComments(offset);
@@ -271,6 +307,12 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     navRouter.push(`/user/${username}`);
   };
 
+  const refreshAll = () => {
+    setOffset(0);
+    setHasMore(true);
+    fetchComments(0);
+  };
+
   return (
     <div className={styles.commentSection}>
       <div className={styles.commentSectionHeader}>
@@ -299,19 +341,52 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
                 setReplyText={setReplyText}
                 onSendReply={() => handleSendComment(comment.commentId)}
                 onAuthorClick={handleAuthorClick}
-                refreshComments={() => {
-                  setOffset(0);
-                  setHasMore(true);
-                  fetchComments(0);
-                }}
+                refreshComments={refreshAll}
                 userAuth={userAuth}
                 navRouter={navRouter}
+                roleInHub={roleInHub}
               />
             ))}
             {hasMore && (
               <button className={styles.loadMoreComments} onClick={handleLoadMore} disabled={loading}>
                 {loading ? 'Loading...' : 'Load more comments'}
               </button>
+            )}
+
+            {!hasMore && totalHidden > 0 && (
+              <div className={styles.hiddenCommentsSection}>
+                {!showHidden ? (
+                  <button className={styles.showHiddenBtn} onClick={() => setShowHidden(true)}>
+                    [{totalHidden} message{totalHidden > 1 ? 's' : ''} hidden, click to show]
+                  </button>
+                ) : (
+                  <>
+                    <div className={styles.hiddenCommentsHeader}>Hidden Comments</div>
+                    {hiddenComments.map(comment => (
+                      <CommentItem
+                        key={comment.commentId}
+                        comment={comment}
+                        depth={0}
+                        onLike={handleLikeComment}
+                        onReply={handleReplyClick}
+                        onGift={handleGiftComment}
+                        replyingTo={replyingTo}
+                        replyText={replyText}
+                        setReplyText={setReplyText}
+                        onSendReply={() => handleSendComment(comment.commentId)}
+                        onAuthorClick={handleAuthorClick}
+                        refreshComments={refreshAll}
+                        userAuth={userAuth}
+                        navRouter={navRouter}
+                        roleInHub={roleInHub}
+                      />
+                    ))}
+                    <button className={styles.hideHiddenBtn} onClick={() => setShowHidden(false)}>
+                      Hide hidden messages
+                    </button>
+                  </>
+                )}
+              </div>
             )}
           </>
         )}
@@ -393,6 +468,7 @@ function CommentItem({
   refreshComments,
   userAuth,
   navRouter,
+  roleInHub,
 }) {
   const { openReportModal } = useReportModal();
   const [replies, setReplies] = useState([]);
@@ -403,6 +479,17 @@ function CommentItem({
   const [giftLoading, setGiftLoading] = useState(false);
   const commentMenuRef = useRef();
   const isReplying = replyingTo === comment.commentId;
+
+  // New states for Edit/Delete/Hide
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(comment.content);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Hidden replies state
+  const [hiddenReplies, setHiddenReplies] = useState([]);
+  const [showHiddenReplies, setShowHiddenReplies] = useState(false);
+  const [totalHiddenReplies, setTotalHiddenReplies] = useState(0);
+  const [loadingHiddenReplies, setLoadingHiddenReplies] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -434,9 +521,95 @@ function CommentItem({
     });
   };
 
-  const fetchReplies = useCallback(async () => {
-    if (!comment.hasChildren) return;
+  // Permission Checks
+  const isOwnComment = userAuth && userAuth.userId === comment.userId;
+  const isAuthorVtuber = comment.roleInHub === 'VTUBER';
+  const isAuthorModerator = comment.roleInHub === 'MODERATOR';
+  const isAuthorUser = !isAuthorVtuber && !isAuthorModerator;
 
+  const canEdit = isOwnComment;
+
+  const canDelete = isOwnComment || 
+    (roleInHub === 'VTUBER' && isAuthorUser) || 
+    (roleInHub === 'MODERATOR' && (isAuthorUser || isAuthorModerator)) ||
+    (roleInHub === 'VTUBER' && isAuthorModerator); // Added VTUBER can delete Moderator
+
+  const canHide = (roleInHub === 'VTUBER' && isAuthorUser) || 
+    (roleInHub === 'MODERATOR' && (isAuthorUser || isAuthorModerator));
+  
+  // Moderator cannot hide Vtuber's Comment
+  const moderatorHidingVtuber = roleInHub === 'MODERATOR' && isAuthorVtuber;
+  const actualCanHide = canHide && !moderatorHidingVtuber;
+
+  const handleEdit = () => {
+    setCommentMenuOpen(false);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditValue(comment.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editValue.trim() || editValue === comment.content) {
+      setIsEditing(false);
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const result = await editComment(comment.commentId, editValue.trim());
+      if (result?.success) {
+        showSteamSuccess('Comment updated', 'Success');
+        setIsEditing(false);
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to update comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      showSteamError('Failed to update comment', 'Error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setCommentMenuOpen(false);
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      const result = await deleteComment(comment.commentId);
+      if (result?.success) {
+        showSteamSuccess('Comment deleted', 'Success');
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to delete comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      showSteamError('Failed to delete comment', 'Error');
+    }
+  };
+
+  const handleHide = async () => {
+    setCommentMenuOpen(false);
+    try {
+      const result = await hideComment(comment.commentId);
+      if (result?.success) {
+        showSteamSuccess('Comment hidden', 'Success');
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to hide comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error hiding comment:', error);
+      showSteamError('Failed to hide comment', 'Error');
+    }
+  };
+
+  const fetchReplies = useCallback(async () => {
     setLoadingReplies(true);
     try {
       const { replies: newReplies, hasMore: more } = await getCommentReplies(
@@ -447,12 +620,29 @@ function CommentItem({
       setReplies(prev => [...prev, ...newReplies]);
       setHasMoreReplies(more);
       setRepliesOffset(prev => prev + newReplies.length);
+
+      if (!more) {
+        fetchHiddenReplies();
+      }
     } catch (error) {
       console.error('Error fetching replies:', error);
     } finally {
       setLoadingReplies(false);
     }
-  }, [comment.commentId, comment.hasChildren, replies.length]);
+  }, [comment.commentId, replies.length]);
+
+  const fetchHiddenReplies = async () => {
+    setLoadingHiddenReplies(true);
+    try {
+      const { replies: hiddens, totalHidden: total } = await getHiddenReplies(comment.commentId, 0, 100);
+      setHiddenReplies(hiddens);
+      setTotalHiddenReplies(total);
+    } catch (error) {
+      console.error('Error fetching hidden replies:', error);
+    } finally {
+      setLoadingHiddenReplies(false);
+    }
+  };
 
   const handleViewReplies = () => {
     if (replies.length === 0) {
@@ -463,6 +653,7 @@ function CommentItem({
       setReplies([]);
       setHasMoreReplies(comment.hasChildren);
       setRepliesOffset(0);
+      setShowHiddenReplies(false);
     }
   };
 
@@ -473,6 +664,10 @@ function CommentItem({
           <UserAvatar
             className={styles.commentAvatar}
             avatarUrl={comment.avatarUrl}
+            avatarFrame={comment.frameUrl}
+            frameSize={comment.frameSize}
+            frameX={comment.frameXAxis}
+            frameY={comment.frameYAxis}
             onClick={() => onAuthorClick(comment.username)}
             size="small"
           />
@@ -480,6 +675,11 @@ function CommentItem({
             <div className={styles.commentHeader}>
               <span className={styles.commentAuthor} onClick={() => onAuthorClick(comment.username)}>
                 {comment.displayName}
+                {comment.roleInHub && (
+                  <span className={`${styles.roleBadge} ${styles[comment.roleInHub.toLowerCase()]}`}>
+                    {comment.roleInHub}
+                  </span>
+                )}
               </span>
               <span className={styles.commentTime}>{formatTimeAgo(comment.createdAt)}</span>
               <div className={styles.commentMenuWrapper} ref={commentMenuRef}>
@@ -488,6 +688,24 @@ function CommentItem({
                 </button>
                 {commentMenuOpen && (
                   <div className={styles.commentDropdown}>
+                    {canEdit && (
+                      <button className={styles.dropdownItem} onClick={handleEdit}>
+                        <Edit fontSize='small' />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    {actualCanHide && (
+                      <button className={styles.dropdownItem} onClick={handleHide}>
+                        <VisibilityOff fontSize='small' />
+                        <span>Hide</span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button className={`${styles.dropdownItem} ${styles.deleteItem}`} onClick={handleDelete}>
+                        <Delete fontSize='small' />
+                        <span>Delete</span>
+                      </button>
+                    )}
                     <button className={styles.dropdownItem} onClick={handleReportUser}>
                       <Flag fontSize='small' />
                       <span>Report user</span>
@@ -496,7 +714,29 @@ function CommentItem({
                 )}
               </div>
             </div>
-            <p className={styles.commentText}>{comment.content}</p>
+            
+            {isEditing ? (
+              <div className={styles.editCommentContainer}>
+                <textarea
+                  className={styles.commentTextarea}
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  rows={2}
+                  autoFocus
+                />
+                <div className={styles.editActions}>
+                  <button className={styles.cancelEditBtn} onClick={handleCancelEdit} disabled={savingEdit}>
+                    Cancel
+                  </button>
+                  <button className={styles.saveEditBtn} onClick={handleSaveEdit} disabled={savingEdit || !editValue.trim()}>
+                    {savingEdit ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className={styles.commentText}>{comment.content}</p>
+            )}
+
             <div className={styles.commentActions}>
               <button
                 className={`${styles.commentActionBtn} ${comment.isLikedByCurrentUser ? styles.liked : ''}`}
@@ -601,8 +841,44 @@ function CommentItem({
               refreshComments={refreshComments}
               userAuth={userAuth}
               navRouter={navRouter}
+              roleInHub={roleInHub}
             />
           ))}
+
+          {!hasMoreReplies && totalHiddenReplies > 0 && (
+            <div className={styles.hiddenRepliesSection} style={{ marginLeft: `${(depth + 1) * 24 + 16}px` }}>
+              {!showHiddenReplies ? (
+                <button className={styles.showHiddenBtn} onClick={() => setShowHiddenReplies(true)}>
+                  [{totalHiddenReplies} repl{totalHiddenReplies > 1 ? 'ies' : 'y'} hidden, click to show]
+                </button>
+              ) : (
+                <>
+                  {hiddenReplies.map(reply => (
+                    <CommentItem
+                      key={reply.commentId}
+                      comment={reply}
+                      depth={depth + 1}
+                      onLike={onLike}
+                      onReply={onReply}
+                      onGift={onGift}
+                      replyingTo={replyingTo}
+                      replyText={replyText}
+                      setReplyText={setReplyText}
+                      onSendReply={onSendReply}
+                      onAuthorClick={onAuthorClick}
+                      refreshComments={refreshComments}
+                      userAuth={userAuth}
+                      navRouter={navRouter}
+                      roleInHub={roleInHub}
+                    />
+                  ))}
+                  <button className={styles.hideHiddenBtn} onClick={() => setShowHiddenReplies(false)}>
+                    Hide hidden replies
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -622,6 +898,7 @@ function CommentItem({
     </>
   );
 }
+
 
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);

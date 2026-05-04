@@ -140,6 +140,10 @@ export default function PendingMembersTable({ fanHubId }) {
                     <div className="member-cell">
                       <UserAvatar
                         avatarUrl={m.avatarUrl}
+                        avatarFrame={m.frameUrl}
+                        frameSize={m.frameSize}
+                        frameX={m.frameXAxis}
+                        frameY={m.frameYAxis}
                         size="small"
                         className="table-avatar"
                       />
@@ -188,7 +192,11 @@ export default function PendingMembersTable({ fanHubId }) {
               <div className="member-info-header">
                 <UserAvatar
                   avatarUrl={selectedPending.avatarUrl}
-                  size="medium"
+                  avatarFrame={selectedPending.frameUrl}
+                  frameSize={selectedPending.frameSize}
+                  frameX={selectedPending.frameXAxis}
+                  frameY={selectedPending.frameYAxis}
+                  size="profile-dropdown"
                   className="modal-avatar"
                 />
                 <div>

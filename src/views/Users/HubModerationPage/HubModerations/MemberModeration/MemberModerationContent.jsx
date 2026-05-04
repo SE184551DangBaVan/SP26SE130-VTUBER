@@ -351,7 +351,7 @@ function MembersTable({ fanHubId, roleFilter }) {
             <thead>
               <tr>
                 <th className="sortable" onClick={() => handleSort("id")}>Member ID{getSortIcon("id")}</th>
-                <th>Display Name</th>
+                <th>Member</th>
                 <th>Username</th>
                 <th className="sortable" onClick={() => handleSort("roleInHub")}>Role{getSortIcon("roleInHub")}</th>
                 <th className="sortable" onClick={() => handleSort("joinedAt")}>Joined Date{getSortIcon("joinedAt")}</th>
@@ -366,7 +366,20 @@ function MembersTable({ fanHubId, roleFilter }) {
                     className={`${roleFilter === "MEMBER" ? "clickable-row" : ""} ${expandedMemberId === member.id ? "expanded-row" : ""}`}
                   >
                     <td className="member-id">#{member.id}</td>
-                    <td className="display-name">{member.displayName || "-"}</td>
+                    <td className="member-cell">
+                      <UserAvatar
+                        avatarUrl={member.avatarUrl}
+                        avatarFrame={member.frameUrl}
+                        frameSize={member.frameSize}
+                        frameX={member.frameXAxis}
+                        frameY={member.frameYAxis}
+                        size="small"
+                        className="member-avatar-component"
+                      />
+                      <span className="member-name">
+                        {member.displayName || member.username}
+                      </span>
+                    </td>
                     <td className="username">{member.username || "-"}</td>
                     <td><span className={`role-badge ${getRoleClass(member.roleInHub)}`}>{member.roleInHub || "MEMBER"}</span></td>
                     <td className="joined-date">{formatDate(member.joinedAt)}</td>
@@ -406,7 +419,11 @@ function MembersTable({ fanHubId, roleFilter }) {
                               <div className="details-header">
                                 <UserAvatar
                                   avatarUrl={memberDetail.avatarUrl}
-                                  size="small"
+                                  avatarFrame={memberDetail.frameUrl}
+                                  frameSize={memberDetail.frameSize}
+                                  frameX={memberDetail.frameXAxis}
+                                  frameY={memberDetail.frameYAxis}
+                                  size="profile-dropdown"
                                   className="detail-avatar-small"
                                 />
                                 <div className="details-main-info">

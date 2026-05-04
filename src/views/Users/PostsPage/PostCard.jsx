@@ -444,6 +444,10 @@ export default function PostCard({
             <UserAvatar
               className={styles.postAuthorAvatar}
               avatarUrl={post.authorAvatarUrl}
+              avatarFrame={post.authorFrameUrl}
+              frameSize={post.authorFrameSize}
+              frameX={post.authorFrameXAxis}
+              frameY={post.authorFrameYAxis}
               onClick={handleAvatarClick}
               size="small"
             />
@@ -535,6 +539,10 @@ export default function PostCard({
           <UserAvatar
             className={styles.postAuthorAvatar}
             avatarUrl={post.authorAvatarUrl}
+            avatarFrame={post.authorFrameUrl}
+            frameSize={post.authorFrameSize}
+            frameX={post.authorFrameXAxis}
+            frameY={post.authorFrameYAxis}
             onClick={handleAvatarClick}
             size="small"
           />

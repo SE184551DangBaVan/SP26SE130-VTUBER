@@ -32,12 +32,21 @@ const UserAvatar = ({
 
   // Custom frame styles if props are provided
   const frameCustomStyle = {};
-  if (frameSize) {
-    frameCustomStyle.width = `${frameSize}%`;
-    frameCustomStyle.height = `${frameSize}%`;
-  }
-  if (frameX !== 0 || frameY !== 0) {
-    frameCustomStyle.transform = `translate(calc(-50% + ${frameX}px), calc(-50% + ${frameY}px))`;
+  
+  // Normalize inputs to numbers, fallback to defaults
+  const fs = Number(frameSize) || 115;
+  const fx = Number(frameX) || 0;
+  const fy = Number(frameY) || 0;
+
+  // Set size
+  frameCustomStyle.width = `${fs}%`;
+  frameCustomStyle.height = `${fs}%`;
+  
+  // Set position (using percentages for responsiveness)
+  // We use left/top instead of transform to allow the CSS transform: translate(-50%, -50%) to work
+  if (fx !== 0 || fy !== 0) {
+    frameCustomStyle.left = `calc(50% + ${fx}%)`;
+    frameCustomStyle.top = `calc(50% + ${fy}%)`;
   }
 
   return (
