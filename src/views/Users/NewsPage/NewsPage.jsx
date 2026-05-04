@@ -217,7 +217,11 @@ export default function NewsPage() {
           <div className='news-main-content' style={{ backgroundColor: selectedPost.fanHubThemeColor + '08' }}>
             <div className='news-hub-header'>
               <UserAvatar 
-                avatarUrl={selectedPost.authorAvatarUrl} 
+                avatarUrl={selectedPost.authorAvatarUrl}
+                avatarFrame={selectedPost.authorFrameUrl}
+                frameSize={selectedPost.authorFrameSize}
+                frameX={selectedPost.authorFrameXAxis}
+                frameY={selectedPost.authorFrameYAxis}
                 size="medium"
                 className='news-hub-avatar'
               />
@@ -327,7 +331,11 @@ export default function NewsPage() {
                   <h4 className='other-news-title'>{post.title}</h4>
                   <div className='other-news-meta'>
                     <UserAvatar 
-                      avatarUrl={post.authorAvatarUrl} 
+                      avatarUrl={post.authorAvatarUrl}
+                      avatarFrame={post.authorFrameUrl}
+                      frameSize={post.authorFrameSize}
+                      frameX={post.authorFrameXAxis}
+                      frameY={post.authorFrameYAxis}
                       size="small"
                       className='other-news-avatar'
                     />

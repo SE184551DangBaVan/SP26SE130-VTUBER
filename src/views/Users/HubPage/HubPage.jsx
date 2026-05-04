@@ -23,6 +23,7 @@ import JoinQuestionnaireModal from './JoinQuestionnaireModal';
 import { BASE_URL } from '@/config';
 import PostDetails from '../PostsPage/PostDetails';
 import PostCard from '../PostsPage/PostCard';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import './HubPage.css';
 import { GroupRounded, MoreVertRounded } from '@mui/icons-material';
 
@@ -681,10 +682,6 @@ export default function HubPage({ ownedHub }) {
                 <option value='oldest'>Oldest</option>
               </select>
             </div>
-            <div className='post-type-filter'>
-              <span className='filter-label'>Showing:</span>
-              <span className='filter-value'>IMAGE & VIDEO posts</span>
-            </div>
           </div>
 
           {(postsLoading && !firstLoad) ? (
@@ -818,13 +815,14 @@ export default function HubPage({ ownedHub }) {
                     {members.map((member) => {
                       return (
                         <div key={member.id} className='member-item'>
-                          <img
-                            className='member-avatar'
-                            src={member.avatarUrl || '/profile-pic-undefined.jpg'}
-                            alt={member.displayName}
-                            onError={(e) => {
-                              e.target.src = '/profile-pic-undefined.jpg';
-                            }}
+                          <UserAvatar
+                            avatarUrl={member.avatarUrl}
+                            avatarFrame={member.frameUrl}
+                            frameSize={member.frameSize}
+                            frameX={member.frameXAxis}
+                            frameY={member.frameYAxis}
+                            size="medium"
+                            className="member-avatar-component"
                           />
                           <div className='member-info'>
                             <span className='member-display-name'>{member.displayName}</span>

@@ -209,6 +209,15 @@
   padding: 6px 12px !important;
 }
 
+.chatbot-inline-code {
+  background-color: rgba(0, 0, 0, 0.08);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
 /* Typing Indicator */
 .typing-indicator {
   display: flex;

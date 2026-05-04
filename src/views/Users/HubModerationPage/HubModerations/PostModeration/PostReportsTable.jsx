@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { reviewPost } from "@/services/ModeratorController.jsx";
 import { getPostsWithReports, bulkResolveReports } from "@/services/ReportController";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 
 const PAGE_SIZE = 10;
 
@@ -229,7 +230,20 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
                   <tr key={post.postId}>
                     <td className="post-id">#{post.postId}</td>
                     <td className="post-title">{post.title || "-"}</td>
-                    <td className="post-author">{post.authorUsername || "-"}</td>
+                    <td className="member-cell">
+                      <UserAvatar
+                        avatarUrl={post.authorAvatarUrl}
+                        avatarFrame={post.authorFrameUrl}
+                        frameSize={post.authorFrameSize}
+                        frameX={post.authorFrameXAxis}
+                        frameY={post.authorFrameYAxis}
+                        size="small"
+                        className="member-avatar-component"
+                      />
+                      <span className="member-name">
+                        {post.authorDisplayName || post.authorUsername}
+                      </span>
+                    </td>
                     <td className="status-cell">
                       <span className={`post-status-badge ${getPostStatusClass(post.status)}`}>
                         {post.status}
@@ -289,7 +303,20 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
                 <h3>Post Information</h3>
                 <div className="report-info-grid">
                   <div className="report-info-item"><span className="report-info-label">Post ID:</span><span className="report-info-value">#{selectedPost.postId}</span></div>
-                  <div className="report-info-item"><span className="report-info-label">Author:</span><span className="report-info-value">{selectedPost.authorDisplayName || selectedPost.authorUsername}</span></div>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Author:</span>
+                    <div className="report-info-value" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <UserAvatar
+                        avatarUrl={selectedPost.authorAvatarUrl}
+                        avatarFrame={selectedPost.authorFrameUrl}
+                        frameSize={selectedPost.authorFrameSize}
+                        frameX={selectedPost.authorFrameXAxis}
+                        frameY={selectedPost.authorFrameYAxis}
+                        size="small"
+                      />
+                      <span>{selectedPost.authorDisplayName || selectedPost.authorUsername}</span>
+                    </div>
+                  </div>
                   <div className="report-info-item"><span className="report-info-label">Member ID:</span><span className="report-info-value">#{selectedPost.authorMemberId || "N/A"}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedPost.fanHubName}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Post Type:</span><span className="report-info-value">{selectedPost.postType}</span></div>

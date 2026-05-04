@@ -123,10 +123,7 @@
 }
 
 .member-avatar {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  object-fit: cover;
+  /* Handled by UserAvatar */
 }
 
 .member-info {

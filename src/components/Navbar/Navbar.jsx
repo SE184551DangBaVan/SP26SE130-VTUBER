@@ -2,7 +2,7 @@
 
 import './Navbar.css'
 import { useRouter } from "next/navigation";
-import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, DarkModeOutlined, TranslateOutlined, ChatBubbleOutline, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd } from '@mui/icons-material';
+import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, TranslateOutlined, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd } from '@mui/icons-material';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
 import { updateUserProfile } from '@/services/UserController';
@@ -87,7 +87,6 @@ const Navbar = () => {
     const [dailyMissionOpen, setDailyMissionOpen] = useState(false);
     const [notificationOpen, setNotificationOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
     const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
     const [updatingLanguage, setUpdatingLanguage] = useState(false);
 
@@ -509,10 +508,6 @@ const Navbar = () => {
 
                                         {/* Toggle Items */}
                                         <div className="profile-toggle-items">
-                                            <button className="profile-toggle-item" onClick={() => setDarkMode(!darkMode)}>
-                                                <DarkModeOutlined />
-                                                <span>Dark mode: {darkMode ? 'ON' : 'OFF'}</span>
-                                            </button>
                                             <div className="language-toggle-wrapper" ref={languageDropdownRef}>
                                                 <button
                                                     className="profile-toggle-item language-toggle-btn"
@@ -543,10 +538,6 @@ const Navbar = () => {
 
                                         {/* Additional Links */}
                                         <div className="profile-menu-items">
-                                            <button className="profile-menu-item">
-                                                <ChatBubbleOutline />
-                                                <span>Your Comments</span>
-                                            </button>
                                             <button className="profile-menu-item"
                                             onClick={() => {router.push("/my-posts")}}>
                                                 <ArticleOutlined />

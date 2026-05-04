@@ -347,6 +347,19 @@
   font-size: clamp(0.7rem, 1.8vw, 0.75rem);
 }
 
+.member-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #1e293b;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .author-display-name {
   color: #555;
   font-weight: 600;

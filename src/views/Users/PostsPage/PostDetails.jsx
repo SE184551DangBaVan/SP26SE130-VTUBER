@@ -9,7 +9,8 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
 import { BASE_URL } from '@/config';
 import CommentSection from './CommentSection';
-import './PostDetails.css';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
+import styles from './PostDetails.module.css';
 import {
   ShareRounded,
   MoreHoriz,
@@ -365,7 +366,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
     switch (post.postType) {
       case 'IMAGE':
         return (
-          <div className='post-details-media'>
+          <div className={styles.postDetailsMedia}>
             {post.mediaUrls && post.mediaUrls.length > 0 && (
               post.mediaUrls.length === 1 ? (
                 <img
@@ -376,9 +377,9 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                   }}
                 />
               ) : (
-                <div className='post-details-carousel'>
+                <div className={styles.postDetailsCarousel}>
                   <button 
-                    className='carousel-btn carousel-prev' 
+                    className={`${styles.carouselBtn} ${styles.carouselPrev}`} 
                     onClick={() => setCurrentImageIndex(prev => 
                       prev === 0 ? post.mediaUrls.length - 1 : prev - 1
                     )}
@@ -388,7 +389,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                     </svg>
                   </button>
                   
-                  <div className='carousel-image-container'>
+                  <div className={styles.carouselImageContainer}>
                     <img
                       src={post.mediaUrls[currentImageIndex]}
                       alt={`${post.title || 'Post'} - Image ${currentImageIndex + 1}`}
@@ -399,7 +400,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                   </div>
 
                   <button 
-                    className='carousel-btn carousel-next' 
+                    className={`${styles.carouselBtn} ${styles.carouselNext}`} 
                     onClick={() => setCurrentImageIndex(prev => 
                       prev === post.mediaUrls.length - 1 ? 0 : prev + 1
                     )}
@@ -409,11 +410,11 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                     </svg>
                   </button>
 
-                  <div className='carousel-indicators'>
+                  <div className={styles.carouselIndicators}>
                     {post.mediaUrls.map((_, index) => (
                       <button
                         key={index}
-                        className={`indicator-dot ${index === currentImageIndex ? 'active' : ''}`}
+                        className={`${styles.indicatorDot} ${index === currentImageIndex ? styles.active : ''}`}
                         onClick={() => setCurrentImageIndex(index)}
                       />
                     ))}
@@ -425,7 +426,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
         );
       case 'VIDEO':
         return (
-          <div className='post-details-media'>
+          <div className={styles.postDetailsMedia}>
             {post.mediaUrls && post.mediaUrls.length > 0 && (
               <video controls>
                 <source src={post.mediaUrls[0]} type='video/mp4' />
@@ -439,26 +440,26 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
       case 'TEXT':
       default:
         return (
-          <div className='post-details-media post-details-text-only'>
+          <div className={`${styles.postDetailsMedia} ${styles.postDetailsTextOnly}`}>
             <RetroWindow
               windowWidth="100%"
               windowHeight="100%"
               windowColor="blue"
               windowTitle={`${(isTranslated ? translatedTitle : post.content) ? (isTranslated ? translatedTitle : post.title) : 'Post Title'}`}
               windowContent={(
-                <div className='text-only-content'>
+                <div className={styles.textOnlyContent}>
                   {(isTranslated ? translatedContent : post.content) && (
                     <>
                       <p
                         ref={contentRef}
-                        className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                        className={`${styles.postDetailsText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
                         style={{ padding: '0 0 12px' }}
                       >
                         {isTranslated ? translatedContent : post.content}
                       </p>
                       {needsSeeMore && (
                         <button
-                          className='post-details-see-more-btn'
+                          className={styles.postDetailsSeeMoreBtn}
                           onClick={handleToggleContent}
                           style={{ padding: '4px 0 12px' }}
                         >
@@ -468,11 +469,11 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                     </>
                   )}
                   {showSummary && summaryContent && (
-                    <div className='summary-section' style={{ margin: '0 0 12px' }}>
-                      <div className='summary-header'>
-                        <h4 className='summary-title'>AI Summary</h4>
+                    <div className={styles.summarySection} style={{ margin: '0 0 12px' }}>
+                      <div className={styles.summaryHeader}>
+                        <h4 className={styles.summaryTitle}>AI Summary</h4>
                         <button 
-                          className='summary-close-btn' 
+                          className={styles.summaryCloseBtn} 
                           onClick={(e) => {
                             e.stopPropagation();
                             setShowSummary(false);
@@ -482,13 +483,13 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                           <Close fontSize='small' />
                         </button>
                       </div>
-                      <p className='summary-content'>{summaryContent}</p>
+                      <p className={styles.summaryContent}>{summaryContent}</p>
                     </div>
                   )}
                   {post.hashtags && post.hashtags.length > 0 && (
-                    <div className='post-hashtags'>
+                    <div className={styles.postHashtags}>
                       {post.hashtags.map((tag, idx) => (
-                        <span key={idx} className='hashtag'>#{tag}</span>
+                        <span key={idx} className={styles.hashtag}>#{tag}</span>
                       ))}
                     </div>
                   )}
@@ -501,93 +502,94 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   };
 
   return (
-    <div className='post-details-overlay' onClick={handleClose}>
-      <div className='post-details-container' onClick={(e) => e.stopPropagation()}>
-        <button className='post-view-close' onClick={handleClose}>
+    <div className={styles.postDetailsOverlay} onClick={handleClose}>
+      <div className={styles.postDetailsContainer} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.postViewClose} onClick={handleClose}>
           <Close />
         </button>
 
         {isDeleted ? (
-          <div className='post-deleted-view'>
+          <div className={styles.postDeletedView}>
             <DeleteOutline style={{ fontSize: 64, color: '#ff4d4f', marginBottom: 16 }} />
-            <h2 className='post-deleted-title'>Post has been deleted</h2>
-            <p className='post-deleted-text'>You have successfully deleted your post.</p>
-            <button className='post-deleted-back-btn' onClick={handleClose}>
+            <h2 className={styles.postDeletedTitle}>Post has been deleted</h2>
+            <p className={styles.postDeletedText}>You have successfully deleted your post.</p>
+            <button className={styles.postDeletedBackBtn} onClick={handleClose}>
               Go Back
             </button>
           </div>
         ) : (
-          <div className='post-details-content'>
+          <div className={styles.postDetailsContent}>
             {/* Left Panel - Media */}
-            <div className='post-details-left'>
+            <div className={styles.postDetailsLeft}>
               {loading ? (
-                <div className='post-details-loading'>Loading...</div>
+                <div className={styles.postDetailsLoading}>Loading...</div>
               ) : (
                 renderLeftPanel()
               )}
             </div>
 
             {/* Right Panel - Post Info + Comments */}
-            <div className='post-details-right'>
+            <div className={styles.postDetailsRight}>
               {loading ? (
-                <div className='post-details-loading'>Loading...</div>
+                <div className={styles.postDetailsLoading}>Loading...</div>
               ) : (
                 <>
                   {/* Post Header */}
-                  <div className='post-view-header'>
-                    <div className='post-view-author-info'>
-                      <img
-                        className='post-view-avatar'
-                        src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-                        alt={post.authorDisplayName}
-                        onError={(e) => {
-                          e.target.src = '/profile-pic-undefined.jpg';
-                        }}
+                  <div className={styles.postViewHeader}>
+                    <div className={styles.postViewAuthorInfo}>
+                      <UserAvatar
+                        className={styles.postViewAvatar}
+                        avatarUrl={post.authorAvatarUrl}
+                        avatarFrame={post.authorFrameUrl}
+                        frameSize={post.authorFrameSize}
+                        frameX={post.authorFrameXAxis}
+                        frameY={post.authorFrameYAxis}
+                        size="small"
                       />
-                      <div className='post-view-author-details'>
-                        <span className='fanhub-name'>h/{post.fanHubName}</span>
-                        <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
+                      <div className={styles.postViewAuthorDetails}>
+                        <span className={styles.fanhubName}>h/{post.fanHubName}</span>
+                        <span className={styles.postTime}>{formatTimeAgo(post.createdAt)}</span>
                       </div>
                     </div>
-                    <div className='post-view-actions-menu'>
+                    <div className={styles.postViewActionsMenu}>
                       <button 
-                        className='menu-btn' 
+                        className={styles.menuBtn} 
                         onClick={handleAISummary} 
                         title={showSummary ? 'Hide Summary' : 'AI Summary'}
                         disabled={summaryLoading}
                       >
                         {summaryLoading ? (
-                          <span className='summary-loading-spinner' />
+                          <span className={styles.summaryLoadingSpinner} />
                         ) : (
                           <AutoAwesome fontSize='small' />
                         )}
                       </button>
                       <button 
-                        className='menu-btn' 
+                        className={styles.menuBtn} 
                         onClick={handleAITranslate} 
                         title={isTranslated ? 'Show Original' : 'AI Translate'}
                         disabled={translateLoading}
                       >
                         {translateLoading ? (
-                          <span className='translate-loading-spinner' />
+                          <span className={styles.translateLoadingSpinner} />
                         ) : isTranslated ? (
                           <SwapHoriz fontSize='small' />
                         ) : (
                           <Translate fontSize='small' />
                         )}
                       </button>
-                      <div className='extra-menu-wrapper' ref={menuRef}>
-                        <button className='menu-btn' onClick={handleExtraOptionsToggle} title='More options'>
+                      <div className={styles.extraMenuWrapper} ref={menuRef}>
+                        <button className={styles.menuBtn} onClick={handleExtraOptionsToggle} title='More options'>
                           <MoreHoriz fontSize='small' />
                         </button>
                         {extraMenuOpen && (
-                          <div className='extra-dropdown'>
-                            <button className='dropdown-item' onClick={handleReportPost}>
+                          <div className={styles.extraDropdown}>
+                            <button className={styles.dropdownItem} onClick={handleReportPost}>
                               <Flag fontSize='small' />
                               <span>Report post</span>
                             </button>
                             {userAuth?.userId === post.authorId && (
-                              <button className='dropdown-item delete-option' onClick={() => {
+                              <button className={`${styles.dropdownItem} ${styles.deleteOption}`} onClick={() => {
                                 setExtraMenuOpen(false);
                                 setShowDeleteConfirm(true);
                               }}>
@@ -605,7 +607,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                   {post.postType === 'IMAGE' || post.postType === 'VIDEO' ? (
                     <>
                       {(isTranslated ? translatedTitle : post.title) && (
-                        <h3 className='post-details-title'>
+                        <h3 className={styles.postDetailsTitle}>
                           {isTranslated ? translatedTitle : post.title}
                         </h3>
                       )}
@@ -613,13 +615,13 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                         <>
                           <p
                             ref={contentRef}
-                            className={`post-details-text ${!isContentExpanded && needsSeeMore ? 'collapsed' : ''}`}
+                            className={`${styles.postDetailsText} ${!isContentExpanded && needsSeeMore ? styles.collapsed : ''}`}
                           >
                             {isTranslated ? translatedContent : post.content}
                           </p>
                           {needsSeeMore && (
                             <button
-                              className='post-details-see-more-btn'
+                              className={styles.postDetailsSeeMoreBtn}
                               onClick={handleToggleContent}
                             >
                               {isContentExpanded ? 'Show less' : 'See more...'}
@@ -628,11 +630,11 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                         </>
                       )}
                       {showSummary && summaryContent && (
-                        <div className='summary-section'>
-                          <div className='summary-header'>
-                            <h4 className='summary-title'>AI Summary</h4>
+                        <div className={styles.summarySection}>
+                          <div className={styles.summaryHeader}>
+                            <h4 className={styles.summaryTitle}>AI Summary</h4>
                             <button 
-                              className='summary-close-btn' 
+                              className={styles.summaryCloseBtn} 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setShowSummary(false);
@@ -642,27 +644,27 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                               <Close fontSize='small' />
                             </button>
                           </div>
-                          <p className='summary-content'>{summaryContent}</p>
+                          <p className={styles.summaryContent}>{summaryContent}</p>
                         </div>
                       )}
                     </>
                   ) : null}
 
                   {/* Like/Comment/Share */}
-                  <div className='post-details-footer'>
-                    <div className='post-details-footer-left'>
-                      <button className={`action-btn like-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike} disabled={likeLoading}
+                  <div className={styles.postDetailsFooter}>
+                    <div className={styles.postDetailsFooterLeft}>
+                      <button className={`${styles.actionBtn} ${styles.likeBtn} ${isLiked ? styles.liked : ''}`} onClick={handleLike} disabled={likeLoading}
                         title={`${isLiked ? 'unlike' : 'like'}`}>
                         {likeLoading ? (
-                          <span className='like-loading-spinner' />
+                          <span className={styles.likeLoadingSpinner} />
                         ) : isLiked ? (
                           <Favorite fontSize='small' />
                         ) : (
                           <FavoriteBorder fontSize='small' />
                         )}
-                        <span className='action-count'>{formatCount(likeCount)}</span>
+                        <span className={styles.actionCount}>{formatCount(likeCount)}</span>
                       </button>
-                      <button className='action-btn share-btn' onClick={handleShare}>
+                      <button className={`${styles.actionBtn} ${styles.shareBtn}`} onClick={handleShare}>
                         <ShareRounded fontSize='small' />
                         <span>Share</span>
                       </button>
@@ -670,7 +672,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                   </div>
 
                   {/* Divider */}
-                  <div className='post-details-divider' />
+                  <div className={styles.postDetailsDivider} />
 
                   {/* Comment Section */}
                   <CommentSection
@@ -688,25 +690,25 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className='pin-confirm-overlay' onClick={(e) => e.stopPropagation()}>
-          <div className='pin-confirm-dialog delete-confirm-dialog'>
-            <div className='pin-confirm-icon delete-icon-bg'>
+        <div className={styles.pinConfirmOverlay} onClick={(e) => e.stopPropagation()}>
+          <div className={`${styles.pinConfirmDialog} ${styles.deleteConfirmDialog}`}>
+            <div className={`${styles.pinConfirmIcon} ${styles.deleteIconBg}`}>
               <DeleteOutline fontSize='large' />
             </div>
-            <h4 className='pin-confirm-title'>Delete this post?</h4>
-            <p className='pin-confirm-text'>
+            <h4 className={styles.pinConfirmTitle}>Delete this post?</h4>
+            <p className={styles.pinConfirmText}>
               Are you sure you want to delete your post? This action cannot be undone.
             </p>
-            <div className='pin-confirm-actions'>
+            <div className={styles.pinConfirmActions}>
               <button
-                className='pin-confirm-btn pin-confirm-cancel'
+                className={`${styles.pinConfirmBtn} ${styles.pinConfirmCancel}`}
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleteLoading}
               >
                 Cancel
               </button>
               <button
-                className='pin-confirm-btn pin-confirm-unpin'
+                className={`${styles.pinConfirmBtn} ${styles.pinConfirmUnpin}`}
                 onClick={handleDeletePost}
                 disabled={deleteLoading}
               >
@@ -778,11 +780,11 @@ function PollDisplay({ post }) {
   };
 
   return (
-    <div className='post-details-poll-wrapper'>
-      {post.title && <h3 className='poll-display-title'>{post.title}</h3>}
-      {post.content && <p className='poll-display-content'>{post.content}</p>}
-      <div className='poll-display poll-display-details'>
-        <div className='poll-options-list'>
+    <div className={styles.postDetailsPollWrapper}>
+      {post.title && <h3 className={styles.pollDisplayTitle}>{post.title}</h3>}
+      {post.content && <p className={styles.pollDisplayContent}>{post.content}</p>}
+      <div className={`${styles.pollDisplay} ${styles.pollDisplayDetails}`}>
+        <div className={styles.pollOptionsList}>
           {post.voteOptions?.map((option) => {
             const isObject = typeof option === 'object' && option !== null;
             const optionId = isObject ? option.id : option;
@@ -795,23 +797,23 @@ function PollDisplay({ post }) {
             return (
               <div
                 key={optionId}
-                className={`poll-option-item ${isSelected ? 'selected' : ''} ${voting ? 'voting' : ''}`}
+                className={`${styles.pollOptionItem} ${isSelected ? styles.selected : ''} ${voting ? styles.voting : ''}`}
                 onClick={() => handleOptionClick(optionId)}
               >
                 {hasVoted && (
                   <div 
-                    className='poll-option-bar' 
+                    className={styles.pollOptionBar} 
                     style={{ width: `${percentage}%` }}
                   />
                 )}
-                <div className='poll-option-content'>
-                  <div className='poll-option-text-wrapper'>
-                    <span className='poll-option-text'>{optionText}</span>
+                <div className={styles.pollOptionContent}>
+                  <div className={styles.pollOptionTextWrapper}>
+                    <span className={styles.pollOptionText}>{optionText}</span>
                     {hasVoted && (
-                      <span className='poll-option-percentage'>{percentage}%</span>
+                      <span className={styles.pollOptionPercentage}>{percentage}%</span>
                     )}
                     {!hasVoted && (
-                      <span className='poll-option-icon'>○</span>
+                      <span className={styles.pollOptionIcon}>○</span>
                     )}
                   </div>
                 </div>
@@ -821,10 +823,10 @@ function PollDisplay({ post }) {
         </div>
         {selectedOption && (
           <>
-            <div className='poll-total-votes'>
+            <div className={styles.pollTotalVotes}>
               <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
               <button 
-                className='poll-unvote-btn' 
+                className={styles.pollUnvoteBtn} 
                 onClick={handleUnvote}
                 disabled={voting}
               >
