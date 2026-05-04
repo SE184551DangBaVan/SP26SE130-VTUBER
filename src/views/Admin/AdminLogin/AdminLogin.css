@@ -138,6 +138,7 @@
 }
 
 .glitch-form-wrapper .card-body {
+    position: relative;
     padding: 1.5rem;
 }
 
@@ -307,6 +308,28 @@
     opacity: 1;
     color: var(--bg-color);
     animation: glitch-anim var(--glitch-anim-duration) cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both;
+}
+
+.admin-login-error-message {
+  color: red;
+  font-weight: 400;
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  bottom: 80px;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+  animation: pop-out 0.8s ease-out forwards;
+}
+
+@keyframes pop-out {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: 25px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
