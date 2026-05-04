@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { getMembersWithReports, bulkResolveMemberReports } from "@/services/ReportController";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 
 const PAGE_SIZE = 10;
 
@@ -208,13 +209,15 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
                 return (
                   <tr key={member.memberId}>
                     <td className="member-cell">
-                      {member.avatarUrl && (
-                        <img
-                          src={member.avatarUrl}
-                          alt={member.displayName || member.username}
-                          className="member-avatar"
-                        />
-                      )}
+                      <UserAvatar
+                        avatarUrl={member.avatarUrl}
+                        avatarFrame={member.frameUrl}
+                        frameSize={member.frameSize}
+                        frameX={member.frameXAxis}
+                        frameY={member.frameYAxis}
+                        size="small"
+                        className="member-avatar-component"
+                      />
                       <span className="member-name">
                         {member.displayName || member.username}
                       </span>
@@ -284,12 +287,19 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
                   <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedMember.fanHubName}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Role:</span><span className={`member-role-badge ${getMemberRoleClass(selectedMember.roleInHub)}`}>{selectedMember.roleInHub}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Status:</span><span className="report-info-value">{selectedMember.memberStatus}</span></div>
-                  {selectedMember.avatarUrl && (
-                    <div className="report-info-item">
-                      <span className="report-info-label">Avatar:</span>
-                      <a href={selectedMember.avatarUrl} target="_blank" rel="noopener noreferrer" className="report-info-value" style={{ color: "#3b82f6" }}>View Avatar</a>
+                  <div className="report-info-item">
+                    <span className="report-info-label">Avatar:</span>
+                    <div className="report-info-value" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <UserAvatar
+                        avatarUrl={selectedMember.avatarUrl}
+                        avatarFrame={selectedMember.frameUrl}
+                        frameSize={selectedMember.frameSize}
+                        frameX={selectedMember.frameXAxis}
+                        frameY={selectedMember.frameYAxis}
+                        size="small"
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
               <div className="reports-list-section">

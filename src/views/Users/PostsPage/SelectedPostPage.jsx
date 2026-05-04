@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { CommentRounded, ShareRounded } from '@mui/icons-material';
 import { likePost, unlikePost } from '@/services/PostController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import './SelectedPostPage.css';
 
 export default function SelectedPostPage() {
@@ -285,13 +286,14 @@ export default function SelectedPostPage() {
           <div className='post-content'>
             <div className='post-header'>
               <div className='post-author-info'>
-                <img
+                <UserAvatar
                   className='post-author-avatar'
-                  src={post.authorAvatarUrl || '/profile-pic-undefined.jpg'}
-                  alt={post.authorDisplayName}
-                  onError={(e) => {
-                    e.target.src = '/profile-pic-undefined.jpg';
-                  }}
+                  avatarUrl={post.authorAvatarUrl}
+                  avatarFrame={post.authorFrameUrl}
+                  frameSize={post.authorFrameSize}
+                  frameX={post.authorFrameXAxis}
+                  frameY={post.authorFrameYAxis}
+                  size="small"
                 />
                 <div className='post-author-details'>
                   <span className='author-display-name'>{post.authorDisplayName}</span>

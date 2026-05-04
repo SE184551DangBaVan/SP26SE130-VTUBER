@@ -5,6 +5,7 @@ import {useAuth} from "@/functions/Auth/useAuth.jsx";
 import { getChatMessages, sendChatMessage } from "@/services/ChatMessageController";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { parseText } from "@/utils/textParser";
 
 const INITIAL_PAGE_SIZE = 7;
 const LOAD_MORE_PAGE_SIZE = 10;
@@ -259,7 +260,7 @@ export default function ChatBot() {
                   />
                 )}
                 <div className={`message-bubble ${message.isSystem ? "system-message" : ""}`}>
-                  {message.text}
+                  {parseText(message.text)}
                   {message.metadataResponse && message.metadataResponse.metadataType === "POST" && (
                     <div className="post-preview-container">
                       <Link 

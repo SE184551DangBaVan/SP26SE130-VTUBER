@@ -163,3 +163,141 @@ export const giftComment = async (commentId) => {
     throw err;
   }
 };
+
+/**
+ * Edit a comment
+ * @param {number} commentId - Comment ID
+ * @param {string} content - New comment content
+ * @returns {Promise<Object>} Response data
+ */
+export const editComment = async (commentId, content) => {
+  try {
+    const res = await axiosInstance.put(`/posts/comment/${commentId}`, {
+      content,
+    });
+
+    console.log("editComment response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Edit comment error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Delete a comment
+ * @param {number} commentId - Comment ID
+ * @returns {Promise<Object>} Response data
+ */
+export const deleteComment = async (commentId) => {
+  try {
+    const res = await axiosInstance.delete(`/posts/comment/${commentId}`);
+
+    console.log("deleteComment response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Delete comment error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Hide a comment
+ * @param {number} commentId - Comment ID
+ * @returns {Promise<Object>} Response data
+ */
+export const hideComment = async (commentId) => {
+  try {
+    const res = await axiosInstance.put(`/posts/comment/${commentId}/hide`);
+
+    console.log("hideComment response:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Hide comment error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
+  }
+};
+
+/**
+ * Get hidden comments for a post
+ * @param {number} postId - Post ID
+ * @param {number} offset - Number of comments to skip
+ * @param {number} limit - Number of comments to fetch
+ * @returns {Promise<Object>} Hidden comments data
+ */
+export const getHiddenComments = async (postId, offset = 0, limit = 5) => {
+  try {
+    const res = await axiosInstance.get(
+      `/posts/${postId}/comments/hidden?offset=${offset}&limit=${limit}`
+    );
+
+    console.log("getHiddenComments response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return {
+        comments: res.data.data,
+        hasMore: res.data.data.length === limit,
+        totalHidden: res.data.totalHidden || res.data.data.length, // Fallback if totalHidden not provided
+      };
+    }
+
+    return { comments: [], hasMore: false, totalHidden: 0 };
+  } catch (err) {
+    console.error("Fetch hidden comments error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return { comments: [], hasMore: false, totalHidden: 0 };
+  }
+};
+
+/**
+ * Get hidden replies for a comment
+ * @param {number} commentId - Comment ID
+ * @param {number} offset - Number of replies to skip
+ * @param {number} limit - Number of replies to fetch
+ * @returns {Promise<Object>} Hidden replies data
+ */
+export const getHiddenReplies = async (commentId, offset = 0, limit = 5) => {
+  try {
+    const res = await axiosInstance.get(
+      `/posts/comments/${commentId}/replies/hidden?offset=${offset}&limit=${limit}`
+    );
+
+    console.log("getHiddenReplies response:", res.data);
+
+    if (res.data?.success && res.data?.data) {
+      return {
+        replies: res.data.data,
+        hasMore: res.data.data.length === limit,
+        totalHidden: res.data.totalHidden || res.data.data.length,
+      };
+    }
+
+    return { replies: [], hasMore: false, totalHidden: 0 };
+  } catch (err) {
+    console.error("Fetch hidden replies error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return { replies: [], hasMore: false, totalHidden: 0 };
+  }
+};
+

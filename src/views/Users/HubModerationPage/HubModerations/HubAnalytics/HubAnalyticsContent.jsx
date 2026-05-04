@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getHubAnalytics } from "@/services/FanHubController";
+import UserAvatar from "@/components/UserAvatar/UserAvatar";
 import "./HubAnalyticsContent.css";
 
 export default function HubAnalyticsContent({ fanHubId }) {
@@ -78,11 +79,14 @@ export default function HubAnalyticsContent({ fanHubId }) {
             {analytics.topMembers && analytics.topMembers.length > 0 ? (
               analytics.topMembers.map((member) => (
                 <div key={member.id} className="top-member-item">
-                  <img 
-                    src={member.avatarUrl || '/profile-pic-undefined.jpg'} 
-                    alt={member.displayName} 
-                    className="member-avatar"
-                    onError={(e) => { e.target.src = '/profile-pic-undefined.jpg'; }}
+                  <UserAvatar 
+                    avatarUrl={member.avatarUrl} 
+                    avatarFrame={member.frameUrl}
+                    frameSize={member.frameSize}
+                    frameX={member.frameXAxis}
+                    frameY={member.frameYAxis}
+                    size="small"
+                    className="member-avatar-component"
                   />
                   <div className="member-info">
                     <span className="member-name">{member.displayName}</span>

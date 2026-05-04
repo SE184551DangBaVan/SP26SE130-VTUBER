@@ -9,6 +9,11 @@ import {
   likeComment,
   unlikeComment,
   giftComment,
+  editComment,
+  deleteComment,
+  hideComment,
+  getHiddenComments,
+  getHiddenReplies,
 } from '@/services/CommentController';
 import { COMMENT_GIFTING_COST } from '@/constants/giftingConstants';
 import { checkIsMember } from '@/services/FanHubController';
@@ -16,8 +21,9 @@ import { joinFanHub } from '@/services/MemberController';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { useReportModal, REPORT_TYPE } from '@/components/ReportModal';
-import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist } from '@mui/icons-material';
+import { Favorite, FavoriteBorder, Reply, ChatBubbleOutline, MoreHoriz, Flag, LocalFlorist, Edit, Delete, VisibilityOff } from '@mui/icons-material';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
+import styles from './CommentSection.module.css';
 
 const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
@@ -35,14 +41,22 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isHubMember, setIsHubMember] = useState(false);
+  const [roleInHub, setRoleInHub] = useState(null); // 'MEMBER', 'MODERATOR', 'VTUBER'
   const [checkingMembership, setCheckingMembership] = useState(false);
   const [joiningHub, setJoiningHub] = useState(false);
+
+  // Hidden comments state
+  const [hiddenComments, setHiddenComments] = useState([]);
+  const [showHidden, setShowHidden] = useState(false);
+  const [loadingHidden, setLoadingHidden] = useState(false);
+  const [totalHidden, setTotalHidden] = useState(0);
 
   // Check hub membership when fanHubId is provided
   useEffect(() => {
     const checkMembership = async () => {
       if (!fanHubId || !userAuth) {
         setIsHubMember(false);
+        setRoleInHub(null);
         return;
       }
 
@@ -50,9 +64,11 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       try {
         const memberData = await checkIsMember(fanHubId);
         setIsHubMember(memberData?.isMember || false);
+        setRoleInHub(memberData?.roleInHub || 'MEMBER');
       } catch (error) {
         console.error('Error checking hub membership:', error);
         setIsHubMember(false);
+        setRoleInHub(null);
       } finally {
         setCheckingMembership(false);
       }
@@ -71,6 +87,7 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
       if (result?.success) {
         showSteamSuccess('Joined hub successfully! You can now comment.', 'Success');
         setIsHubMember(true);
+        setRoleInHub('MEMBER');
       } else {
         showSteamError(result?.message || 'Failed to join hub', 'Error');
       }
@@ -85,6 +102,8 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   useEffect(() => {
     if (!postId) return;
     setComments([]);
+    setHiddenComments([]);
+    setShowHidden(false);
     setOffset(0);
     setHasMore(true);
     fetchComments(0);
@@ -102,6 +121,11 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
         setComments(prev => currentOffset === 0 ? newComments : [...prev, ...newComments]);
         setHasMore(more);
         setOffset(currentOffset + newComments.length);
+
+        // If no more regular comments, try to fetch hidden ones
+        if (!more) {
+          fetchHiddenComments();
+        }
       } catch (error) {
         console.error('Error fetching comments:', error);
       } finally {
@@ -110,6 +134,19 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     },
     [postId]
   );
+
+  const fetchHiddenComments = async () => {
+    setLoadingHidden(true);
+    try {
+      const { comments: hiddens, totalHidden: total } = await getHiddenComments(postId, 0, 100);
+      setHiddenComments(hiddens);
+      setTotalHidden(total);
+    } catch (error) {
+      console.error('Error fetching hidden comments:', error);
+    } finally {
+      setLoadingHidden(false);
+    }
+  };
 
   const handleLoadMore = () => {
     fetchComments(offset);
@@ -220,9 +257,6 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     }
 
     // Prevent self-gifting
-      console.log("gifting comment id:" + commentId)
-      console.log("author id: " + authorId);
-    console.log("curernt logged in uesr id: " + userAuth.userId);
     if (userAuth.userId === authorId) {
       showSteamError("You cannot gift yourself", "Warning");
       return;
@@ -273,18 +307,24 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     navRouter.push(`/user/${username}`);
   };
 
+  const refreshAll = () => {
+    setOffset(0);
+    setHasMore(true);
+    fetchComments(0);
+  };
+
   return (
-    <div className='comment-section'>
-      <div className='comment-section-header'>
+    <div className={styles.commentSection}>
+      <div className={styles.commentSectionHeader}>
         {commentCount > 0 ? `${commentCount} Comment${commentCount > 1 ? 's' : ''}` : 'Comments'}
       </div>
 
-      <div className='comments-list'>
+      <div className={styles.commentsList}>
         {comments.length === 0 && !loading ? (
-          <div className='no-comments'>
+          <div className={styles.noComments}>
             <ChatBubbleOutline />
             <p>No comments yet</p>
-            <p className='subtitle'>Be the first to comment.</p>
+            <p className={styles.subtitle}>Be the first to comment.</p>
           </div>
         ) : (
           <>
@@ -301,39 +341,72 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
                 setReplyText={setReplyText}
                 onSendReply={() => handleSendComment(comment.commentId)}
                 onAuthorClick={handleAuthorClick}
-                refreshComments={() => {
-                  setOffset(0);
-                  setHasMore(true);
-                  fetchComments(0);
-                }}
+                refreshComments={refreshAll}
                 userAuth={userAuth}
                 navRouter={navRouter}
+                roleInHub={roleInHub}
               />
             ))}
             {hasMore && (
-              <button className='load-more-comments' onClick={handleLoadMore} disabled={loading}>
+              <button className={styles.loadMoreComments} onClick={handleLoadMore} disabled={loading}>
                 {loading ? 'Loading...' : 'Load more comments'}
               </button>
+            )}
+
+            {!hasMore && totalHidden > 0 && (
+              <div className={styles.hiddenCommentsSection}>
+                {!showHidden ? (
+                  <button className={styles.showHiddenBtn} onClick={() => setShowHidden(true)}>
+                    [{totalHidden} message{totalHidden > 1 ? 's' : ''} hidden, click to show]
+                  </button>
+                ) : (
+                  <>
+                    <div className={styles.hiddenCommentsHeader}>Hidden Comments</div>
+                    {hiddenComments.map(comment => (
+                      <CommentItem
+                        key={comment.commentId}
+                        comment={comment}
+                        depth={0}
+                        onLike={handleLikeComment}
+                        onReply={handleReplyClick}
+                        onGift={handleGiftComment}
+                        replyingTo={replyingTo}
+                        replyText={replyText}
+                        setReplyText={setReplyText}
+                        onSendReply={() => handleSendComment(comment.commentId)}
+                        onAuthorClick={handleAuthorClick}
+                        refreshComments={refreshAll}
+                        userAuth={userAuth}
+                        navRouter={navRouter}
+                        roleInHub={roleInHub}
+                      />
+                    ))}
+                    <button className={styles.hideHiddenBtn} onClick={() => setShowHidden(false)}>
+                      Hide hidden messages
+                    </button>
+                  </>
+                )}
+              </div>
             )}
           </>
         )}
       </div>
 
-      <div className='comment-input-container'>
-        <div className='comment-input-wrapper'>
+      <div className={styles.commentInputContainer}>
+        <div className={styles.commentInputWrapper}>
           {(fanHubId && isHubMember && !checkingMembership) && 
           <UserAvatar
-            className='comment-input-avatar'
+            className={styles.commentInputAvatar}
             avatarUrl={avatarUrl}
             avatarFrame={avatarFrame}
             size="small"
           />}
-          <div className='comment-input-box'>
+          <div className={styles.commentInputBox}>
             {fanHubId && !isHubMember && !checkingMembership ? (
-              <div className='comment-membership-required'>
+              <div className={styles.commentMembershipRequired}>
                 <p>You must be a member of this hub to comment.</p>
                 <button 
-                  className='join-hub-btn' 
+                  className={styles.joinHubBtn} 
                   onClick={handleJoinHub}
                   disabled={joiningHub}
                 >
@@ -343,7 +416,7 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
             ) : (
               <>
                 <textarea
-                  className='comment-textarea'
+                  className={styles.commentTextarea}
                   placeholder='Write a comment...'
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
@@ -356,15 +429,15 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
                   rows={1}
                 />
                 {commentText.trim() && (
-                  <div className='comment-input-actions'>
+                  <div className={styles.commentInputActions}>
                     <button
-                      className='comment-cancel-btn'
+                      className={styles.commentCancelBtn}
                       onClick={() => setCommentText('')}
                     >
                       Cancel
                     </button>
                     <button
-                      className='comment-send-btn'
+                      className={styles.commentSendBtn}
                       onClick={() => handleSendComment()}
                       disabled={!commentText.trim()}
                     >
@@ -395,6 +468,7 @@ function CommentItem({
   refreshComments,
   userAuth,
   navRouter,
+  roleInHub,
 }) {
   const { openReportModal } = useReportModal();
   const [replies, setReplies] = useState([]);
@@ -405,6 +479,17 @@ function CommentItem({
   const [giftLoading, setGiftLoading] = useState(false);
   const commentMenuRef = useRef();
   const isReplying = replyingTo === comment.commentId;
+
+  // New states for Edit/Delete/Hide
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(comment.content);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Hidden replies state
+  const [hiddenReplies, setHiddenReplies] = useState([]);
+  const [showHiddenReplies, setShowHiddenReplies] = useState(false);
+  const [totalHiddenReplies, setTotalHiddenReplies] = useState(0);
+  const [loadingHiddenReplies, setLoadingHiddenReplies] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -436,9 +521,95 @@ function CommentItem({
     });
   };
 
-  const fetchReplies = useCallback(async () => {
-    if (!comment.hasChildren) return;
+  // Permission Checks
+  const isOwnComment = userAuth && userAuth.userId === comment.userId;
+  const isAuthorVtuber = comment.roleInHub === 'VTUBER';
+  const isAuthorModerator = comment.roleInHub === 'MODERATOR';
+  const isAuthorUser = !isAuthorVtuber && !isAuthorModerator;
 
+  const canEdit = isOwnComment;
+
+  const canDelete = isOwnComment || 
+    (roleInHub === 'VTUBER' && isAuthorUser) || 
+    (roleInHub === 'MODERATOR' && (isAuthorUser || isAuthorModerator)) ||
+    (roleInHub === 'VTUBER' && isAuthorModerator); // Added VTUBER can delete Moderator
+
+  const canHide = (roleInHub === 'VTUBER' && isAuthorUser) || 
+    (roleInHub === 'MODERATOR' && (isAuthorUser || isAuthorModerator));
+  
+  // Moderator cannot hide Vtuber's Comment
+  const moderatorHidingVtuber = roleInHub === 'MODERATOR' && isAuthorVtuber;
+  const actualCanHide = canHide && !moderatorHidingVtuber;
+
+  const handleEdit = () => {
+    setCommentMenuOpen(false);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditValue(comment.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editValue.trim() || editValue === comment.content) {
+      setIsEditing(false);
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const result = await editComment(comment.commentId, editValue.trim());
+      if (result?.success) {
+        showSteamSuccess('Comment updated', 'Success');
+        setIsEditing(false);
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to update comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      showSteamError('Failed to update comment', 'Error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setCommentMenuOpen(false);
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      const result = await deleteComment(comment.commentId);
+      if (result?.success) {
+        showSteamSuccess('Comment deleted', 'Success');
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to delete comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      showSteamError('Failed to delete comment', 'Error');
+    }
+  };
+
+  const handleHide = async () => {
+    setCommentMenuOpen(false);
+    try {
+      const result = await hideComment(comment.commentId);
+      if (result?.success) {
+        showSteamSuccess('Comment hidden', 'Success');
+        refreshComments();
+      } else {
+        showSteamError(result?.message || 'Failed to hide comment', 'Error');
+      }
+    } catch (error) {
+      console.error('Error hiding comment:', error);
+      showSteamError('Failed to hide comment', 'Error');
+    }
+  };
+
+  const fetchReplies = useCallback(async () => {
     setLoadingReplies(true);
     try {
       const { replies: newReplies, hasMore: more } = await getCommentReplies(
@@ -449,12 +620,29 @@ function CommentItem({
       setReplies(prev => [...prev, ...newReplies]);
       setHasMoreReplies(more);
       setRepliesOffset(prev => prev + newReplies.length);
+
+      if (!more) {
+        fetchHiddenReplies();
+      }
     } catch (error) {
       console.error('Error fetching replies:', error);
     } finally {
       setLoadingReplies(false);
     }
-  }, [comment.commentId, comment.hasChildren, replies.length]);
+  }, [comment.commentId, replies.length]);
+
+  const fetchHiddenReplies = async () => {
+    setLoadingHiddenReplies(true);
+    try {
+      const { replies: hiddens, totalHidden: total } = await getHiddenReplies(comment.commentId, 0, 100);
+      setHiddenReplies(hiddens);
+      setTotalHiddenReplies(total);
+    } catch (error) {
+      console.error('Error fetching hidden replies:', error);
+    } finally {
+      setLoadingHiddenReplies(false);
+    }
+  };
 
   const handleViewReplies = () => {
     if (replies.length === 0) {
@@ -465,32 +653,60 @@ function CommentItem({
       setReplies([]);
       setHasMoreReplies(comment.hasChildren);
       setRepliesOffset(0);
+      setShowHiddenReplies(false);
     }
   };
 
   return (
     <>
-      <div className='comment-item' style={{ paddingLeft: depth > 0 ? `${depth * 24 + 16}px` : '16px' }}>
-        <div className='comment-content'>
+      <div className={styles.commentItem} style={{ paddingLeft: depth > 0 ? `${depth * 24 + 16}px` : '16px' }}>
+        <div className={styles.commentContent}>
           <UserAvatar
-            className='comment-avatar'
+            className={styles.commentAvatar}
             avatarUrl={comment.avatarUrl}
+            avatarFrame={comment.frameUrl}
+            frameSize={comment.frameSize}
+            frameX={comment.frameXAxis}
+            frameY={comment.frameYAxis}
             onClick={() => onAuthorClick(comment.username)}
             size="small"
           />
-          <div className='comment-body'>
-            <div className='comment-header'>
-              <span className='comment-author' onClick={() => onAuthorClick(comment.username)}>
+          <div className={styles.commentBody}>
+            <div className={styles.commentHeader}>
+              <span className={styles.commentAuthor} onClick={() => onAuthorClick(comment.username)}>
                 {comment.displayName}
+                {comment.roleInHub && (
+                  <span className={`${styles.roleBadge} ${styles[comment.roleInHub.toLowerCase()]}`}>
+                    {comment.roleInHub}
+                  </span>
+                )}
               </span>
-              <span className='comment-time'>{formatTimeAgo(comment.createdAt)}</span>
-              <div className='comment-menu-wrapper' ref={commentMenuRef}>
-                <button className='comment-menu-btn' onClick={handleCommentMenuToggle} title='More options'>
+              <span className={styles.commentTime}>{formatTimeAgo(comment.createdAt)}</span>
+              <div className={styles.commentMenuWrapper} ref={commentMenuRef}>
+                <button className={styles.commentMenuBtn} onClick={handleCommentMenuToggle} title='More options'>
                   <MoreHoriz fontSize='small' />
                 </button>
                 {commentMenuOpen && (
-                  <div className='comment-dropdown'>
-                    <button className='dropdown-item' onClick={handleReportUser}>
+                  <div className={styles.commentDropdown}>
+                    {canEdit && (
+                      <button className={styles.dropdownItem} onClick={handleEdit}>
+                        <Edit fontSize='small' />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    {actualCanHide && (
+                      <button className={styles.dropdownItem} onClick={handleHide}>
+                        <VisibilityOff fontSize='small' />
+                        <span>Hide</span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button className={`${styles.dropdownItem} ${styles.deleteItem}`} onClick={handleDelete}>
+                        <Delete fontSize='small' />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                    <button className={styles.dropdownItem} onClick={handleReportUser}>
                       <Flag fontSize='small' />
                       <span>Report user</span>
                     </button>
@@ -498,10 +714,32 @@ function CommentItem({
                 )}
               </div>
             </div>
-            <p className='comment-text'>{comment.content}</p>
-            <div className='comment-actions'>
+            
+            {isEditing ? (
+              <div className={styles.editCommentContainer}>
+                <textarea
+                  className={styles.commentTextarea}
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  rows={2}
+                  autoFocus
+                />
+                <div className={styles.editActions}>
+                  <button className={styles.cancelEditBtn} onClick={handleCancelEdit} disabled={savingEdit}>
+                    Cancel
+                  </button>
+                  <button className={styles.saveEditBtn} onClick={handleSaveEdit} disabled={savingEdit || !editValue.trim()}>
+                    {savingEdit ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className={styles.commentText}>{comment.content}</p>
+            )}
+
+            <div className={styles.commentActions}>
               <button
-                className={`comment-action-btn ${comment.isLikedByCurrentUser ? 'liked' : ''}`}
+                className={`${styles.commentActionBtn} ${comment.isLikedByCurrentUser ? styles.liked : ''}`}
                 onClick={() => onLike(comment.commentId, comment.isLikedByCurrentUser)}
                 title={`${comment.isLikedByCurrentUser ? 'unlike' : 'like'}`}
               >
@@ -514,7 +752,7 @@ function CommentItem({
               </button>
 
               <button
-                className={`comment-action-btn gift-btn`}
+                className={`${styles.commentActionBtn} gift-btn`}
                 onClick={async () => {
                   if (giftLoading) return;
                   setGiftLoading(true);
@@ -525,7 +763,7 @@ function CommentItem({
                 title={`Send a rose (${COMMENT_GIFTING_COST} points)`}
               >
                 {giftLoading ? (
-                  <div className="gift-loading-spinner-small" />
+                  <div className={styles.giftLoadingSpinnerSmall} />
                 ) : (
                   <LocalFlorist fontSize='small' style={{ color: '#e91e63' }} />
                 )}
@@ -534,7 +772,7 @@ function CommentItem({
 
               {depth < MAX_NEST_DEPTH && (
                 <button
-                  className='comment-action-btn'
+                  className={styles.commentActionBtn}
                   onClick={() => onReply(comment.commentId)}
                 >
                   <Reply fontSize='small' />
@@ -545,10 +783,10 @@ function CommentItem({
 
             {isReplying && depth < MAX_NEST_DEPTH && (
               <div className='comment-reply-input' style={{ marginTop: 8 }}>
-                <div className='comment-input-wrapper'>
-                  <div className='comment-input-box'>
+                <div className={styles.commentInputWrapper}>
+                  <div className={styles.commentInputBox}>
                     <textarea
-                      className='comment-textarea'
+                      className={styles.commentTextarea}
                       placeholder='Write a reply...'
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
@@ -561,15 +799,15 @@ function CommentItem({
                       rows={1}
                     />
                     {replyText.trim() && (
-                      <div className='comment-input-actions'>
+                      <div className={styles.commentInputActions}>
                         <button
-                          className='comment-cancel-btn'
+                          className={styles.commentCancelBtn}
                           onClick={() => onReply(null)}
                         >
                           Cancel
                         </button>
                         <button
-                          className='comment-send-btn'
+                          className={styles.commentSendBtn}
                           onClick={onSendReply}
                           disabled={!replyText.trim()}
                         >
@@ -586,7 +824,7 @@ function CommentItem({
       </div>
 
       {replies.length > 0 && (
-        <div className='comment-replies'>
+        <div className={styles.commentReplies}>
           {replies.map(reply => (
             <CommentItem
               key={reply.commentId}
@@ -603,13 +841,49 @@ function CommentItem({
               refreshComments={refreshComments}
               userAuth={userAuth}
               navRouter={navRouter}
+              roleInHub={roleInHub}
             />
           ))}
+
+          {!hasMoreReplies && totalHiddenReplies > 0 && (
+            <div className={styles.hiddenRepliesSection} style={{ marginLeft: `${(depth + 1) * 24 + 16}px` }}>
+              {!showHiddenReplies ? (
+                <button className={styles.showHiddenBtn} onClick={() => setShowHiddenReplies(true)}>
+                  [{totalHiddenReplies} repl{totalHiddenReplies > 1 ? 'ies' : 'y'} hidden, click to show]
+                </button>
+              ) : (
+                <>
+                  {hiddenReplies.map(reply => (
+                    <CommentItem
+                      key={reply.commentId}
+                      comment={reply}
+                      depth={depth + 1}
+                      onLike={onLike}
+                      onReply={onReply}
+                      onGift={onGift}
+                      replyingTo={replyingTo}
+                      replyText={replyText}
+                      setReplyText={setReplyText}
+                      onSendReply={onSendReply}
+                      onAuthorClick={onAuthorClick}
+                      refreshComments={refreshComments}
+                      userAuth={userAuth}
+                      navRouter={navRouter}
+                      roleInHub={roleInHub}
+                    />
+                  ))}
+                  <button className={styles.hideHiddenBtn} onClick={() => setShowHiddenReplies(false)}>
+                    Hide hidden replies
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {comment.hasChildren && (
-        <button className='view-replies-btn' onClick={handleViewReplies}>
+        <button className={styles.viewRepliesBtn} onClick={handleViewReplies}>
           {replies.length > 0 ? (
             <>Hide replies {loadingReplies && '...'}</>
           ) : (
@@ -624,6 +898,7 @@ function CommentItem({
     </>
   );
 }
+
 
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);

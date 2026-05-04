@@ -8,7 +8,6 @@ import { useAuth } from '@/functions/Auth/useAuth';
 import { BASE_URL } from '@/config';
 import PostDetails from './PostDetails';
 import PostCard from './PostCard';
-import './PostsPage.css';
 
 const POSTS_PER_PAGE = 4;
 
@@ -215,6 +214,7 @@ export default function PostsPage() {
                       onHashtagClick={handleHashtagClick}
                       userAuth={userAuth}
                       router={router}
+                      showPinned={false}
                     />
                   </div>
                 );
@@ -230,6 +230,7 @@ export default function PostsPage() {
                     onHashtagClick={handleHashtagClick}
                     userAuth={userAuth}
                     router={router}
+                    showPinned={false}
                   />
                 );
               }

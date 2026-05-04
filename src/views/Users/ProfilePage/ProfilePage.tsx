@@ -36,6 +36,7 @@ export default function ProfilePage({ username }: { username: string }) {
   const [loadingFrames, setLoadingFrames] = useState(false);
   const [selectedFrameUrl, setSelectedFrameUrl] = useState<string | null>(null);
   const [currentFrameUrl, setCurrentFrameUrl] = useState<string | null>(null);
+  const [selectedFrameOffsets, setSelectedFrameOffsets] = useState({ size: 115, x: 0, y: 0 });
 
   // Inline editing state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -89,6 +90,11 @@ export default function ProfilePage({ username }: { username: string }) {
           setUserId(data.userId);
           setCurrentFrameUrl(data.frameUrl);
           setSelectedFrameUrl(data.frameUrl);
+          setSelectedFrameOffsets({
+            size: data.frameSize ?? data.size ?? 115,
+            x: data.frameXAxis ?? data.frameX ?? data.x ?? 0,
+            y: data.frameYAxis ?? data.frameY ?? data.y ?? 0
+          });
           setUserData({
             displayName: data.displayName || data.username,
             username: data.username,
@@ -96,6 +102,9 @@ export default function ProfilePage({ username }: { username: string }) {
             avatar: data.avatarUrl || "/profile-pic-undefined.jpg",
             hasFrame: data.frameUrl !== null,
             frameUrl: data.frameUrl,
+            frameSize: data.frameSize ?? data.size,
+            frameX: data.frameXAxis ?? data.frameX ?? data.x,
+            frameY: data.frameYAxis ?? data.frameY ?? data.y,
             displayBadges: data.displayBadges || [],
             bio: data.bio || "No bio yet...",
             milestones: {
@@ -298,8 +307,20 @@ export default function ProfilePage({ username }: { username: string }) {
     setSelectedFrameUrl(currentFrameUrl);
   };
 
-  const handleSelectFrame = (frameUrl: string) => {
-    setSelectedFrameUrl(frameUrl === selectedFrameUrl ? null : frameUrl);
+  const handleSelectFrame = (frame: any) => {
+    if (!frame || typeof frame === 'string') {
+        setSelectedFrameUrl(null);
+        setSelectedFrameOffsets({ size: 115, x: 0, y: 0 });
+        return;
+    }
+    
+    const isDeselecting = selectedFrameUrl === frame.imageUrl;
+    setSelectedFrameUrl(isDeselecting ? null : frame.imageUrl);
+    setSelectedFrameOffsets(isDeselecting ? { size: 115, x: 0, y: 0 } : {
+        size: frame.frameSize ?? frame.size ?? 115,
+        x: frame.frameXAxis ?? frame.frameX ?? frame.x ?? 0,
+        y: frame.frameYAxis ?? frame.frameY ?? frame.y ?? 0
+    });
   };
 
   const handleSaveFrame = async () => {
@@ -309,11 +330,18 @@ export default function ProfilePage({ username }: { username: string }) {
       const result = await uploadAvatarFrame(null, selectedFrameUrl);
       if (result?.success) {
         setCurrentFrameUrl(selectedFrameUrl);
-        setUserData({
-          ...userData,
-          hasFrame: selectedFrameUrl !== null,
-          frameUrl: selectedFrameUrl,
-        });
+        // Refresh user data to get updated offsets
+        const data = await getUserByUsername(username);
+        if (data) {
+          setUserData({
+            ...userData,
+            hasFrame: data.frameUrl !== null,
+            frameUrl: data.frameUrl,
+            frameSize: data.frameSize ?? data.size,
+            frameX: data.frameXAxis ?? data.frameX ?? data.x,
+            frameY: data.frameYAxis ?? data.frameY ?? data.y,
+          });
+        }
         showSuccess("Avatar frame updated successfully!");
         setIsFrameModalOpen(false);
         await auth.refreshUser();
@@ -432,6 +460,10 @@ export default function ProfilePage({ username }: { username: string }) {
             ...userData,
             avatar: data.avatarUrl || "/profile-pic-undefined.jpg",
             hasFrame: data.frameUrl !== null,
+            frameUrl: data.frameUrl,
+            frameSize: data.frameSize || data.size,
+            frameX: data.frameXAxis || data.frameX || data.x,
+            frameY: data.frameYAxis || data.frameY || data.y,
           });
         }
 
@@ -479,6 +511,9 @@ export default function ProfilePage({ username }: { username: string }) {
         <UserAvatar
           avatarUrl={userData.avatar}
           avatarFrame={userData.frameUrl}
+          frameSize={userData.frameSize}
+          frameX={userData.frameX}
+          frameY={userData.frameY}
           size="xlarge"
           className={`profile-main-avatar ${userData.hasFrame ? 'has-frame' : ''}`}
           onClick={isCurrentUser ? handleOpenAvatarUploadModal : undefined}
@@ -795,6 +830,9 @@ export default function ProfilePage({ username }: { username: string }) {
                 <UserAvatar 
                   avatarUrl={previewUrl} 
                   avatarFrame={userData.frameUrl}
+                  frameSize={userData.frameSize}
+                  frameX={userData.frameX}
+                  frameY={userData.frameY}
                   size="xlarge"
                   className="avatar-preview-image" 
                 />
@@ -825,6 +863,9 @@ export default function ProfilePage({ username }: { username: string }) {
                 <UserAvatar
                   avatarUrl={userData.avatar}
                   avatarFrame={selectedFrameUrl}
+                  frameSize={selectedFrameOffsets.size}
+                  frameX={selectedFrameOffsets.x}
+                  frameY={selectedFrameOffsets.y}
                   size="xlarge"
                   className="preview-avatar-container"
                 />
@@ -841,7 +882,7 @@ export default function ProfilePage({ username }: { username: string }) {
                     <button className="go-shop-btn" onClick={() => router.push('/shop')}>Go to Shop</button>
                   </div>
                 ) : (
-                  <div className="frame-grid">
+                  <div className="frame-grid retro-custom-scroll">
                     <div 
                       className={`frame-item ${selectedFrameUrl === null ? 'selected' : ''}`}
                       onClick={() => handleSelectFrame('')}
@@ -854,7 +895,7 @@ export default function ProfilePage({ username }: { username: string }) {
                       <div 
                         key={index} 
                         className={`frame-item ${selectedFrameUrl === frame.imageUrl ? 'selected' : ''}`}
-                        onClick={() => handleSelectFrame(frame.imageUrl)}
+                        onClick={() => handleSelectFrame(frame)}
                       >
                         <div className="frame-image-wrapper">
                           <img src={frame.imageUrl} alt={frame.itemName} className="frame-inventory-img" />
