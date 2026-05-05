@@ -319,7 +319,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 1.5rem;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
@@ -587,11 +588,18 @@
 .post-details-actions {
   display: flex;
   gap: 0.75rem;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 1.25rem 1.5rem;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
   flex-shrink: 0;
+}
+
+.moderation-actions-left, .moderation-actions-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .resolve-cancel-btn {

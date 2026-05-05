@@ -293,10 +293,10 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
         <div className="report-resolve-overlay" onClick={closeDetailsModal}>
           <div className="post-details-modal" onClick={(e) => e.stopPropagation()}>
             <div className="post-details-header">
-              <h2>Post Report Details</h2>
               <button className="report-details-close" onClick={closeDetailsModal}>
                 ×
               </button>
+              <h2>Post Report Details</h2>
             </div>
             <div className="post-details-body">
               <div className="post-info-section">
@@ -380,7 +380,9 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
             </div>
             <div className="post-details-actions">
               <button className="resolve-cancel-btn" onClick={closeDetailsModal} disabled={resolving}>Cancel</button>
-              <button className="resolve-view-btn" onClick={() => handleViewPost(selectedPost.postId)}>View Post</button>
+              {selectedPost.status !== "REJECTED" && (
+                <button className="resolve-view-btn" onClick={() => handleViewPost(selectedPost.postId)}>View Post</button>
+              )}
               {selectedPost.status === "APPROVED" && (
                 <button className="resolve-takedown-btn" onClick={handleTakeDown} disabled={resolving}>Take Down</button>
               )}
