@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getFanHubs, strikeFanHub, deactivateFanHub } from '@/services/FanHubController';
-import { getFanHubReportsWithReports } from '@/services/HubReportController';
+import { getFanHubReportsWithReports, bulkResolveFanHubReports } from '@/services/HubReportController';
 import './AdminHubManagement.css';
 
 export default function AdminHubManagement() {
@@ -11,9 +11,14 @@ export default function AdminHubManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
   const [selectedHubReports, setSelectedHubReports] = useState([]);
   const [strikeReason, setStrikeReason] = useState('');
+  const [resolveMessage, setResolveMessage] = useState('');
+  const [resolveTargetReportIds, setResolveTargetReportIds] = useState([]);
+  const [resolveTargetLabel, setResolveTargetLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submittingResolve, setSubmittingResolve] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
 
@@ -64,7 +69,8 @@ export default function AdminHubManagement() {
   };
 
   const handleDeactivateClick = (hub) => {
-    setSelectedHub(hub);
+    const strikeCount = getStrikeCount(hub.fanHubId) ?? hub.strikeCount ?? 0;
+    setSelectedHub({ ...hub, strikeCount });
     setShowDeactivateModal(true);
   };
 
@@ -87,14 +93,67 @@ export default function AdminHubManagement() {
     setSubmitting(false);
   };
 
+  const getHubReportData = (fanHubId) => hubReports.find(report => report.fanHubId === fanHubId);
+
   const getReportCount = (fanHubId) => {
-    const hubReport = hubReports.find(report => report.fanHubId === fanHubId);
+    const hubReport = getHubReportData(fanHubId);
     return hubReport ? hubReport.reports.length : 0;
   };
 
+  const getStrikeCount = (fanHubId) => {
+    const hubReport = getHubReportData(fanHubId);
+    return hubReport?.strikeCount ?? 0;
+  };
+
+  const handleOpenResolveModal = (reportIds, label) => {
+    setResolveTargetReportIds(reportIds);
+    setResolveTargetLabel(label);
+    setResolveMessage('');
+    setShowResolveModal(true);
+  };
+
+  const handleCloseResolveModal = () => {
+    setShowResolveModal(false);
+    setResolveTargetReportIds([]);
+    setResolveTargetLabel('');
+    setResolveMessage('');
+  };
+
+  const handleSubmitResolve = async () => {
+    if (resolveTargetReportIds.length === 0) return;
+
+    setSubmittingResolve(true);
+    const result = await bulkResolveFanHubReports(resolveTargetReportIds, resolveMessage.trim());
+
+    if (result?.success) {
+      alert(resolveTargetReportIds.length === 1 ?
+        `Report resolved successfully` :
+        'Reports resolved successfully');
+      await fetchHubs();
+      const hubReport = getHubReportData(selectedHub.fanHubId);
+      setSelectedHubReports(hubReport ? hubReport.reports : []);
+      handleCloseResolveModal();
+    } else {
+      alert(result?.message || 'Failed to resolve reports');
+    }
+    setSubmittingResolve(false);
+  };
+
+  const handleResolveReport = (report) => {
+    if (!report?.reportId) return;
+    handleOpenResolveModal([report.reportId], `Resolve Report #${report.reportId}`);
+  };
+
+  const handleResolveAllReports = () => {
+    const reportIds = selectedHubReports.map(report => report.reportId);
+    if (reportIds.length === 0) return;
+    handleOpenResolveModal(reportIds, 'Resolve all reports');
+  };
+
   const handleReportsClick = (hub) => {
-    const hubReport = hubReports.find(report => report.fanHubId === hub.fanHubId);
-    setSelectedHub(hub);
+    const hubReport = getHubReportData(hub.fanHubId);
+    const strikeCount = hubReport?.strikeCount ?? hub.strikeCount ?? 0;
+    setSelectedHub({ ...hub, strikeCount });
     setSelectedHubReports(hubReport ? hubReport.reports : []);
     setShowReportsModal(true);
   };
@@ -143,13 +202,14 @@ export default function AdminHubManagement() {
                   <th>Subdomain</th>
                   <th>Owner Username</th>
                   <th>Created At</th>
-                  <th>Reports</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedHubs.map((hub, i) => {
                   const reportCount = getReportCount(hub.fanHubId);
+                  const strikeCount = getStrikeCount(hub.fanHubId);
                   return (
                     <tr key={hub.fanHubId}>
                       <td>{i+1}</td>
@@ -162,7 +222,7 @@ export default function AdminHubManagement() {
                           className={`reports-count ${reportCount === 1 ? 'first-reports' : ''} ${reportCount === 2 ? 'mild-reports' : ''} ${reportCount > 3 ? 'high-reports' : ''}`}
                           onClick={() => handleReportsClick(hub)}
                         >
-                          {reportCount}
+                          {reportCount} Reports <br /> {strikeCount} Strikes
                         </button>
                       </td>
                       <td>
@@ -271,7 +331,11 @@ export default function AdminHubManagement() {
 
             <div className='modal-body'>
               <div className='deactivate-confirmation'>
-                <p>By confirming you will remove all access to <strong>{selectedHub.hubName}</strong> from every user, including the owner: <strong>{selectedHub.ownerUsername || 'N/A'}</strong></p>
+                {selectedHub.strikeCount < 3 ? (
+                  <p>This Hub hasn’t accumulated enough strikes to be Deactivated, are you sure?</p>
+                ) : (
+                  <p>By confirming you will remove all access to <strong>{selectedHub.hubName}</strong> from every user, including the owner: <strong>{selectedHub.ownerUsername || 'N/A'}</strong></p>
+                )}
               </div>
             </div>
 
@@ -321,7 +385,7 @@ export default function AdminHubManagement() {
                           </div>
                         </div>
                         <div className='report-reason'>
-                          <strong>Reason:</strong> {report.reason}
+                          <strong>Reason:</strong> <span>{report.reason}</span>
                         </div>
                         {report.resolveMessage && (
                           <div className='report-resolution'>
@@ -333,6 +397,15 @@ export default function AdminHubManagement() {
                             <strong>Resolved by:</strong> {report.resolvedByDisplayName}
                           </div>
                         )}
+                        <div className='report-actions'>
+                          <button
+                            className='resolve-single-btn'
+                            onClick={() => handleResolveReport(report)}
+                            disabled={submittingResolve}
+                          >
+                            Resolve
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -343,6 +416,50 @@ export default function AdminHubManagement() {
             <div className='modal-footer'>
               <button className='cancel-btn' onClick={handleCloseReportsModal}>
                 Close
+              </button>
+              <button
+                className='resolve-all-btn'
+                onClick={handleResolveAllReports}
+                disabled={submittingResolve || selectedHubReports.length === 0}
+              >
+                {submittingResolve ? 'Resolving...' : 'Resolve all'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResolveModal && selectedHub && (
+        <div className='modal-overlay' onClick={handleCloseResolveModal}>
+          <div className='modal-content' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>{resolveTargetLabel || 'Resolve reports'}</h2>
+              <button className='modal-close' onClick={handleCloseResolveModal}>×</button>
+            </div>
+
+            <div className='modal-body'>
+              <div className='form-group'>
+                <label>Resolve Message (optional)</label>
+                <textarea
+                  className='reason-input'
+                  placeholder='Enter resolve message...'
+                  value={resolveMessage}
+                  onChange={(e) => setResolveMessage(e.target.value)}
+                  rows={5}
+                />
+              </div>
+            </div>
+
+            <div className='modal-footer'>
+              <button className='cancel-btn' onClick={handleCloseResolveModal}>
+                Close
+              </button>
+              <button
+                className='confirm-btn'
+                onClick={handleSubmitResolve}
+                disabled={submittingResolve}
+              >
+                {submittingResolve ? 'Submitting...' : 'Submit'}
               </button>
             </div>
           </div>

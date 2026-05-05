@@ -1,6 +1,6 @@
 import './MainPage.css'
 import { useSideBar } from '@/contexts/SideBarContext';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { EventCalendar } from '@mui/x-scheduler/event-calendar';
 
@@ -14,8 +14,11 @@ import SecondPageModuleBg2 from '@/assets/Decor/Kobayashi-Newspaper.png'
 
 import SecondPageModuleIco from '@/assets/UI-Elements/announce-svgrepo-com.svg'
 import VirtualGremlin from '@/components/Gremlin_V-Pet/VirtualGremlin';
+import PetSelectionList from '@/components/Gremlin_V-Pet/PetSelectionList';
 
 import PetBGCanvas from '@/assets/UI-Elements/Summer5.png'
+
+import NoMediaIco from '@/assets/UI-Elements/no-image.svg'
 
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
@@ -34,6 +37,8 @@ export default function MainPage() {
   const [allAnnouncements, setAllAnnouncements] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const storedUserId = sessionStorage.getItem("userID") || localStorage.getItem("userID");
@@ -265,7 +270,7 @@ export default function MainPage() {
 
   const pageModules = [
     { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2, AbstractArtifact2]},
-    { id: 2, title: 'News', textColor: '#FFF', color: '#E8B84D', gridColumn: '3 / 7', gridRow: '1', backgroundList: [SecondPageModuleBg2] },
+    { id: 2, title: 'News', textColor: '#FFF', color: '#efefef', gridColumn: '3 / 7', gridRow: '1', backgroundList: [SecondPageModuleBg2] },
     { id: 3, title: 'Workshop', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
     { id: 4, title: 'My Playlist', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
   ];
@@ -314,7 +319,7 @@ export default function MainPage() {
                 }}
               >
                 <h3 className='module-title'>{pageModule.title} {pageModule.id === 2 && <img className='news-speaker' src={SecondPageModuleIco.src}/>}</h3>
-                <div className='module-main-content'>
+                <div className='module-main-content' ref={containerRef} >
                   {pageModule.id === 1 && selectedCard === pageModule.id &&
                     <div className='agenda-schedule-container'>
                       {/* Agenda only shows in focused mode */}
@@ -366,7 +371,7 @@ export default function MainPage() {
                                 {allAnnouncements[carouselIndex].mediaUrls && allAnnouncements[carouselIndex].mediaUrls.length > 0 ? (
                                   <div className='media-wrapper'>
                                     {allAnnouncements[carouselIndex].postType === 'VIDEO' ? (
-                                      <video className='carousel-media' controls>
+                                      <video className='carousel-media' autoPlay controls={isCarouselPaused} muted loop>
                                         <source src={allAnnouncements[carouselIndex].mediaUrls[0]} type='video/mp4' />
                                       </video>
                                     ) : (
@@ -378,7 +383,7 @@ export default function MainPage() {
                                     )}
                                   </div>
                                 ) : (
-                                  <div className='media-placeholder'>No Media</div>
+                                  <div className='media-placeholder'><img className='no-media-placeholer' src={NoMediaIco.src} alt='No Media'/></div>
                                 )}
                               </div>
 
@@ -466,8 +471,8 @@ export default function MainPage() {
                       )}
                     </div>
                   }
-                  {pageModule.id === 3 && 
-                    <VirtualGremlin />
+                  {pageModule.id === 3 && selectedCard === pageModule.id &&
+                    <PetSelectionList />
                   }
                   {pageModule.id === 4 && 
                     <p>Music playlist here</p>

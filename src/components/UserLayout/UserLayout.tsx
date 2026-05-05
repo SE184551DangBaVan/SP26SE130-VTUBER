@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from '@/functions/Auth/useAuth';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from "@/firebase";
@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar/Navbar';
 import SideBar from '@/components/SideBar/SideBar';
 import { SideBarProvider } from '@/contexts/SideBarContext';
 import ChatBot from "@/components/ChatBot/ChatBot";
+import VirtualGremlin from '@/components/Gremlin_V-Pet/VirtualGremlin';
 
 interface UserLayoutProps {
   children: ReactNode;
@@ -21,6 +22,9 @@ export default function UserLayout({ children }: UserLayoutProps) {
   const [loading, setLoading] = useState(true);
   const authen = useAuth();
   const userAuth = authen ? authen.userAuth : null;
+  
+  const containerRef = useRef(null);
+  const [selectedPet, setSelectedPet] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -28,7 +32,22 @@ export default function UserLayout({ children }: UserLayoutProps) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const savedPet = localStorage.getItem('selectedPet');
+    if (savedPet) {
+      setSelectedPet(savedPet);
+    }
+
+    const handleStorageChange = () => {
+      const savedPet = localStorage.getItem('selectedPet');
+      setSelectedPet(savedPet);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
 
@@ -36,11 +55,11 @@ export default function UserLayout({ children }: UserLayoutProps) {
 
   return (
     <SideBarProvider>
-      <div className="app">
+      <div className="app" ref={containerRef}>
           {userAuth && (<ChatBot/>)}
         <Navbar/>
         <SideBar />
-        {/* <VirtualGremlin /> */}
+        {selectedPet && <VirtualGremlin selectedPet={selectedPet} />}
         {children}
       </div>
     </SideBarProvider>

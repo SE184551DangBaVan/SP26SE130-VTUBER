@@ -449,10 +449,10 @@ body {
 .modal-content::before {
   content: "";
   position: absolute;
-  inset: 4px;
+  inset: 0;
   border-radius: inherit;
 
-  background: #ffffff;
+  background: #a3a283;
 
   box-shadow:
     inset 0 2px 4px rgba(0,0,0,0.9),
