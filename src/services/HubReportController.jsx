@@ -35,6 +35,33 @@ export const getFanHubReportsWithReports = async (pageNo = 0, pageSize = 10, sor
 };
 
 /**
+ * Bulk resolve fan hub reports
+ * @param {Array<number>} reportIds - Array of report IDs to resolve
+ * @param {string} resolveMessage - Resolution message
+ * @returns {Promise<Object>} API response
+ */
+export const bulkResolveFanHubReports = async (reportIds = [], resolveMessage = 'Resolved by admin') => {
+  try {
+    const res = await axiosInstance.put(`/fan-hub-report/bulk-resolve`, null, {
+      params: {
+        reportIds,
+        resolveMessage
+      }
+    });
+
+    console.log("bulkResolveFanHubReports response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Bulk resolve fan hub reports error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};
+
+/**
  * Create a report for a fan hub
  * @param {number} fanHubId - Fan Hub ID
  * @param {string} reason - Report reason

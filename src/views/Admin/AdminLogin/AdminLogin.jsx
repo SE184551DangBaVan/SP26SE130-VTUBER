@@ -44,8 +44,14 @@ export default function AdminLogin() {
   
       } catch (error) {
         console.error("Login error:", error);
-        updateToast(toastId, "error", "Network Error. Please try again.");
-        setError("Login Failed. Please try again.");
+        if(error.status === 401) {
+          updateToast(toastId, "error", error.response?.data?.message);
+          setError(error.response?.data?.data ||"Login Failed. Please try again.");
+        }
+        else {
+          updateToast(toastId, "error", "Network Error. Please try again.");
+          setError("Login Failed. Please try again.");
+        }
       }
     };
 
@@ -100,7 +106,7 @@ export default function AdminLogin() {
                 PASSWORD
               </label>
             </div>
-
+            <p className='admin-login-error-message'>{error}</p>
             <button data-text="SYSTEM_LOGIN" type="submit" className="submit-btn">
               <span className="btn-text">SYSTEM_LOGIN</span>
             </button>

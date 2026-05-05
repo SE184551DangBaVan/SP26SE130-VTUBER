@@ -60,17 +60,17 @@ export const DESKTOP_ICONS_CONFIG = [
         windowTitle: 'BANNER_MANAGEMENT.exe'
     },
     {
-        id: 'view-feedback',
-        label: 'View Feedback',
-        icon: <img src={FeedbackIco.src} alt="View Feedback" style={{ width: '50px', height: '50px', transform: 'translate(12%, 0) rotate(-15deg)' }} />,
-        component: AdminFeedback,
-        windowTitle: 'VIEW_FEEDBACK.exe'
-    },
-    {
         id: 'view-paidpackage',
         label: 'Paid Packages',
         icon: <img src={PaidPackageIco.src} alt="View Feedback" style={{ width: '60px', height: '60px', transform: 'translate(2%, 8px)' }} />,
         component: AdminPaidPackageManagement,
         windowTitle: 'PAID_PACKAGES_MANAGER.exe'
+    },
+    {
+        id: 'view-feedback',
+        label: 'View Feedback',
+        icon: <img src={FeedbackIco.src} alt="View Feedback" style={{ width: '50px', height: '50px', transform: 'translate(12%, 0) rotate(-15deg)' }} />,
+        component: AdminFeedback,
+        windowTitle: 'VIEW_FEEDBACK.exe'
     }
 ];

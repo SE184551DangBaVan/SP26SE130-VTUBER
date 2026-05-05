@@ -103,7 +103,9 @@
   margin-left: 8px;
 }
 
-.deactivate-btn:hover {
+.deactivate-btn:hover,
+.resolve-single-btn:hover,
+.resolve-all-btn:hover {
   background: #A3A283;
 }
 
@@ -349,11 +351,21 @@
   border-bottom: 1px solid #ccc;
 }
 
+.resolve-single-btn,
+.resolve-all-btn {
+  font-family: 'Pixelify Sans', sans-serif;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .refresh-btn,
 .strike-btn,
 .deactivate-btn,
 .confirm-btn,
-.cancel-btn {
+.cancel-btn,
+.resolve-single-btn,
+.resolve-all-btn {
   background: #CBC9AA;
   color: #333;
   border-top: 3px solid #CBC9AA;
@@ -365,7 +377,9 @@
 
 .refresh-btn:active,
 .strike-btn:active,
-.deactivate-btn:active {
+.deactivate-btn:active,
+.resolve-single-btn:active,
+.resolve-all-btn:active {
   border: 2px inset #333;
   transform: translate(2px, 2px);
   box-shadow: 0 0 1px #000;
@@ -451,22 +465,21 @@
 
 /* Reports functionality styles */
 .reports-count {
-  background: none;
-  width: 60%;
-  text-align: center;
-  border: none;
+  background: #f2f2e8;
+  text-align: left;
   color: #555;
   cursor: pointer;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 4px 12px 4px 12px;
   border-radius: 4px;
-  border: 2px solid transparent;
-  transition: background-color 0.2s;
+  border: 2px dotted #ccc;
+  text-decoration: none;
+  transition: all 0.2s;
 }
 
 .reports-count:hover {
-  border: 2px solid #999;
-  background-color: #f0f8ff;
+  color: #6996ef;
+  text-decoration: underline;
 }
 
 .reports-count.high-reports {
@@ -505,6 +518,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .report-meta {
@@ -559,4 +577,14 @@
   color: #333;
 }
 
+.report-reason strong {
+  text-shadow: 2px 2px 5px #00000044;
+}
 
+.report-reason span {
+  text-shadow: none;
+  padding: 4px 15px;
+  border-radius: 24px;
+  border: 2px solid #a3a283;
+  background-color: rgb(184, 182, 145);
+}
