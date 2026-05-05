@@ -171,7 +171,7 @@ export default function VirtualGremlin({ selectedPet = 'golduShippu', alarms = [
     }
   }, 24);
 
-  if (!error) {
+  if (error) {
     return <div className="pet-error">V-Pet Disconnected</div>;
   }
 
