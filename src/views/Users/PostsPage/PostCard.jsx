@@ -65,6 +65,7 @@ export default function PostCard({
   const [isTranslated, setIsTranslated] = useState(false);
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translatedTitle, setTranslatedTitle] = useState(null);
+  const [translatedPollOptions, setTranslatedPollOptions] = useState(null);
   const [translateLoading, setTranslateLoading] = useState(false);
   const [translateMessage, setTranslateMessage] = useState(null);
   
@@ -330,11 +331,12 @@ export default function PostCard({
     try {
       const result = await getTranslatePost(post.postId);
       if (result?.success && result?.data) {
-        const { translatedContent, translatedTitle, translate_language_set, extraComment } = result.data;
+        const { translatedContent, translatedTitle, translate_language_set, extraComment, pollOptionsTranslation } = result.data;
 
         // Only set translatedContent if it's not empty or null
         setTranslatedContent(translatedContent || null);
         setTranslatedTitle(translatedTitle || null);
+        setTranslatedPollOptions(pollOptionsTranslation || null);
 
         if (!translate_language_set && extraComment) {
           setTranslateMessage(extraComment);
@@ -342,8 +344,8 @@ export default function PostCard({
           setTranslateMessage(null);
         }
 
-        // Only mark as translated if we have either title or content
-        if (translatedContent || translatedTitle) {
+        // Only mark as translated if we have either title, content or poll options
+        if (translatedContent || translatedTitle || (pollOptionsTranslation && pollOptionsTranslation.length > 0)) {
           setIsTranslated(true);
         }
       } else {
@@ -425,7 +427,7 @@ export default function PostCard({
       case 'TEXT':
         return <TextPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'POLL':
-        return <PollPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
+        return <PollPostContent post={post} displayContent={displayContent} displayTitle={displayTitle} isTranslated={isTranslated} translatedPollOptions={translatedPollOptions} isContentExpanded={isContentExpanded} needsSeeMore={needsSeeMore} onToggleContent={handleToggleContent} contentRef={contentRef} showSummary={showSummary} summaryContent={summaryContent} onSummaryClose={() => setShowSummary(false)} onHashtagClick={handleHashtagClick} />;
       case 'ANNOUNCEMENT':
       case 'EVENT_SCHEDULE':
         return null;
@@ -643,7 +645,7 @@ export default function PostCard({
             </div>
             <button className={styles.actionBtn} onClick={handleCommentsClick}>
               <CommentRounded fontSize='small' />
-              <span>Comments</span>
+              <span>{formatCount(post.commentCount || 0)}</span>
             </button>
           </div>
           <button className={`${styles.actionBtn} ${styles.shareBtn}`} onClick={(e) => {
@@ -688,7 +690,7 @@ export default function PostCard({
           </div>
           <button className={styles.actionBtn} onClick={handleCommentsClick}>
             <CommentRounded fontSize='small' />
-            <span>Comment</span>
+            <span>{formatCount(post.commentCount || 0)}</span>
           </button>
         </div>
         <button className={`${styles.actionBtn} ${styles.shareBtn}`} onClick={(e) => {
@@ -1043,7 +1045,7 @@ function TextPostContent({ post, displayContent, displayTitle, isTranslated, isC
   );
 }
 
-function PollPostContent({ post, displayContent, displayTitle, isTranslated, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
+function PollPostContent({ post, displayContent, displayTitle, isTranslated, translatedPollOptions, isContentExpanded, needsSeeMore, onToggleContent, contentRef, showSummary, summaryContent, onSummaryClose, onHashtagClick }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
   const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
   const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
@@ -1139,11 +1141,15 @@ function PollPostContent({ post, displayContent, displayTitle, isTranslated, isC
       {post.voteOptions && (
         <div className={styles.pollDisplay}>
           <div className={styles.pollOptionsList}>
-            {post.voteOptions.map((option) => {
+            {post.voteOptions.map((option, index) => {
               const isObject = typeof option === 'object' && option !== null;
               const optionId = isObject ? option.id : option;
-              const optionText = isObject ? option.optionText : option;
+              let optionText = isObject ? option.optionText : option;
               const thumbnailUrl = isObject ? option.thumbnailUrl : null;
+
+              if (isTranslated && translatedPollOptions && translatedPollOptions[index]) {
+                optionText = translatedPollOptions[index];
+              }
 
               const percentage = getVotePercentage(optionId);
               const isSelected = selectedOption === optionId;
@@ -1231,4 +1237,11 @@ function formatTimeAgo(dateString) {
   if (days < 365) return `${Math.floor(days / 30)}mo ago`;
 
   return `${Math.floor(days / 365)}y ago`;
+}
+
+function formatCount(count) {
+  if (count === null || count === undefined) return '0';
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
 }

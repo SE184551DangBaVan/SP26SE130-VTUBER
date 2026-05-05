@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
 import { getMembersWithReports, bulkResolveMemberReports } from "@/services/ReportController";
+import { kickMember, banFanHubMember, removeModerator } from "@/services/MemberController.jsx";
 import UserAvatar from "@/components/UserAvatar/UserAvatar";
 
 const PAGE_SIZE = 10;
@@ -22,6 +23,20 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
   const [resolveMessage, setResolveMessage] = useState("");
   const [resolving, setResolving] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+
+  const [isRestrictModalOpen, setIsRestrictModalOpen] = useState(false);
+  const [restrictForm, setRestrictForm] = useState({
+    reason: "",
+    banType: "COMMENT",
+    durationMode: "TEMPORARY",
+    hours: 1,
+    days: 0,
+    months: 0,
+    years: 0,
+  });
+  const [restricting, setRestricting] = useState(false);
+  const [kicking, setKicking] = useState(false);
+  const [demoting, setDemoting] = useState(false);
 
   const fetchMembers = useCallback(async (reset = false) => {
     if (reset) {
@@ -136,6 +151,126 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
     } finally {
       setResolving(false);
     }
+  };
+
+  const handleKickMember = async () => {
+    if (!selectedMember) return;
+    if (!window.confirm(`Are you sure you want to kick ${selectedMember.displayName || selectedMember.username}?`)) {
+      return;
+    }
+
+    setKicking(true);
+    try {
+      const res = await kickMember(fanHubId, selectedMember.memberId);
+      if (res.success) {
+        showToast("Member kicked successfully!", "success");
+        await fetchMembers(true);
+        closeDetailsModal();
+      } else {
+        showToast(res.message || "Failed to kick member", "error");
+      }
+    } catch (err) {
+      console.error("Kick error:", err);
+      showToast("Error kicking member", "error");
+    } finally {
+      setKicking(false);
+    }
+  };
+
+  const handleRestrictMember = async () => {
+    if (!selectedMember || !restrictForm.reason.trim()) {
+      showToast("Please provide a restriction reason", "error");
+      return;
+    }
+
+    let bannedUntil = null;
+    if (restrictForm.durationMode === "TEMPORARY") {
+      const { hours, days, months, years } = restrictForm;
+      if (hours === 0 && days === 0 && months === 0 && years === 0) {
+        showToast("Duration cannot be zero for temporary restriction", "error");
+        return;
+      }
+
+      const date = new Date();
+      date.setHours(date.getHours() + parseInt(hours));
+      date.setDate(date.getDate() + parseInt(days));
+      date.setMonth(date.getMonth() + parseInt(months));
+      date.setFullYear(date.getFullYear() + parseInt(years));
+      bannedUntil = date.toISOString();
+    }
+
+    setRestricting(true);
+    try {
+      const result = await banFanHubMember({
+        fanHubMemberId: selectedMember.memberId,
+        reason: restrictForm.reason.trim(),
+        banType: restrictForm.banType,
+        bannedUntil: bannedUntil,
+      });
+      if (result?.success) {
+        showToast("Member restricted successfully!", "success");
+        await fetchMembers(true);
+        closeRestrictModal();
+        closeDetailsModal();
+      } else {
+        showToast(result?.message || "Failed to restrict member", "error");
+      }
+    } catch (err) {
+      console.error("Restrict member error:", err);
+      showToast("Error restricting member", "error");
+    } finally {
+      setRestricting(false);
+    }
+  };
+
+  const handleDemoteModerator = async () => {
+    if (!selectedMember || !isOwner) return;
+    if (!window.confirm(`Are you sure you want to demote ${selectedMember.displayName || selectedMember.username} to a regular member?`)) {
+      return;
+    }
+
+    setDemoting(true);
+    try {
+      const res = await removeModerator(fanHubId, [selectedMember.memberId]);
+      if (res.success) {
+        showToast("Moderator demoted successfully!", "success");
+        await fetchMembers(true);
+        closeDetailsModal();
+      } else {
+        showToast(res.message || "Failed to demote moderator", "error");
+      }
+    } catch (err) {
+      console.error("Demote error:", err);
+      showToast("Error demoting moderator", "error");
+    } finally {
+      setDemoting(false);
+    }
+  };
+
+  const openRestrictModal = () => {
+    setRestrictForm({
+      reason: "",
+      banType: "COMMENT",
+      durationMode: "TEMPORARY",
+      hours: 1,
+      days: 0,
+      months: 0,
+      years: 0
+    });
+    setIsRestrictModalOpen(true);
+  };
+
+  const closeRestrictModal = () => {
+    setIsRestrictModalOpen(false);
+    setRestrictForm({
+      reason: "",
+      banType: "COMMENT",
+      durationMode: "TEMPORARY",
+      hours: 1,
+      days: 0,
+      months: 0,
+      years: 0
+    });
   };
 
   const formatDate = (dateString) => {
@@ -272,10 +407,11 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
         <div className="report-resolve-overlay" onClick={closeDetailsModal}>
           <div className="post-details-modal" onClick={(e) => e.stopPropagation()}>
             <div className="post-details-header">
-              <h2>Member Report Details</h2>
               <button className="report-details-close" onClick={closeDetailsModal}>
                 ×
               </button>
+              <h2>Member Report Details</h2>
+              <div style={{ width: '24px' }}></div> {/* Spacer to balance the header if needed, but space-between is used */}
             </div>
             <div className="post-details-body">
               <div className="post-info-section">
@@ -321,7 +457,8 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
                   ))}
                 </div>
               </div>
-              {selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
+              {/* Only show resolve form if the user has permission to resolve */}
+              {(isOwner || selectedMember.roleInHub !== "MODERATOR") && selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
                 <div className="resolve-form-section">
                   <h3>Resolve All Pending Reports</h3>
                   <div className="resolve-form-group"><label htmlFor="resolve-message">Resolution Message <span className="required">*</span></label><textarea id="resolve-message" className="resolve-textarea" placeholder="Provide your resolution reason..." value={resolveMessage} onChange={(e) => setResolveMessage(e.target.value)} rows={4} disabled={resolving} /></div>
@@ -329,10 +466,158 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
               )}
             </div>
             <div className="post-details-actions">
-              <button className="resolve-cancel-btn" onClick={closeDetailsModal} disabled={resolving}>Cancel</button>
-              {selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
-                <button className="resolve-confirm-btn" onClick={handleResolveAll} disabled={resolving || !resolveMessage.trim()}>{resolving ? "Resolving..." : `Resolve ${selectedMember.reports.filter((r) => r.reportStatus === "PENDING").length} Pending Report(s)`}</button>
-              )}
+              <div className="moderation-actions-left">
+                {/* Moderators cannot restrict/kick each other, only members. isOwner (VTUBER) can do everything. */}
+                {(isOwner || selectedMember.roleInHub !== "MODERATOR") && (
+                  <>
+                    <button 
+                      className="restrict-btn-small" 
+                      onClick={openRestrictModal}
+                      disabled={kicking || restricting || resolving || demoting}
+                    >
+                      Restrict
+                    </button>
+                    <button 
+                      className="kick-btn-small" 
+                      onClick={handleKickMember}
+                      disabled={kicking || restricting || resolving || demoting}
+                    >
+                      {kicking ? "Kicking..." : "Kick"}
+                    </button>
+                  </>
+                )}
+                
+                {/* VTUBER can demote moderators */}
+                {isOwner && selectedMember.roleInHub === "MODERATOR" && (
+                  <button 
+                    className="demote-btn" 
+                    onClick={handleDemoteModerator}
+                    disabled={kicking || restricting || resolving || demoting}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                  >
+                    {demoting ? "Demoting..." : "Demote"}
+                  </button>
+                )}
+              </div>
+              <div className="moderation-actions-right">
+                <button className="resolve-cancel-btn" onClick={closeDetailsModal} disabled={resolving || kicking || restricting || demoting}>Cancel</button>
+                {/* Reports against moderators can only be resolved by VTUBER (isOwner) */}
+                {(isOwner || selectedMember.roleInHub !== "MODERATOR") && selectedMember.reports?.some((r) => r.reportStatus === "PENDING") && (
+                  <button className="resolve-confirm-btn" onClick={handleResolveAll} disabled={resolving || !resolveMessage.trim() || kicking || restricting || demoting}>{resolving ? "Resolving..." : `Resolve ${selectedMember.reports.filter((r) => r.reportStatus === "PENDING").length} Pending Report(s)`}</button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restrict Modal */}
+      {isRestrictModalOpen && selectedMember && (
+        <div className="mm-modal-overlay restrict-modal-overlay" onClick={closeRestrictModal}>
+          <div className="mm-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-modal-header">
+              <h2>Restrict Member</h2>
+              <button className="mm-modal-close" onClick={closeRestrictModal}>×</button>
+            </div>
+            <div className="mm-modal-body">
+              <div className="mm-ban-member-info">
+                <div className="mm-ban-info-grid">
+                  <div className="mm-ban-info-item">
+                    <span className="mm-ban-info-label">Member</span>
+                    <span className="mm-ban-info-value">{selectedMember.displayName || selectedMember.username}</span>
+                  </div>
+                  <div className="mm-ban-info-item">
+                    <span className="mm-ban-info-label">Username</span>
+                    <span className="mm-ban-info-value">@{selectedMember.username}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mm-ban-form">
+                <div className="mm-form-group">
+                  <label htmlFor="ban-type">Restriction Type</label>
+                  <select 
+                    id="ban-type" 
+                    value={restrictForm.banType}
+                    onChange={(e) => setRestrictForm({ ...restrictForm, banType: e.target.value })}
+                  >
+                    <option value="COMMENT">Restrict Commenting</option>
+                    <option value="POST">Restrict Posting</option>
+                  </select>
+                </div>
+
+                <div className="mm-form-group">
+                  <label>Restriction Duration</label>
+                  <div className="duration-mode-options">
+                    <button 
+                      className={`mode-btn ${restrictForm.durationMode === "TEMPORARY" ? "active" : ""}`}
+                      onClick={() => setRestrictForm({ ...restrictForm, durationMode: "TEMPORARY" })}
+                    >
+                      Temporary
+                    </button>
+                    <button 
+                      className={`mode-btn ${restrictForm.durationMode === "PERMANENT" ? "active" : ""}`}
+                      onClick={() => setRestrictForm({ ...restrictForm, durationMode: "PERMANENT" })}
+                    >
+                      Permanent
+                    </button>
+                  </div>
+                  
+                  {restrictForm.durationMode === "TEMPORARY" && (
+                    <div className="duration-units-grid">
+                      <div className="unit-field">
+                        <label>Hours</label>
+                        <input 
+                          type="number" min="0" value={restrictForm.hours}
+                          onChange={(e) => setRestrictForm({ ...restrictForm, hours: Math.max(0, parseInt(e.target.value) || 0) })}
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Days</label>
+                        <input 
+                          type="number" min="0" value={restrictForm.days}
+                          onChange={(e) => setRestrictForm({ ...restrictForm, days: Math.max(0, parseInt(e.target.value) || 0) })}
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Months</label>
+                        <input 
+                          type="number" min="0" value={restrictForm.months}
+                          onChange={(e) => setRestrictForm({ ...restrictForm, months: Math.max(0, parseInt(e.target.value) || 0) })}
+                        />
+                      </div>
+                      <div className="unit-field">
+                        <label>Years</label>
+                        <input 
+                          type="number" min="0" value={restrictForm.years}
+                          onChange={(e) => setRestrictForm({ ...restrictForm, years: Math.max(0, parseInt(e.target.value) || 0) })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mm-form-group">
+                  <label htmlFor="ban-reason">Reason for Restriction <span className="required">*</span></label>
+                  <textarea 
+                    id="ban-reason" 
+                    rows={3}
+                    value={restrictForm.reason}
+                    onChange={(e) => setRestrictForm({ ...restrictForm, reason: e.target.value })}
+                    placeholder="Enter restriction reason..."
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mm-modal-footer">
+              <button className="mm-modal-cancel-btn" onClick={closeRestrictModal} disabled={restricting}>Cancel</button>
+              <button 
+                className="mm-modal-confirm-btn" 
+                onClick={handleRestrictMember}
+                disabled={restricting || !restrictForm.reason.trim()}
+              >
+                {restricting ? "Restricting..." : "Confirm Restriction"}
+              </button>
             </div>
           </div>
         </div>

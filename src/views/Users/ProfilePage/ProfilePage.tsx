@@ -506,8 +506,8 @@ export default function ProfilePage({ username }: { username: string }) {
   const isCurrentUser = loggedInUserId !== null && userId !== null && loggedInUserId === userId;
 
   return (
-    <div className="user-profile">
-      <div className="main-info">
+    <div className="user-profile profile-page">
+      <div className="banner">
         <UserAvatar
           avatarUrl={userData.avatar}
           avatarFrame={userData.frameUrl}

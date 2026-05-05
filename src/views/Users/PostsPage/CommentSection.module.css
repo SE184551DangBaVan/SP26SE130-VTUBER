@@ -389,20 +389,27 @@
 }
 
 .joinHubBtn {
-  padding: 8px 16px;
-  background: #000;
+  padding: 8px 20px;
+  background: #2d8cf0;
   color: #fff;
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: all 0.2s;
   align-self: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .joinHubBtn:hover:not(:disabled) {
-  background: #333;
+  background: #1a73e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.joinHubBtn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .joinHubBtn:disabled {

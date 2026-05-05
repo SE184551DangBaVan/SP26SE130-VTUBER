@@ -303,7 +303,17 @@ export default function SelectedPostPage() {
               <div className='post-meta-right'>
                 <span className='post-time'>{formatTimeAgo(post.createdAt)}</span>
                 {post.fanHubName && (
-                  <span className='fanhub-badge'>{post.fanHubName}</span>
+                  <span 
+                    className='fanhub-badge'
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      if (post.fanHubSubdomain) {
+                        router.push(`/hub/${post.fanHubSubdomain}`);
+                      }
+                    }}
+                  >
+                    {post.fanHubName}
+                  </span>
                 )}
               </div>
             </div>
@@ -368,10 +378,6 @@ export default function SelectedPostPage() {
                   </div>
                 </div>
               </div>
-              <button className='action-btn'>
-                <CommentRounded fontSize='small' />
-                <span>Comments</span>
-              </button>
               <button className='action-btn' onClick={handleShare}>
                 <ShareRounded fontSize='small' />
                 <span>Share</span>
@@ -406,4 +412,11 @@ function formatTimeAgo(dateString) {
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
 
   return date.toLocaleDateString();
+}
+
+function formatCount(count) {
+  if (count === null || count === undefined) return '0';
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
 }

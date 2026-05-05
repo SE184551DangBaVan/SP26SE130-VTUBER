@@ -415,7 +415,7 @@ export const retryAiValidation = async (postId) => {
 /**
  * Get translation of a post
  * @param {number} postId - The ID of the post to translate
- * @returns {Promise<Object>} Response data { translatedContent, translatedTitle, translate_language_set, extraComment }
+ * @returns {Promise<Object>} Response data { translatedContent, translatedTitle, translate_language_set, extraComment, pollOptionsTranslation }
  */
 export const getTranslatePost = async (postId) => {
   try {

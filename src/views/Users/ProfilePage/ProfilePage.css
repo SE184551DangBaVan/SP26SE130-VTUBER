@@ -786,7 +786,7 @@ body:has(#side-bar.rebound-animation) .user-profile {
   background: #fff;
 }
 
-.hub-name {
+.profile-page .hub-name {
   font-size: 11px;
   color: #333;
   margin: 0;
