@@ -20,6 +20,7 @@ export default function AdminHubManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [submittingResolve, setSubmittingResolve] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [activeTab, setActiveTab] = useState('manage');
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -176,7 +177,12 @@ export default function AdminHubManagement() {
     });
   };
 
-  const paginatedHubs = hubs.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const reportedHubs = hubs.filter(hub => getReportCount(hub.fanHubId) > 0);
+  const managedHubs = hubs;
+  
+  const getTabHubs = () => activeTab === 'reported' ? reportedHubs : managedHubs;
+  const tabHubs = getTabHubs();
+  const paginatedHubs = tabHubs.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   return (
     <>
@@ -194,7 +200,30 @@ export default function AdminHubManagement() {
           <div className='empty-state'>No fan hubs found</div>
         ) : (
           <>
-            <table className='applications-table'>
+            <div className='hub-management-tabs'>
+              <button 
+                className={`tab-button ${activeTab === 'manage' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('manage');
+                  setCurrentPage(0);
+                }}
+              >
+                Manage Fan Hubs
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'reported' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('reported');
+                  setCurrentPage(0);
+                }}
+              >
+                Reported Fan Hubs ({reportedHubs.length})
+              </button>
+            </div>
+            {paginatedHubs.length === 0 ? (
+              <div className='empty-state'>No fan hubs found in this tab</div>
+            ) : (
+              <table className='applications-table'>
               <thead>
                 <tr>
                   <th>ID</th>
@@ -202,7 +231,7 @@ export default function AdminHubManagement() {
                   <th>Subdomain</th>
                   <th>Owner Username</th>
                   <th>Created At</th>
-                  <th>Status</th>
+                  {activeTab === 'manage' && <th>Strikes</th>}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -212,40 +241,52 @@ export default function AdminHubManagement() {
                   const strikeCount = getStrikeCount(hub.fanHubId);
                   return (
                     <tr key={hub.fanHubId}>
-                      <td>{i+1}</td>
+                      <td>{i + 1}</td>
                       <td>{hub.hubName}</td>
                       <td>{hub.subdomain}</td>
                       <td>{hub.ownerUsername}</td>
                       <td>{formatDate(hub.createdAt)}</td>
-                      <td>
-                        <button
-                          className={`reports-count ${reportCount === 1 ? 'first-reports' : ''} ${reportCount === 2 ? 'mild-reports' : ''} ${reportCount > 3 ? 'high-reports' : ''}`}
-                          onClick={() => handleReportsClick(hub)}
-                        >
-                          {reportCount} Reports <br /> {strikeCount} Strikes
-                        </button>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className='strike-btn'
-                            onClick={() => handleStrikeClick(hub)}
-                          >
-                            Strike
-                          </button>
-                          <button
-                            className='deactivate-btn'
-                            onClick={() => handleDeactivateClick(hub)}
-                          >
-                            Deactivate
-                          </button>
-                        </div>
-                      </td>
+                      {activeTab === 'manage' ? (
+                        <>
+                          <td>
+                            <span className='strike-count-display'>{strikeCount} Strikes</span>
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className='deactivate-btn'
+                                onClick={() => handleDeactivateClick(hub)}
+                              >
+                                Deactivate
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <td>
+                          <div className="action-buttons">
+                            <button
+                              className={`reports-count ${reportCount === 1 ? 'first-reports' : ''} ${reportCount === 2 ? 'mild-reports' : ''} ${reportCount > 3 ? 'high-reports' : ''}`}
+                              onClick={() => handleReportsClick(hub)}
+                            >
+                              {reportCount} Reports
+                            </button>
+                            <button
+                              className='strike-btn'
+                              onClick={() => handleStrikeClick(hub)}
+                            >
+                              Strike
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            )}
+            
             <div className='pagination'>
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))} 
@@ -253,10 +294,10 @@ export default function AdminHubManagement() {
               >
                 Previous
               </button>
-              <span>Page {currentPage + 1} of {Math.ceil(hubs.length / itemsPerPage)}</span>
+              <span>Page {currentPage + 1} of {Math.ceil(tabHubs.length / itemsPerPage)}</span>
               <button 
                 onClick={() => setCurrentPage(prev => prev + 1)} 
-                disabled={(currentPage + 1) * itemsPerPage >= hubs.length}
+                disabled={(currentPage + 1) * itemsPerPage >= tabHubs.length}
               >
                 Next
               </button>

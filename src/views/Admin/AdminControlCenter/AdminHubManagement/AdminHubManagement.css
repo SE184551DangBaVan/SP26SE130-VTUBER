@@ -35,6 +35,41 @@
   overflow: hidden;
 }
 
+.hub-management-tabs {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  background-color: #CBC9AA;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  border-left: 2px solid #54523e;
+  border-bottom: 2px solid #54523e;
+  border-right: 2px solid #54523e;
+}
+
+.tab-button:hover {
+  background-color: #98956a;
+  color: #333;
+}
+
+.tab-button.active {
+  color: #424242;
+  border-bottom-color: #CBC9AA;
+  background-color: #dcd8b0;
+  border: unset;
+}
+
 .loading-state,
 .empty-state {
   padding: 48px;
@@ -493,6 +528,15 @@
 .reports-count.first-reports {
   color: #3272ca;
   font-weight: bold;
+}
+
+.strike-count-display {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
 }
 
 .reports-list {

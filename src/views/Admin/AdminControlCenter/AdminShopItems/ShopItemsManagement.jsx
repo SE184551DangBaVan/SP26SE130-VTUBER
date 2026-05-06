@@ -317,7 +317,7 @@ export default function ShopItemsManagement() {
                         <div className='shop-item-card-body'>
                           <div className='shop-item-card-title-row'>
                             <h3>{item.itemName}</h3>
-                            <span className='shop-item-price-tag'>${item.price}</span>
+                            <span className='shop-item-price-tag'>{item.price} Pts.</span>
                           </div>
                           <p>{truncateText(item.description, 110)}</p>
                         </div>

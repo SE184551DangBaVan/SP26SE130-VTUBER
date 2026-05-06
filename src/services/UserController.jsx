@@ -353,3 +353,22 @@ export const changePassword = async (passwordData) => {
     return err.response?.data || { success: false, message: err.message };
   }
 };
+
+/**
+ * Convert paid points to points
+ * @param {number} amount - Amount of paid points to convert
+ * @returns {Promise<Object>} Conversion result
+ */
+export const convertPoints = async (amount) => {
+  try {
+    const res = await axiosInstance.post(`/user/convert-points`, { amount });
+    return res.data;
+  } catch (err) {
+    console.error("Convert points error:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return err.response?.data || { success: false, message: err.message };
+  }
+};

@@ -3,13 +3,15 @@ const WALK_LEFT = "WALK_LEFT";
 const WALK_RIGHT = "WALK_RIGHT";
 const INTRO = "INTRO";
 const ACTION = "ACTION";
+const GRAB = "GRAB";
 
 const SPRITE_KEYS = {
   [IDLE]: "idle",
   [WALK_LEFT]: "walkLeft",
   [WALK_RIGHT]: "walkRight",
   [INTRO]: "intro",
-  [ACTION]: "action"
+  [ACTION]: "action",
+  [GRAB]: "grab"
 };
 
 const WALK_DURATION_OPTIONS = [72, 120]; // 3 or 5 seconds for 24 FPS
@@ -54,7 +56,7 @@ class GremlinBrain {
       this.transitionState();
     }
 
-    if (this.state !== IDLE && this.state !== INTRO && this.state !== ACTION) {
+    if (this.state !== IDLE && this.state !== INTRO && this.state !== ACTION && this.state !== GRAB) {
       this.x += this.vx;
       this.keepInBounds();
     }
@@ -69,6 +71,8 @@ class GremlinBrain {
       this.introPlayed = true;
       this.setState(IDLE, randomInt(IDLE_DURATION_MIN, IDLE_DURATION_MAX));
     } else if (this.state === ACTION) {
+      this.setState(IDLE, randomInt(IDLE_DURATION_MIN, IDLE_DURATION_MAX));
+    } else if (this.state === GRAB) {
       this.setState(IDLE, randomInt(IDLE_DURATION_MIN, IDLE_DURATION_MAX));
     } else if (this.state === IDLE) {
       const shouldWalk = Math.random() < 0.8;
