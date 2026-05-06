@@ -213,7 +213,7 @@
 }
 
 .window .modal-close:hover {
-  background-color: #f0f0f0;
+  background-color: #939177;
   color: #333;
 }
 
@@ -428,6 +428,23 @@
 .modal-header {
   background: #2f2f1f;
   color: #fff;
+}
+
+.modal-header:has(.modal-header-left) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.visit-hub-btn {
+  padding: 6px 12px;
+  transition: all 0.2s ease;
 }
 
 /* Responsive */

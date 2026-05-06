@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getFanHubs, strikeFanHub, deactivateFanHub } from '@/services/FanHubController';
 import { getFanHubReportsWithReports, bulkResolveFanHubReports } from '@/services/HubReportController';
+import { useRouter } from 'next/navigation';
 import './AdminHubManagement.css';
 
 export default function AdminHubManagement() {
@@ -21,6 +22,7 @@ export default function AdminHubManagement() {
   const [submittingResolve, setSubmittingResolve] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [activeTab, setActiveTab] = useState('manage');
+  const router = useRouter();
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -36,6 +38,11 @@ export default function AdminHubManagement() {
     setHubs(hubsData);
     setHubReports(reportsData);
     setLoading(false);
+  };
+
+  const handleVisitHub = (subdomain) => {
+    if (!subdomain) return;
+    router.push(`/hub/${subdomain}`);
   };
 
   const handleStrikeClick = (hub) => {
@@ -400,8 +407,24 @@ export default function AdminHubManagement() {
         <div className='modal-overlay' onClick={handleCloseReportsModal}>
           <div className='modal-content' onClick={(e) => e.stopPropagation()}>
             <div className='modal-header'>
-              <h2>Reports for {selectedHub.hubName}</h2>
-              <button className='modal-close' onClick={handleCloseReportsModal}>×</button>
+              <div className='modal-header-left'>
+                <h2>Reports for {selectedHub.hubName}</h2>
+                <button
+                  className='visit-hub-btn resolve-all-btn'
+                  onClick={() => handleVisitHub(selectedHub.subdomain)}
+                >
+                  Visit
+                </button>
+              </div>
+
+              <div className='modal-header-right'>
+                <button
+                  className='modal-close'
+                  onClick={handleCloseReportsModal}
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
             <div className='modal-body'>
