@@ -9,6 +9,7 @@ import FirstPageModuleBg2 from '@/assets/Decor/hand-drawn-hieroglyph.png'
 
 import AbstractArtifact1 from '@/assets/Decor/futuristic-warning-sign-secure-area-frame-banner-decal-1-Photoroom.png'
 import AbstractArtifact2 from '@/assets/Decor/futuristic-style-warning-signs-futuristic-inscriptions-and-technical-symbols-japanese-hieroglyphs-decals-2-Photoroom.png'
+import AbstractArtifact3 from '@/assets/Decor/futuristic-style-warning-signs-futuristic-inscriptions-and-technical-symbols-japanese-hieroglyphs-decals-1.png'
 
 import SecondPageModuleBg2 from '@/assets/Decor/Kobayashi-Newspaper.png'
 
@@ -19,6 +20,7 @@ import PetSelectionList from '@/components/Gremlin_V-Pet/PetSelectionList';
 import PetBGCanvas from '@/assets/UI-Elements/Summer5.png'
 
 import NoMediaIco from '@/assets/UI-Elements/no-image.svg'
+import NoNewsIco from '@/assets/UI-Elements/newspaper.svg'
 
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
@@ -285,9 +287,9 @@ export default function MainPage() {
 
   const pageModules = [
     { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2, AbstractArtifact2]},
-    { id: 2, title: 'News', textColor: '#FFF', color: '#efefef', gridColumn: '3 / 7', gridRow: '1', backgroundList: [SecondPageModuleBg2] },
-    { id: 3, title: 'Workshop', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
-    { id: 4, title: 'My Playlist', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
+    { id: 2, title: 'News', textColor: '#FFF', color: '#efefef', gridColumn: '3 / 7', gridRow: '1' },
+    { id: 3, title: 'My Favourite Oshi', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
+    { id: 4, title: 'Iventory', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
   ];
 
   return (
@@ -480,17 +482,18 @@ export default function MainPage() {
                             <p>No announcements available</p>
                           </div>) : (
                           <div className='news-empty-state'>
-                            <p>Need to be logged in to view announcements.</p>
+                            <img className='no-news-available' src={NoNewsIco.src} />
+                            <p>Join Fan Hubs to see News about your favourite creator.</p>
                           </div>
                           )
                       )}
                     </div>
                   }
                   {pageModule.id === 3 && selectedCard === pageModule.id &&
-                    <PetSelectionList />
+                    <p>Favourite Oshis</p>
                   }
                   {pageModule.id === 4 && 
-                    <p>Music playlist here</p>
+                    <p>My Items</p>
                   }
                 </div>
               </div>

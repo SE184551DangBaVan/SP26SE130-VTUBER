@@ -15,6 +15,8 @@ import ImgSequence4 from '../../assets/Decor/social-network-influencers4.png'
 import ImgSequence5 from '../../assets/Decor/social-network-influencers5.png'
 import ImgSequence6 from '../../assets/Decor/social-network-influencers6.png'
 
+import { languageRegisterOptions } from '@/constants/languageRegisterOptions';
+
 import PasswordStrengthBar from 'react-password-strength-bar'
 
 export default function Register() {
@@ -25,7 +27,7 @@ export default function Register() {
   const [emailEntered, setEmailEntered] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [translateLanguage, setTranslateLanguage] = useState("En");
+  const [translateLanguage, setTranslateLanguage] = useState("English");
   const [bio, setBio] = useState("");
   const [otp, setOtp] = useState("");
   const [userInput, setUserInput] = useState("");
@@ -268,13 +270,8 @@ export default function Register() {
                       }
                       <div className='input-field'>
                         <div className="select">
-                          <div
-                            className="selected"
-                            data-default="EN"
-                            data-one="VN"
-                            data-two="CN"
-                            data-three="JP"
-                          >
+                          <div className="selected">
+                            <span>{translateLanguage}</span>
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               height="1em"
@@ -287,22 +284,27 @@ export default function Register() {
                             </svg>
                           </div>
                           <div className="options">
-                            <div title="English">
-                              <input id="en" name="option" type="radio" checked={translateLanguage == "En"} onChange={() => setTranslateLanguage("En")} />
-                              <label className="option" htmlFor="en" data-txt="EN" ></label>
-                            </div>
-                            <div title="Tiếng Việt">
-                              <input id="vn" name="option" type="radio" checked={translateLanguage == "Vn"} onChange={() => setTranslateLanguage("Vn")} />
-                              <label className="option" htmlFor="vn" data-txt="VN" ></label>
-                            </div>
-                            <div title="中文">
-                              <input id="cn" name="option" type="radio" checked={translateLanguage == "Cn"} onChange={() => setTranslateLanguage("Cn")} />
-                              <label className="option" htmlFor="cn" data-txt="CN" ></label>
-                            </div>
-                            <div title="日本語">
-                              <input id="jp" name="option" type="radio" checked={translateLanguage == "Jp"} onChange={() => setTranslateLanguage("Jp")} />
-                              <label className="option" htmlFor="jp" data-txt="JP" ></label>
-                            </div>
+                            {languageRegisterOptions.map((lang) => (
+                              <div key={lang.code} title={lang.label}>
+                                <input
+                                  id={lang.code}
+                                  name="option"
+                                  type="radio"
+                                  checked={translateLanguage === lang.value}
+                                  onChange={() => setTranslateLanguage(lang.value)}
+                                />
+                                <label
+                                  className="option"
+                                  htmlFor={lang.code}
+                                  data-txt={lang.code}
+                                  style={{
+                                    "--opt-color": lang.color,
+                                    "--opt-bg": lang.bg,
+                                    "--opt-border": lang.border || "transparent"
+                                  }}
+                                ></label>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>

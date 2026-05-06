@@ -539,7 +539,7 @@ const Navbar = () => {
                                                     onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                                                 >
                                                     <TranslateOutlined />
-                                                    <span>AI Translate: {translateLanguage || 'EN'}</span>
+                                                    <span>AI Language: {translateLanguage || 'EN'}</span>
                                                 </button>
                                                 {languageDropdownOpen && (
                                                     <div className="language-dropdown">

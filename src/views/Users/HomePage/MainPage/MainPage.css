@@ -113,6 +113,15 @@
   transition: all 0.3s ease;
 }
 
+.page-module-background-2 .page-module-background-second {
+  position: absolute;
+  top: 85%;
+  right: 0;
+  height: 40px;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+}
+
 .page-module-background-3 .page-module-background-first {
   position: absolute;
   height: 35px;
@@ -695,10 +704,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 20px;
   width: 100%;
   height: 100%;
   color: rgba(100, 100, 100, 0.7);
   font-size: 16px;
+}
+
+.news-empty-state .no-news-available {
+  width: 60px;
+  transform: rotateZ(15deg);
+  animation: no-news 8s ease infinite;
+}
+
+@keyframes no-news {
+  0% {
+    transform: rotateZ(15deg);
+  }
+  25% {
+    transform: rotateZ(-15deg);
+  }
+  50% {
+    transform: rotateZ(15deg);
+  }
+  75% {
+    transform: rotateZ(-15deg);
+  }
+  100% {
+    transform: rotateZ(15deg);
+  }
 }
 
 @media (max-width: 768px) {

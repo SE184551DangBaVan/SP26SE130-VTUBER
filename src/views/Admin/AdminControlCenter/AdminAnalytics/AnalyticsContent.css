@@ -289,6 +289,7 @@
   border: 1px solid #cbd5e1;
   color: #334155;
   font-size: 0.82rem;
+  max-height: 28px;
 }
 
 .analytics-list-container {
@@ -402,9 +403,9 @@
 .analytics-list-item-right img {
   width: 58px;
   height: 58px;
-  border-radius: 14px;
+  border-radius: 100px;
   object-fit: cover;
-  border: 2px solid #f8fafc;
+  border: 2px solid #000;
 }
 
 .analytics-right-pane {

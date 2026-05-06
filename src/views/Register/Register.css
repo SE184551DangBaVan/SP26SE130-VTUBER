@@ -664,8 +664,15 @@ body:has(.register-wrapper) {
   padding: 5px;
   transition: 300ms;
   background-color: var(--bg-color);
+  border: 1px solid transparent;
   width: 100%;
   font-size: 15px;
+}
+
+.signIn-Info .input-field .option:hover {
+  color: var(--opt-color);
+  background-color: var(--opt-bg);
+  border: 1px solid var(--opt-border);
 }
 
 .signIn-Info .input-field .options input[type="radio"] {

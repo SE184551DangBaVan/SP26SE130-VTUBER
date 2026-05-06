@@ -213,9 +213,9 @@ export default function AnalyticsContent() {
                           </div>
                         </div>
                         <div className='analytics-list-item-right'>
-                          <span>{activeTab === 'fanhubs' ? item.memberCount : item.points}</span>
+                          <span>{activeTab === 'fanhubs' ? item.memberCount : item.oshiCount}</span>
                           <img
-                            src={item.avatarUrl || FanHubIco.src}
+                            src={item.avatarUrl || '/profile-pic-undefined.jpg'}
                             alt={labelMain}
                           />
                         </div>

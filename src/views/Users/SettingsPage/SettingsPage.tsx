@@ -524,7 +524,7 @@ export default function SettingsPage() {
 
               <div className="settings-divider"></div>
               <div className="settings-field">
-                <label className="field-label" htmlFor="translate-language">AI Translation Language</label>
+                <label className="field-label" htmlFor="translate-language">AI Language</label>
                 <select
                   id="translate-language"
                   className="field-select"

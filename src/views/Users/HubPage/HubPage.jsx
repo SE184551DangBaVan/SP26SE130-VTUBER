@@ -137,6 +137,10 @@ export default function HubPage({ ownedHub }) {
     };
   }, []);
 
+  const bannerHeight = Math.max(96, 450 - navScrollOffset * 0.65);
+  const headerHeight = Math.max(116, bannerHeight + 20);
+  const bannerParallaxOffset = Math.min(90, navScrollOffset * 0.18);
+
   // State for create post modal
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
 
@@ -516,16 +520,16 @@ export default function HubPage({ ownedHub }) {
       <div
         className='hub-banner'
         style={{
-          height: `calc(450px - ${navScrollOffset*0.65}px)`,
+          height: `${bannerHeight}px`,
           backgroundImage: hubData.bannerUrl ? `url(${hubData.bannerUrl})` : '#75a4c8',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: `center calc(50% + ${bannerParallaxOffset}px)`,
           borderBottom: hubData.themeColor ? `4px solid ${hubData.themeColor}` : '4px solid #ccc',
         }}
       >
         <div className='hub-banner-overlay'>
           <div className='hub-header-content' 
-            style={{ height: `calc(470px - ${navScrollOffset*0.65}px)`}}>
+            style={{ height: `${headerHeight}px`}}>
             <div className='hub-header-left'>
               <img
                 className='hub-avatar'
