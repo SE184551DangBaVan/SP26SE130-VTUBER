@@ -916,12 +916,12 @@ body:has(.page-main-content) .nav-container .button-primary {
 }
 
 .language-dropdown::-webkit-scrollbar-thumb {
-  background: #b2ebf2;
+  background: #acacac;
   border-radius: 3px;
 }
 
 .language-dropdown::-webkit-scrollbar-thumb:hover {
-  background: #80deea;
+  background: #bebebe;
 }
 
 .language-option {

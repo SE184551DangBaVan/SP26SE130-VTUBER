@@ -19,16 +19,37 @@ export default function Providers({ children }) {
 
   useEffect(() => {
     document.body.style.setProperty("--scroll", "0");
-    window.addEventListener(
-      "scroll",
-      () => {
-        document.body.style.setProperty(
-          "--scroll",
-          String(window.pageYOffset / (document.body.offsetHeight - window.innerHeight))
-        );
-      },
-      false
-    );
+
+    let rafId: number | null = null;
+
+    const updateScrollProgress = () => {
+      const scrollableHeight = Math.max(
+        1,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      const scrollProgress = Math.min(
+        1,
+        Math.max(0, window.scrollY / scrollableHeight)
+      );
+
+      document.body.style.setProperty("--scroll", String(scrollProgress));
+      rafId = null;
+    };
+
+    const handleScroll = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(updateScrollProgress);
+    };
+
+    updateScrollProgress();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, [pathname]);
 
   if (!isClient) {
