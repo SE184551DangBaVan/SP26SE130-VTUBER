@@ -2,10 +2,11 @@
 
 import './Navbar.css'
 import { useRouter } from "next/navigation";
-import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, TranslateOutlined, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd } from '@mui/icons-material';
+import { ExpandMoreRounded, LiveTvRounded, AssignmentOutlined, NotificationsOutlined, PersonOutline, SettingsOutlined, LogoutOutlined, TranslateOutlined, ArticleOutlined, EditNoteOutlined, FeedbackOutlined, AddOutlined, PostAdd, ChevronLeft, ChevronLeftRounded } from '@mui/icons-material';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import {useAuth} from "@/functions/Auth/useAuth.jsx";
-import { updateUserProfile } from '@/services/UserController';
+import { updateUserProfile, convertPoints } from '@/services/UserController';
 import { languageOptions } from '@/constants/languageOptions';
 import NotificationDropdown from '../Notification/NotificationDropdown';
 import DailyMissionDropdown from '../DailyMission/DailyMissionDropdown';
@@ -87,6 +88,8 @@ const Navbar = () => {
     const [dailyMissionOpen, setDailyMissionOpen] = useState(false);
     const [notificationOpen, setNotificationOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+    const [convertModalOpen, setConvertModalOpen] = useState(false);
+    const [convertAmount, setConvertAmount] = useState(1);
     const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
     const [updatingLanguage, setUpdatingLanguage] = useState(false);
 
@@ -223,6 +226,25 @@ const Navbar = () => {
 
     const handleLogout = () => {
         logout();
+    }
+
+    const handleConvert = async () => {
+        if (convertAmount < 1 || convertAmount > (paidPoints ?? 0)) return;
+        const result = await convertPoints(convertAmount);
+        if (result.success) {
+            toast.success(`Successfully converted ${convertAmount} paid points to points!`, {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+            refreshUser();
+            setConvertModalOpen(false);
+            setConvertAmount(1);
+        } else {
+            toast.error(result?.message || 'Conversion failed. Please try again.', {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
     }
 
     // Update user's translate language via API
@@ -469,19 +491,22 @@ const Navbar = () => {
 
                                         {/* Coins Section */}
                                         <div className="coins-section">
-                                            <div className="coins-display">
+                                            <div className="coins-display" onClick={() => setConvertModalOpen(true)}>
                                                 <span className="coin-icon-wrapper">
                                                     <img className="coin-icon" src={PointsIco.src} alt='points'/>
                                                     <span className="coin-tooltip">Points</span>
                                                 </span>
-                                                <span className="coin-amount">{points ?? 0}</span>
+                                                <span className="coin-amount" title={points ?? 0}>{points ?? 0}</span>
                                             </div>
+                                            <button className='convert-paid-points-btn' title='Convert Points' onClick={() => setConvertModalOpen(true)}>
+                                                <ChevronLeftRounded />
+                                            </button>
                                             <div className="coins-display paid-coins-display">
                                                 <span className="coin-icon-wrapper">
                                                     <img className="coin-icon paid-coin-icon" src={PaidPointsIco.src} alt='paid points'/>
                                                     <span className="coin-tooltip">Paid Points</span>
                                                 </span>
-                                                <span className="coin-amount paid-coin-amount">{paidPoints ?? 0}</span>
+                                                <span className="coin-amount paid-coin-amount" title={paidPoints ?? 0}>{paidPoints ?? 0}</span>
                                             </div>
                                             <button className="add-coins-btn" aria-label="Add coins" onClick={() => router.push('/payment/packages')}>
                                                 <AddOutlined />
@@ -575,6 +600,45 @@ const Navbar = () => {
                 </div>
             </div>
         </nav>
+        {convertModalOpen && (
+            <div className="profile-modal-overlay" onClick={() => setConvertModalOpen(false)}>
+                <div className="profile-modal-content convert-modal" onClick={(e) => e.stopPropagation()}>
+                    <h3>Convert Paid Points to Points</h3>
+                    <div className="convert-modal-body">
+                        <div className="convert-display left">
+                            <img className="coin-icon" src={PointsIco.src} alt='points'/>
+                            <span className="convert-amount">{(points ?? 0) + convertAmount}</span>
+                        </div>
+                        <div className="convert-slider-section">
+                            <input
+                                type="number"
+                                min="1"
+                                max={paidPoints ?? 0}
+                                value={convertAmount}
+                                onChange={(e) => setConvertAmount(Math.max(1, Math.min(paidPoints ?? 0, parseInt(e.target.value) || 1)))}
+                                className="convert-input"
+                            />
+                            <input
+                                type="range"
+                                min="1"
+                                max={paidPoints ?? 0}
+                                value={convertAmount}
+                                onChange={(e) => setConvertAmount(parseInt(e.target.value))}
+                                className="convert-slider"
+                            />
+                        </div>
+                        <div className="convert-display right">
+                            <img className="coin-icon paid-coin-icon" src={PaidPointsIco.src} alt='paid points'/>
+                            <span className="convert-amount">{(paidPoints ?? 0) - convertAmount}</span>
+                        </div>
+                    </div>
+                    <div className="convert-modal-actions">
+                        <button onClick={() => setConvertModalOpen(false)}>Cancel</button>
+                        <button onClick={handleConvert}>Convert</button>
+                    </div>
+                </div>
+            </div>
+        )}
     </header>
   )
 }

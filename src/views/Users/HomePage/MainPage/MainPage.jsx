@@ -22,6 +22,7 @@ import NoMediaIco from '@/assets/UI-Elements/no-image.svg'
 
 import { getUserById } from '@/services/UserController';
 import { getAnnouncementsAndEvents } from '@/services/PostController';
+import { getBookmarkedPosts } from '@/services/BookedAgendaController';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 
 export default function MainPage() {
@@ -35,6 +36,7 @@ export default function MainPage() {
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [allAnnouncements, setAllAnnouncements] = useState([]);
+  const [bookedAgendaPosts, setBookedAgendaPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
@@ -53,6 +55,20 @@ export default function MainPage() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Fetch bookmarked posts
+  useEffect(() => {
+    const fetchBookedAgendaPosts = async () => {
+      try {
+        const booked = await getBookmarkedPosts(0, 100, 'createdAt', 'desc');
+        setBookedAgendaPosts(booked);
+      } catch (error) {
+        console.error('Error fetching booked agenda posts:', error);
+      }
+    };
+
+    fetchBookedAgendaPosts();
   }, []);
 
   // Fetch joined hubs
@@ -182,13 +198,12 @@ export default function MainPage() {
     handler();
   };
 
-  // Get pinned announcements for agenda
-  const getPinnedAgendaItems = () => {
+  // Get booked announcements for agenda
+  const getBookedAgendaItems = () => {
     const now = new Date();
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    return allAnnouncements.filter(post => {
-      if (!post.isPinned) return false;
+    return bookedAgendaPosts.filter(post => {
       if (!post.startTime && !post.endTime) return false;
 
       // Don't show if expired more than a month ago
@@ -201,7 +216,7 @@ export default function MainPage() {
     });
   };
 
-  const pinnedAgendaItems = useMemo(() => getPinnedAgendaItems(), [allAnnouncements]);
+  const pinnedAgendaItems = useMemo(() => getBookedAgendaItems(), [bookedAgendaPosts]);
 
   const agendaResources = useMemo(() => {
     const eventColors = ['blue', 'green', 'purple', 'orange', 'pink', 'teal', 'amber', 'indigo'];

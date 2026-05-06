@@ -245,7 +245,7 @@ body:has(.register-wrapper) {
   width: 300px;
   height: 440px;
   perspective: 1000px;
-  top: -15px;
+  top: 40px;
 }
 
 /* card */

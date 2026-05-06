@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSideBar } from '@/contexts/SideBarContext';
 import { getUserById } from '@/services/UserController';
-import { getAnnouncementsAndEvents, pinPost, unpinPost } from '@/services/PostController';
+import { getAnnouncementsAndEvents } from '@/services/PostController';
+import { getBookmarkedPosts, bookmarkPost, unbookmarkPost } from '@/services/BookedAgendaController';
 import { showError } from '@/utils/toastUtils';
 import { CalendarTodayRounded, CheckRounded, ChevronLeft, ChevronRight, EventAvailableRounded, EventRounded, NotificationsRounded } from '@mui/icons-material';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
@@ -23,6 +24,7 @@ export default function NewsPage() {
   const [joinedHubs, setJoinedHubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [allAnnouncements, setAllAnnouncements] = useState([]);
+  const [bookedPosts, setBookedPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [interestLoading, setInterestLoading] = useState(false);
@@ -79,6 +81,20 @@ export default function NewsPage() {
     fetchAllAnnouncements();
   }, [joinedHubs]);
 
+  // Fetch bookmarked posts
+  useEffect(() => {
+    const fetchBookedPosts = async () => {
+      try {
+        const booked = await getBookmarkedPosts(0, 100, 'createdAt', 'desc');
+        setBookedPosts(booked);
+      } catch (error) {
+        console.error('Error fetching booked posts:', error);
+      }
+    };
+
+    fetchBookedPosts();
+  }, []);
+
   // Set selected post from URL params or default to most recent
   useEffect(() => {
     if (allAnnouncements.length === 0) return;
@@ -106,34 +122,39 @@ export default function NewsPage() {
     router.push(`/news-feed/${post.fanHubId}/${post.postId}`);
   };
 
-  const updatePostInterestState = (postId, isPinned) => {
-    setAllAnnouncements(prev => prev.map(post =>
-      post.postId === postId ? { ...post, isPinned } : post
-    ));
+  const updatePostInterestState = (postId, isBookmarked) => {
     setSelectedPost(prev =>
-      prev?.postId === postId ? { ...prev, isPinned } : prev
+      prev?.postId === postId ? { ...prev, isBookmarked } : prev
     );
   };
 
   const handleInterestClick = async () => {
     if (!selectedPost || interestLoading) return;
 
-    const nextPinnedState = !selectedPost.isPinned;
+    const isCurrentlyBookmarked = bookedPosts.some(post => post.postId === selectedPost.postId);
+    const nextBookmarkState = !isCurrentlyBookmarked;
     setInterestLoading(true);
-    updatePostInterestState(selectedPost.postId, nextPinnedState);
+    updatePostInterestState(selectedPost.postId, nextBookmarkState);
 
     try {
-      const result = nextPinnedState
-        ? await pinPost(selectedPost.postId)
-        : await unpinPost(selectedPost.postId);
+      const result = nextBookmarkState
+        ? await bookmarkPost(selectedPost.postId)
+        : await unbookmarkPost(selectedPost.postId);
 
-      if (!result?.success) {
-        updatePostInterestState(selectedPost.postId, !nextPinnedState);
+      if (result?.success) {
+        // Update booked posts list
+        if (nextBookmarkState) {
+          setBookedPosts([...bookedPosts, selectedPost]);
+        } else {
+          setBookedPosts(bookedPosts.filter(p => p.postId !== selectedPost.postId));
+        }
+      } else {
+        updatePostInterestState(selectedPost.postId, !nextBookmarkState);
         showError(result?.message || 'Failed to update interest status');
       }
     } catch (error) {
       console.error('Error updating interest status:', error);
-      updatePostInterestState(selectedPost.postId, !nextPinnedState);
+      updatePostInterestState(selectedPost.postId, !nextBookmarkState);
       showError('Failed to update interest status');
     } finally {
       setInterestLoading(false);
@@ -305,11 +326,11 @@ export default function NewsPage() {
                   </div>
                 </div>
                 <button
-                  className={`interested-btn ${selectedPost.isPinned ? 'active' : ''}`}
+                  className={`interested-btn ${bookedPosts.some(p => p.postId === selectedPost.postId) ? 'active' : ''}`}
                   onClick={handleInterestClick}
                   disabled={interestLoading}
                 >
-                  {selectedPost.isPinned ? <CheckRounded /> : <NotificationsRounded />}
+                  {bookedPosts.some(p => p.postId === selectedPost.postId) ? <CheckRounded /> : <NotificationsRounded />}
                   <span>Interested</span>
                 </button>
               </div>
@@ -352,7 +373,7 @@ export default function NewsPage() {
                   )}
                 </div>}
                 {(post.startTime || post.endTime) &&
-                  (post.isPinned ?
+                  (bookedPosts.some(p => p.postId === post.postId) ?
                     (<EventAvailableRounded className='other-news-schedule-available pinned' />)
                     :
                     (<CalendarTodayRounded className='other-news-schedule-available' />)

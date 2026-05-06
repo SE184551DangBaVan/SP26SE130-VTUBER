@@ -670,6 +670,10 @@ body:has(.page-main-content) .nav-container .button-primary {
   font-size: 18px;
   font-weight: 700;
   color: #2a2b33;
+  max-width: 6ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
 }
 
 .paid-coins-display {
@@ -701,6 +705,50 @@ body:has(.page-main-content) .nav-container .button-primary {
 .add-coins-btn:hover {
   background-color: #52ffff;
   border-color: #52ffff;
+}
+
+.convert-paid-points-btn {
+  color: #000;
+  border-radius: 8px;
+  padding: unset;
+  box-shadow: unset;
+  border: unset;
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  transition: all 0.4s ease;
+}
+
+.convert-paid-points-btn:hover {
+  color: #000;
+  border-radius: 8px;
+  background-color: rgb(175, 200, 200);
+  transition: all 0.4s ease;
+}
+
+.convert-paid-points-btn:hover path {
+  animation: bounce-left-covert-arrow 1s ease-in-out;
+}
+
+@keyframes bounce-left-covert-arrow {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 /* Profile Menu Items */
@@ -1058,4 +1106,126 @@ body:has(.page-main-content) .nav-container .button-primary {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Convert Modal */
+.convert-modal {
+  max-width: 500px;
+  width: 90%;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.convert-modal h3 {
+  margin: 0 0 20px 0;
+  text-align: center;
+  color: #2a2b33;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.convert-modal-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.convert-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.convert-display.left {
+  color: #00897b;
+}
+
+.convert-display.right {
+  color: #ff6b6b;
+}
+
+.convert-display .coin-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.convert-display .convert-amount {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.convert-slider-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.convert-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.convert-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+}
+
+.convert-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2d8cf0;
+  cursor: pointer;
+}
+
+.convert-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2d8cf0;
+  cursor: pointer;
+  border: none;
+}
+
+.convert-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.convert-modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.convert-modal-actions button:first-child {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.convert-modal-actions button:last-child {
+  background: #2d8cf0;
+  color: #fff;
 }

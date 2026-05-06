@@ -32,21 +32,41 @@ export default function UserLayout({ children }: UserLayoutProps) {
       setLoading(false);
     });
 
-    const savedPet = localStorage.getItem('selectedPet');
-    if (savedPet) {
-      setSelectedPet(savedPet);
-    }
+    const resolveSelectedPet = () => {
+      const savedModel = sessionStorage.getItem('selectedPetModel');
+      if (savedModel) {
+        try {
+          const parsed = JSON.parse(savedModel);
+          if (parsed) {
+            setSelectedPet(parsed);
+            return;
+          }
+        } catch {
+          // ignore malformed JSON
+        }
+      }
 
-    const handleStorageChange = () => {
-      const savedPet = localStorage.getItem('selectedPet');
-      setSelectedPet(savedPet);
+      const savedPet = sessionStorage.getItem('selectedPet');
+      if (savedPet) {
+        setSelectedPet(savedPet);
+      } else {
+        setSelectedPet(null);
+      }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    resolveSelectedPet();
+
+    const handleSelectionChange = () => {
+      resolveSelectedPet();
+    };
+
+    window.addEventListener('storage', handleSelectionChange);
+    window.addEventListener('selectedPetChanged', handleSelectionChange);
 
     return () => {
       unsubscribe();
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', handleSelectionChange);
+      window.removeEventListener('selectedPetChanged', handleSelectionChange);
     };
   }, []);
 
