@@ -42,7 +42,9 @@ export default function AdminHubManagement() {
 
   const handleVisitHub = (subdomain) => {
     if (!subdomain) return;
-    router.push(`/hub/${subdomain}`);
+
+    const url = `/hub/${encodeURIComponent(subdomain)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleStrikeClick = (hub) => {
