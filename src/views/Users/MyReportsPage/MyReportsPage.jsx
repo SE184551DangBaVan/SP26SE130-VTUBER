@@ -55,6 +55,7 @@ function MyPostReportsTable() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [postMedia, setPostMedia] = useState(null);
+  const [postStatus, setPostStatus] = useState(null);
   const [loadingMedia, setLoadingMedia] = useState(false);
 
   const fetchReports = useCallback(async (reset = false) => {
@@ -125,14 +126,17 @@ function MyPostReportsTable() {
       setLoadingMedia(true);
       try {
         const postData = await getPostById(report.postId);
-        if (postData && postData.media) {
-          setPostMedia(postData.media);
+        if (postData) {
+          setPostMedia(postData.media || null);
+          setPostStatus(postData.status || null);
         } else {
           setPostMedia(null);
+          setPostStatus(null);
         }
       } catch (error) {
         console.error("Failed to fetch post media:", error);
         setPostMedia(null);
+        setPostStatus(null);
       } finally {
         setLoadingMedia(false);
       }
@@ -143,6 +147,7 @@ function MyPostReportsTable() {
     setIsDetailModalOpen(false);
     setSelectedReport(null);
     setPostMedia(null);
+    setPostStatus(null);
   };
 
   const handleViewPost = (postId) => {
@@ -318,7 +323,9 @@ function MyPostReportsTable() {
             </div>
             <div className="my-report-detail-actions">
               <button className="my-detail-close-btn" onClick={closeDetailModal}>Close</button>
-              <button className="my-detail-view-btn" onClick={() => handleViewPost(selectedReport.postId)}>View Post</button>
+              {postStatus !== "REJECTED" && (
+                <button className="my-detail-view-btn" onClick={() => handleViewPost(selectedReport.postId)}>View Post</button>
+              )}
             </div>
           </div>
         </div>

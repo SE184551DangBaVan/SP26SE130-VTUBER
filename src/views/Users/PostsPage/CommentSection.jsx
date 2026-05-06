@@ -29,7 +29,7 @@ const COMMENTS_PER_LOAD = 7;
 const REPLIES_PER_LOAD = 5;
 const MAX_NEST_DEPTH = 5;
 
-export default function CommentSection({ postId, router, commentCount, fanHubId }) {
+export default function CommentSection({ postId, router, commentCount, fanHubId, fanHubSubdomain }) {
   const localRouter = useRouter();
   const navRouter = router || localRouter;
   const { userAuth, points, setPoints, avatarUrl, avatarFrame } = useAuth();
@@ -43,7 +43,6 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
   const [isHubMember, setIsHubMember] = useState(false);
   const [roleInHub, setRoleInHub] = useState(null); // 'MEMBER', 'MODERATOR', 'VTUBER'
   const [checkingMembership, setCheckingMembership] = useState(false);
-  const [joiningHub, setJoiningHub] = useState(false);
 
   // Hidden comments state
   const [hiddenComments, setHiddenComments] = useState([]);
@@ -77,25 +76,12 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
     checkMembership();
   }, [fanHubId, userAuth]);
 
-  // Handle joining the hub
-  const handleJoinHub = async () => {
-    if (!userAuth || !fanHubId) return;
-
-    setJoiningHub(true);
-    try {
-      const result = await joinFanHub(fanHubId);
-      if (result?.success) {
-        showSteamSuccess('Joined hub successfully! You can now comment.', 'Success');
-        setIsHubMember(true);
-        setRoleInHub('MEMBER');
-      } else {
-        showSteamError(result?.message || 'Failed to join hub', 'Error');
-      }
-    } catch (error) {
-      console.error('Error joining hub:', error);
-      showSteamError('Failed to join hub. Please try again.', 'Error');
-    } finally {
-      setJoiningHub(false);
+  // Handle going to the hub
+  const handleGoToHub = () => {
+    if (fanHubSubdomain) {
+      navRouter.push(`/hub/${fanHubSubdomain}`);
+    } else {
+      console.warn('No fanHubSubdomain provided');
     }
   };
 
@@ -405,14 +391,12 @@ export default function CommentSection({ postId, router, commentCount, fanHubId 
             {fanHubId && !isHubMember && !checkingMembership ? (
               <div className={styles.commentMembershipRequired}>
                 <p>You must be a member of this hub to comment.</p>
-                <button 
-                  className={styles.joinHubBtn} 
-                  onClick={handleJoinHub}
-                  disabled={joiningHub}
+                <button
+                  className={styles.joinHubBtn}
+                  onClick={handleGoToHub}
                 >
-                  {joiningHub ? 'Joining...' : 'Join Hub'}
-                </button>
-              </div>
+                  Go to Hub
+                </button>              </div>
             ) : (
               <>
                 <textarea

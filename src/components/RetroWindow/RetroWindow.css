@@ -35,6 +35,14 @@
 }
 
 
+.window-border .window-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0.8;
+    min-width: 0;
+}
+
 .window-border .window-title {
     max-height: 80%;
     font-size: 26px;
@@ -42,12 +50,10 @@
     font-weight: 800;
     color: #555555;
     text-align: left;
-    min-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex-wrap: nowrap;
-    flex: 0.7;
+    flex: 1;
 }
 
 .window-border .window-buttons {

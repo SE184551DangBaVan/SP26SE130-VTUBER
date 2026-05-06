@@ -289,7 +289,6 @@ export default function BannerManagement() {
   const validateBannerForm = () => {
     setBannerValidationError('');
     if (!bannerName.trim()) { setBannerValidationError('Banner name is required'); return false; }
-    if (!isBannerNameUnique(bannerName)) { setBannerValidationError('Banner name must be unique'); return false; }
     if (!bannerDescription.trim()) { setBannerValidationError('Banner description is required'); return false; }
     if (!bannerStartTime) { setBannerValidationError('Start date is required'); return false; }
     if (!bannerEndTime) { setBannerValidationError('End date is required'); return false; }
@@ -313,6 +312,7 @@ export default function BannerManagement() {
   };
 
   const handleBannerSubmit = async (event) => {
+      console.log("SUBMIT BUTTON CLICKED")
     event.preventDefault();
     if (!validateBannerForm()) return;
     setBannerSubmitting(true);

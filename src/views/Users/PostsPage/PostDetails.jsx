@@ -13,6 +13,7 @@ import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import styles from './PostDetails.module.css';
 import {
   ShareRounded,
+  CommentRounded,
   MoreHoriz,
   Translate,
   AutoAwesome,
@@ -60,6 +61,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   const [isTranslated, setIsTranslated] = useState(false);
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translatedTitle, setTranslatedTitle] = useState(null);
+  const [translatedPollOptions, setTranslatedPollOptions] = useState(null);
   const [translateLoading, setTranslateLoading] = useState(false);
   const [translateMessage, setTranslateMessage] = useState(null);
   
@@ -153,10 +155,11 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
     try {
       const result = await getTranslatePost(post.postId);
       if (result?.success && result?.data) {
-        const { translatedContent, translatedTitle, translate_language_set, extraComment } = result.data;
+        const { translatedContent, translatedTitle, translate_language_set, extraComment, pollOptionsTranslation } = result.data;
         
         setTranslatedContent(translatedContent || null);
         setTranslatedTitle(translatedTitle || null);
+        setTranslatedPollOptions(pollOptionsTranslation || null);
 
         if (!translate_language_set && extraComment) {
           setTranslateMessage(extraComment);
@@ -164,7 +167,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
           setTranslateMessage(null);
         }
 
-        if (translatedContent || translatedTitle) {
+        if (translatedContent || translatedTitle || (pollOptionsTranslation && pollOptionsTranslation.length > 0)) {
           setIsTranslated(true);
         }
       } else {
@@ -247,6 +250,9 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
       const hashtag = searchParams.get('hashtag');
       router.push(hashtag ? `/posts?hashtag=${encodeURIComponent(hashtag)}` : '/posts', { scroll: false });
     }
+    
+    // Clear the post data to trigger the early return and hide the modal
+    setPost(null);
   }, [router, scrollPositionRef, isPropBased, onClose, searchParams]);
 
   useEffect(() => {
@@ -436,7 +442,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
           </div>
         );
       case 'POLL':
-        return <PollDisplay post={post} />;
+        return <PollDisplay post={post} isTranslated={isTranslated} translatedPollOptions={translatedPollOptions} translatedTitle={translatedTitle} translatedContent={translatedContent} />;
       case 'TEXT':
       default:
         return (
@@ -446,6 +452,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
               windowHeight="100%"
               windowColor="blue"
               windowTitle={`${(isTranslated ? translatedTitle : post.content) ? (isTranslated ? translatedTitle : post.title) : 'Post Title'}`}
+              onClose={handleClose}
               windowContent={(
                 <div className={styles.textOnlyContent}>
                   {(isTranslated ? translatedContent : post.content) && (
@@ -547,7 +554,16 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                         size="small"
                       />
                       <div className={styles.postViewAuthorDetails}>
-                        <span className={styles.fanhubName}>h/{post.fanHubName}</span>
+                        <span 
+                          className={styles.fanhubName}
+                          onClick={() => {
+                            if (post.fanHubSubdomain) {
+                              router.push(`/hub/${post.fanHubSubdomain}`);
+                            }
+                          }}
+                        >
+                          h/{post.fanHubName}
+                        </span>
                         <span className={styles.postTime}>{formatTimeAgo(post.createdAt)}</span>
                       </div>
                     </div>
@@ -680,6 +696,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
                     router={router}
                     commentCount={post.commentCount || 0}
                     fanHubId={post.fanHubId}
+                    fanHubSubdomain={post.fanHubSubdomain}
                   />
                 </>
               )}
@@ -722,7 +739,7 @@ export default function PostDetails({ scrollPositionRef, postIdProp, onClose }) 
   );
 }
 
-function PollDisplay({ post }) {
+function PollDisplay({ post, isTranslated, translatedPollOptions, translatedTitle, translatedContent }) {
   const [selectedOption, setSelectedOption] = useState(post.userVotedOptionId);
   const [voteCounts, setVoteCounts] = useState(post.voteCounts || {});
   const [totalVotes, setTotalVotes] = useState(post.totalVotes || 0);
@@ -779,16 +796,23 @@ function PollDisplay({ post }) {
     return Math.round((votes / totalVotes) * 100);
   };
 
+  const displayTitle = isTranslated ? (translatedTitle || post.title) : post.title;
+  const displayContent = isTranslated ? (translatedContent || post.content) : post.content;
+
   return (
     <div className={styles.postDetailsPollWrapper}>
-      {post.title && <h3 className={styles.pollDisplayTitle}>{post.title}</h3>}
-      {post.content && <p className={styles.pollDisplayContent}>{post.content}</p>}
+      {displayTitle && <h3 className={styles.pollDisplayTitle}>{displayTitle}</h3>}
+      {displayContent && <p className={styles.pollDisplayContent}>{displayContent}</p>}
       <div className={`${styles.pollDisplay} ${styles.pollDisplayDetails}`}>
         <div className={styles.pollOptionsList}>
-          {post.voteOptions?.map((option) => {
+          {post.voteOptions?.map((option, index) => {
             const isObject = typeof option === 'object' && option !== null;
             const optionId = isObject ? option.id : option;
-            const optionText = isObject ? option.optionText : option;
+            let optionText = isObject ? option.optionText : option;
+
+            if (isTranslated && translatedPollOptions && translatedPollOptions[index]) {
+              optionText = translatedPollOptions[index];
+            }
             
             const percentage = getVotePercentage(optionId);
             const isSelected = selectedOption === optionId;
