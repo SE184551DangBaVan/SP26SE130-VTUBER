@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getUserPosts, userDeleteOwnPost } from "@/services/PostController";
+import { parseText } from "@/utils/textParser";
 import { useRouter } from "next/navigation";
 import "./MyPostsPage.css";
 import {useSideBar} from "@/contexts/SideBarContext.tsx";
@@ -193,6 +194,19 @@ export default function MyPostsPage() {
     }
   };
 
+  const getAiStatusLabel = (status) => {
+    switch (status?.toUpperCase()) {
+      case "AI_SAFE":
+        return "AI Verified";
+      case "AI_UNSAFE":
+        return "AI Flagged";
+      case "PENDING":
+        return "Pending";
+      default:
+        return status || "UNKNOWN";
+    }
+  };
+
   const handlePostClick = (post) => {
     setSelectedPost(post);
     setIsModalOpen(true);
@@ -244,6 +258,12 @@ export default function MyPostsPage() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isModalOpen]);
+
+  const truncateText = (text, maxLength = 100) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
 
   if (loading) {
     return (
@@ -304,8 +324,8 @@ export default function MyPostsPage() {
                   <span className="post-type-badge">{getPostTypeLabel(post.postType)}</span>
                 </td>
                 <td className="post-content-combined">
-                  <div className="post-title-row">{post.title}</div>
-                  <div className="post-content-row">{post.content}</div>
+                  <div className="post-title-row">{truncateText(post.title, 60)}</div>
+                  <div className="post-content-row">{truncateText(post.content, 100)}</div>
                 </td>
                 <td className="post-status">
                   <span className={`status-badge ${getStatusClass(post.status)}`}>
@@ -314,7 +334,7 @@ export default function MyPostsPage() {
                 </td>
                 <td className="post-ai-validation">
                   <span className={`ai-validation-badge ${getAiValidationStatusClass(post.aiValidationStatus)}`}>
-                    {post.aiValidationStatus || "UNKNOWN"}
+                    {getAiStatusLabel(post.aiValidationStatus)}
                   </span>
                 </td>
                 <td className="post-created-date" onClick={(e) => e.stopPropagation()}>
@@ -350,16 +370,16 @@ export default function MyPostsPage() {
 
       {/* Post Details Modal */}
       {isModalOpen && selectedPost && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mpp-modal-overlay" onClick={closeModal}>
+          <div className="mpp-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="mpp-modal-header">
               <h2>Post Details</h2>
-              <button className="modal-close" onClick={closeModal} title="Close">
+              <button className="mpp-modal-close" onClick={closeModal} title="Close">
                 ✕
               </button>
             </div>
             
-            <div className="modal-body">
+            <div className="mpp-modal-body">
               {/* Post Info Section */}
               <div className="post-info-section">
                 <div className="info-grid">
@@ -380,24 +400,23 @@ export default function MyPostsPage() {
                     <span className="info-value">{getPostTypeLabel(selectedPost.postType)}</span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">Approval Status:</span>
-                    <span className={`status-badge ${getStatusClass(selectedPost.status)}`}>
-                      {selectedPost.status}
-                    </span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">AI Validation:</span>
-                    <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>
-                      {selectedPost.aiValidationStatus || "UNKNOWN"}
-                    </span>
-                  </div>
-                  <div className="info-item">
                     <span className="info-label">Created:</span>
                     <span className="info-value">{formatDate(selectedPost.createdAt)}</span>
                   </div>
-                  <div className="info-item full-width">
-                    <span className="info-label">AI Comment:</span>
-                    <div className="info-value ai-comment">{selectedPost.aiValidationComment || "No comment"}</div>
+                  
+                  <div className="ai-result-row">
+                    <div className="ai-result-item">
+                      <span className="ai-result-label">Approval Status</span>
+                      <span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span>
+                    </div>
+                    <div className="ai-result-item">
+                      <span className="ai-result-label">Final AI Result</span>
+                      <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{getAiStatusLabel(selectedPost.aiValidationStatus)}</span>
+                    </div>
+                    <div className="ai-result-item">
+                      <span className="ai-result-label">AI Analysis</span>
+                      <div className="ai-analysis-text">{parseText(selectedPost.aiValidationComment || "No analysis provided.")}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -407,7 +426,7 @@ export default function MyPostsPage() {
                 <h3>
                   Content {selectedPost.aiContentValidationStatus && (
                     <span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiContentValidationStatus)}`}>
-                      {selectedPost.aiContentValidationStatus}
+                      {getAiStatusLabel(selectedPost.aiContentValidationStatus)}
                     </span>
                   )}
                 </h3>
@@ -455,11 +474,11 @@ export default function MyPostsPage() {
                           <div className="media-info">
                             <div className="media-id">Media ID: #{mediaItem.mediaId}</div>
                             <div className={`media-ai-status ${getAiValidationStatusClass(mediaItem.aiValidationStatus)}`}>
-                              {mediaItem.aiValidationStatus || "UNKNOWN"}
+                              {getAiStatusLabel(mediaItem.aiValidationStatus)}
                             </div>
                             {mediaItem.aiValidationComment && (
                               <div className="media-ai-comment" title={mediaItem.aiValidationComment}>
-                                {mediaItem.aiValidationComment}
+                                {parseText(mediaItem.aiValidationComment)}
                               </div>
                             )}
                           </div>
@@ -485,7 +504,7 @@ export default function MyPostsPage() {
               )}
             </div>
 
-            <div className="modal-footer">
+            <div className="mpp-modal-footer">
               {selectedPost.status !== "DELETED" && (
                 isDeletingConfirm ? (
                   <div className="delete-confirm-group">

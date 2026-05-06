@@ -20,6 +20,7 @@ export default function ProfilePage({ username }: { username: string }) {
   const auth = useAuth();
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBadges, setSelectedBadges] = useState<number[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
@@ -100,6 +101,7 @@ export default function ProfilePage({ username }: { username: string }) {
             username: data.username,
             email: data.email || "",
             avatar: data.avatarUrl || "/profile-pic-undefined.jpg",
+            bannerUrl: data.bannerUrl || null,
             hasFrame: data.frameUrl !== null,
             frameUrl: data.frameUrl,
             frameSize: data.frameSize ?? data.size,
@@ -308,14 +310,15 @@ export default function ProfilePage({ username }: { username: string }) {
   };
 
   const handleSelectFrame = (frame: any) => {
-    if (!frame || typeof frame === 'string') {
-        setSelectedFrameUrl(null);
+    // If selecting 'None' (passed as empty string or 'remove')
+    if (!frame || frame === 'remove') {
+        setSelectedFrameUrl('remove');
         setSelectedFrameOffsets({ size: 115, x: 0, y: 0 });
         return;
     }
     
     const isDeselecting = selectedFrameUrl === frame.imageUrl;
-    setSelectedFrameUrl(isDeselecting ? null : frame.imageUrl);
+    setSelectedFrameUrl(isDeselecting ? 'remove' : frame.imageUrl);
     setSelectedFrameOffsets(isDeselecting ? { size: 115, x: 0, y: 0 } : {
         size: frame.frameSize ?? frame.size ?? 115,
         x: frame.frameXAxis ?? frame.frameX ?? frame.x ?? 0,
@@ -327,9 +330,11 @@ export default function ProfilePage({ username }: { username: string }) {
     setIsUploading(true);
     try {
       // Use the refactored uploadAvatarFrame with frameUrl as param
+      // If selectedFrameUrl is 'remove', we want to clear the frame
       const result = await uploadAvatarFrame(null, selectedFrameUrl);
       if (result?.success) {
-        setCurrentFrameUrl(selectedFrameUrl);
+        // If it was 'remove', set current to null
+        setCurrentFrameUrl(selectedFrameUrl === 'remove' ? null : selectedFrameUrl);
         // Refresh user data to get updated offsets
         const data = await getUserByUsername(username);
         if (data) {
@@ -507,7 +512,7 @@ export default function ProfilePage({ username }: { username: string }) {
 
   return (
     <div className="user-profile profile-page">
-      <div className="banner">
+      <div className="main-info">
         <UserAvatar
           avatarUrl={userData.avatar}
           avatarFrame={userData.frameUrl}
