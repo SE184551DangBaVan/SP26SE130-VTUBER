@@ -609,10 +609,10 @@ export default function CreateHubPage() {
                         </div>
                       )}
                     </div>
-                    <div className='preview-info' style={{background: themeColor}}>
-                      <h2>{hubName || "Your Hub Name"}</h2>
-                      <p className='preview-subdomain'>@{subdomain || 'yourhub'}</p>
-                      <p className='preview-description'>{description || "Your community description will appear here..."}</p>
+                    <div className='preview-info' style={{background: '#0000004d', backdropFilter: 'blur(2px)'}}>
+                      <h2 style={{color: themeColor}}>{hubName || "Your Hub Name"}</h2>
+                      <p className='preview-subdomain' style={{color: themeColor}}>@{subdomain || 'yourhub'}</p>
+                      <p className='preview-description' style={{color: themeColor}}>{description || "Your community description will appear here..."}</p>
                       <div className='preview-stats'>
                         <span className='stat'>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className='stat-icon'>

@@ -16,6 +16,7 @@ import {
 } from '@/services/MemberController';
 import { checkIsMember, getFanHubBySubdomain } from '@/services/FanHubController';
 import { getJoinQuestions } from '@/services/HubQuestionnaireController';
+import { getFanHubModel, uploadFanHubModel } from '@/services/VtuberModelController';
 import { showError, showLoading, updateToast } from '@/utils/toastUtils';
 import { showSteamSuccess, showSteamError } from '@/utils/SteamNotification';
 import { useReportModal } from '@/contexts/ReportContext';
@@ -37,6 +38,22 @@ import LoadingImg6 from '../../../assets/Decor/loading-6.gif'
 import SpeakerIco from '../../../assets/UI-Elements/announcement.svg'
 
 const loadingImages = [LoadingImg1, LoadingImg2, LoadingImg3, LoadingImg4, LoadingImg5, LoadingImg6];
+const SUPPORTED_MODEL_STATES = ['idle', 'intro', 'action', 'walkLeft', 'walkRight', 'grab'];
+
+const transformHubModel = (data, fanHubId) => ({
+  ...data,
+  fanHubId,
+  frameWidth: data.frameWidth || (data.name === 'Gold Ship' ? 350 : 300),
+  frameHeight: data.frameHeight || (data.name === 'Gold Ship' ? 350 : 300)
+});
+
+const buildModelForm = () => ({
+  name: '',
+  sprites: SUPPORTED_MODEL_STATES.reduce((acc, state) => ({
+    ...acc,
+    [state]: { file: null, totalFrames: '' }
+  }), {})
+});
 
 export default function HubPage({ ownedHub }) {
   const params = useParams();
@@ -73,6 +90,12 @@ export default function HubPage({ ownedHub }) {
   const [joinQuestions, setJoinQuestions] = useState([]);
   const [showExtraOptions, setShowExtraOptions] = useState(false);
   const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
+  const [hubModel, setHubModel] = useState(null);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [activeModelFanHubId, setActiveModelFanHubId] = useState(null);
+  const [showCreateModelModal, setShowCreateModelModal] = useState(false);
+  const [modelForm, setModelForm] = useState(buildModelForm());
+  const [modelUploading, setModelUploading] = useState(false);
 
   // Get current user ID from storage
   const currentUserId = parseInt(
@@ -92,6 +115,7 @@ export default function HubPage({ ownedHub }) {
 
   // Track current user's role in this hub (for moderators)
   const [roleInHub, setRoleInHub] = useState(null);
+  const canManageHubModel = isOwner || roleInHub === 'VTUBER';
 
   const checkJoinRequestStatus = useCallback(async () => {
     if (!activeFanHubId || !currentUserId) return;
@@ -140,6 +164,167 @@ export default function HubPage({ ownedHub }) {
   const bannerHeight = Math.max(96, 450 - navScrollOffset * 0.65);
   const headerHeight = Math.max(116, bannerHeight + 20);
   const bannerParallaxOffset = Math.min(90, navScrollOffset * 0.18);
+
+  const resolveActiveModel = useCallback(() => {
+    const savedModel = sessionStorage.getItem('selectedPetModel');
+
+    if (savedModel) {
+      try {
+        const parsed = JSON.parse(savedModel);
+        setActiveModelFanHubId(parsed?.fanHubId ? String(parsed.fanHubId) : null);
+        return;
+      } catch {
+        setActiveModelFanHubId(null);
+      }
+    }
+
+    const savedPet = sessionStorage.getItem('selectedPet');
+    setActiveModelFanHubId(savedPet || null);
+  }, []);
+
+  useEffect(() => {
+    resolveActiveModel();
+
+    const handleSelectionChange = () => resolveActiveModel();
+    window.addEventListener('storage', handleSelectionChange);
+    window.addEventListener('selectedPetChanged', handleSelectionChange);
+
+    return () => {
+      window.removeEventListener('storage', handleSelectionChange);
+      window.removeEventListener('selectedPetChanged', handleSelectionChange);
+    };
+  }, [resolveActiveModel]);
+
+  useEffect(() => {
+    if (!activeFanHubId) {
+      setHubModel(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchHubModel = async () => {
+      setModelLoading(true);
+      try {
+        const model = await getFanHubModel(activeFanHubId);
+        if (!cancelled) {
+          setHubModel(model ? transformHubModel(model, activeFanHubId) : null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error fetching hub model:', error);
+          setHubModel(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setModelLoading(false);
+        }
+      }
+    };
+
+    fetchHubModel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFanHubId]);
+
+  const isCurrentHubModelActive = activeFanHubId && activeModelFanHubId === String(activeFanHubId);
+
+  const activateHubModel = () => {
+    if (!hubModel || !activeFanHubId) return;
+
+    sessionStorage.setItem('selectedPet', String(activeFanHubId));
+    sessionStorage.setItem('selectedPetModel', JSON.stringify(hubModel));
+    setActiveModelFanHubId(String(activeFanHubId));
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('selectedPetChanged'));
+  };
+
+  const deactivateHubModel = () => {
+    sessionStorage.removeItem('selectedPet');
+    sessionStorage.removeItem('selectedPetModel');
+    setActiveModelFanHubId(null);
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('selectedPetChanged'));
+  };
+
+  const handleModelSpriteChange = (state, field, value) => {
+    setModelForm(prev => ({
+      ...prev,
+      sprites: {
+        ...prev.sprites,
+        [state]: {
+          ...prev.sprites[state],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleModelSpriteFileChange = (state, file) => {
+    handleModelSpriteChange(state, 'file', file);
+  };
+
+  const handleCreateHubModel = async () => {
+    if (!activeFanHubId || !canManageHubModel || !modelForm.name.trim()) {
+      showSteamError('Add a model name before creating it.', 'Missing Model Name');
+      return;
+    }
+
+    const spriteEntries = SUPPORTED_MODEL_STATES.reduce((entries, state) => {
+      const sprite = modelForm.sprites[state];
+      if (sprite.file && sprite.totalFrames) {
+        entries.push({
+          state,
+          file: sprite.file,
+          totalFrames: parseInt(sprite.totalFrames, 10)
+        });
+      }
+      return entries;
+    }, []);
+
+    if (spriteEntries.length === 0) {
+      showSteamError('Upload at least one sprite and enter its frame count.', 'Missing Sprites');
+      return;
+    }
+
+    setModelUploading(true);
+    try {
+      const uploadedModel = await uploadFanHubModel({
+        fanHubId: activeFanHubId,
+        name: modelForm.name.trim(),
+        spriteEntries
+      });
+
+      if (!uploadedModel) {
+        throw new Error('Upload did not return a model.');
+      }
+
+      const latestModel = await getFanHubModel(activeFanHubId) || uploadedModel;
+
+      if (latestModel) {
+        const transformedModel = transformHubModel(latestModel, activeFanHubId);
+        setHubModel(transformedModel);
+
+        if (isCurrentHubModelActive) {
+          sessionStorage.setItem('selectedPet', String(activeFanHubId));
+          sessionStorage.setItem('selectedPetModel', JSON.stringify(transformedModel));
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new Event('selectedPetChanged'));
+        }
+      }
+
+      setModelForm(buildModelForm());
+      setShowCreateModelModal(false);
+      showSteamSuccess('Hub model created successfully.', 'Model Created');
+    } catch (error) {
+      console.error('Error creating hub model:', error);
+      showSteamError('Failed to create hub model. Please try again.', 'Upload Failed');
+    } finally {
+      setModelUploading(false);
+    }
+  };
 
   // State for create post modal
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
@@ -644,6 +829,37 @@ export default function HubPage({ ownedHub }) {
                 </button>
                 {showExtraOptions && (
                   <div className='hub-extra-options-menu'>
+                    {modelLoading && (
+                      <button className='hub-extra-option-item' disabled>
+                        Loading Model...
+                      </button>
+                    )}
+                    {!modelLoading && hubModel && (
+                      <button
+                        className='hub-extra-option-item'
+                        onClick={() => {
+                          setShowExtraOptions(false);
+                          if (isCurrentHubModelActive) {
+                            deactivateHubModel();
+                          } else {
+                            activateHubModel();
+                          }
+                        }}
+                      >
+                        {isCurrentHubModelActive ? 'Deactivate Model' : 'Activate Model'}
+                      </button>
+                    )}
+                    {canManageHubModel && (
+                      <button
+                        className='hub-extra-option-item'
+                        onClick={() => {
+                          setShowExtraOptions(false);
+                          setShowCreateModelModal(true);
+                        }}
+                      >
+                        Create Model
+                      </button>
+                    )}
                     <button 
                       className='hub-extra-option-item' 
                       onClick={() => {
@@ -880,6 +1096,82 @@ export default function HubPage({ ownedHub }) {
               <p className='modal-note'>
                 Become part of the community and share your thoughts!
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Hub Model Modal */}
+      {showCreateModelModal && (
+        <div className='modal-overlay' onClick={() => !modelUploading && setShowCreateModelModal(false)}>
+          <div className='modal-content hub-model-modal' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <h2>Create Model</h2>
+              <button
+                className='modal-close'
+                onClick={() => setShowCreateModelModal(false)}
+                disabled={modelUploading}
+              >
+                x
+              </button>
+            </div>
+
+            <div className='modal-body hub-model-modal-body'>
+              <div className='hub-model-form-group'>
+                <label htmlFor='hub-model-name'>Model Name</label>
+                <input
+                  id='hub-model-name'
+                  type='text'
+                  value={modelForm.name}
+                  onChange={(e) => setModelForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder='Enter model name'
+                  disabled={modelUploading}
+                />
+              </div>
+
+              <div className='hub-model-sprites-section'>
+                {SUPPORTED_MODEL_STATES.map(state => (
+                  <div key={state} className='hub-model-sprite-field'>
+                    <div className='hub-model-form-group'>
+                      <label>{state.charAt(0).toUpperCase() + state.slice(1)} Sprite</label>
+                      <input
+                        type='file'
+                        accept='image/*'
+                        disabled={modelUploading}
+                        onChange={(e) => handleModelSpriteFileChange(state, e.target.files?.[0] || null)}
+                      />
+                    </div>
+                    <div className='hub-model-form-group'>
+                      <label>Frames</label>
+                      <input
+                        type='number'
+                        min='1'
+                        value={modelForm.sprites[state].totalFrames}
+                        disabled={modelUploading}
+                        onChange={(e) => handleModelSpriteChange(state, 'totalFrames', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className='modal-footer'>
+              <button
+                className='cancel-btn'
+                onClick={() => setShowCreateModelModal(false)}
+                disabled={modelUploading}
+              >
+                Cancel
+              </button>
+              <button
+                className='confirm-btn hub-model-submit-btn'
+                onClick={handleCreateHubModel}
+                disabled={modelUploading}
+                style={{ background: hubData.themeColor || '#2d8cf0' }}
+              >
+                {modelUploading ? 'Creating...' : 'Create Model'}
+              </button>
             </div>
           </div>
         </div>

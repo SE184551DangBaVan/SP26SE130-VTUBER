@@ -79,23 +79,15 @@ export default function LandingPage() {
             />
             <RetroWindow
                 windowWidth="500px" 
-                windowHeight="150px"
+                windowHeight="250px"
                 windowColor="red" //there is only red, blue, yellow
-                windowTitle={<>LCB OST - Main Menu</>}
+                windowTitle={<>Demonstration</>}
                 windowContent={(
                     <div className='retro-window-content' >
-                        <div className='music-controller'>
-                            <button><img className='backward' src={BackwardButtonIco.src} alt=''></img></button>
-                            <button><img className='pause' src={PlayButtonIco.src} alt=''></img></button>
-                            <button><img className='forward' src={ForwardButtonIco.src} alt=''></img></button>
-                        </div>
-                        <div className='music-timeline'> </div>
+                        
                     </div>
                 )}
             />
-        </div>
-        <div className='landing-page-hero' >
-            <h1>Under Construction</h1>
         </div>
     </div>
   )

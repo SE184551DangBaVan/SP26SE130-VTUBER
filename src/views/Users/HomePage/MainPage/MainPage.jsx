@@ -288,8 +288,8 @@ export default function MainPage() {
   const pageModules = [
     { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2, AbstractArtifact2]},
     { id: 2, title: 'News', textColor: '#FFF', color: '#efefef', gridColumn: '3 / 7', gridRow: '1' },
-    { id: 3, title: 'My Favourite Oshi', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
-    { id: 4, title: 'Iventory', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
+    { id: 3, title: 'I nventory', textColor: '#FFF', color: '#7CB342', gridColumn: '3 / 5', gridRow: '2', backgroundList: [AbstractArtifact1], backgroundImg: PetBGCanvas },
+    { id: 4, title: 'My Favourite Oshi', textColor: '#FFF', color: '#9E9E9E', gridColumn: '5 / 7', gridRow: '2' }
   ];
 
   return (
@@ -479,11 +479,12 @@ export default function MainPage() {
                       ) : (
                         loggedInUserId ?  
                           (<div className='news-empty-state'>
-                            <p>No announcements available</p>
+                            <img className='no-news-available' src={NoNewsIco.src} />
+                            <p>Join Fan Hubs to see News about your favourite creator.</p>
                           </div>) : (
                           <div className='news-empty-state'>
                             <img className='no-news-available' src={NoNewsIco.src} />
-                            <p>Join Fan Hubs to see News about your favourite creator.</p>
+                            <p>You need to be logged in to receive News delegated to your interests</p>
                           </div>
                           )
                       )}

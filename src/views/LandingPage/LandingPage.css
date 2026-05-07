@@ -1,7 +1,7 @@
 .landing-page-container {
     margin-top: 60px;
     width: 100%;
-    height: 400vh;
+    height: 100vh;
 }
 
 .landing-page-container img {
@@ -48,7 +48,8 @@
 .landing-page-container .website-banner .desktop-apps {
     position: absolute;
     top: 60px;
-    width: 200px;
+    left: 10px;
+    width: 120px;
     height: 450px;
     background-image: url(../../assets/UI-Elements/Desktop_apps.png);
     background-repeat: no-repeat;
@@ -56,6 +57,8 @@
     pointer-events: none;
     user-select: none;
     transition: filter 0.6s ease;
+    
+    animation: landing-page-fade-in 0.4s ease;
 }
 
 .landing-page-container .website-banner .desktop-wallpaper {
@@ -68,7 +71,7 @@
   position: absolute;
   z-index: 10;
   left: 80%;
-  top: 30%;
+  top: 20%;
   background: linear-gradient(
       to bottom right,
       var(--paper-dark),
@@ -205,6 +208,9 @@
     filter: drop-shadow(2px -2px 0 #ffffff);
     width: 600px;
     pointer-events: none;
+    transform: translateX(-100%);
+    animation-delay: 1.4s;
+    animation: landing-page-pop-in-left 1s ease forwards;
 }
 
 .landing-page-container .website-banner .desktop-wallpaper a {
@@ -304,6 +310,24 @@
     }
     100% {
         transform: scale(1);
+    }
+}
+
+@keyframes landing-page-fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes landing-page-pop-in-left {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(0);
     }
 }
 

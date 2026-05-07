@@ -541,7 +541,7 @@ export default function BannerManagement() {
                         disabled={deletingBannerId === banner.bannerId}
                         title="Delete Banner"
                       >
-                        {deletingBannerId === banner.bannerId ? '...' : '🗑️'}
+                        {deletingBannerId === banner.bannerId ? '...' : '🗑'}
                       </button>
                     </div>
                     <div className='banner-card-image-wrap'>
