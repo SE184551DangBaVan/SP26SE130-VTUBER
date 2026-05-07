@@ -44,7 +44,7 @@ body:has(#side-bar.rebound-animation) .user-profile {
   background: #fefefe;
   border-radius: 12px 12px 0 0;
   border: 2px solid #000;
-  margin-bottom: 6px;
+  border-bottom: none;
   position: relative;
 }
 

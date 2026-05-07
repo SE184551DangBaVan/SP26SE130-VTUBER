@@ -134,7 +134,7 @@ export default function ChatBot() {
           thought: result.data.thought,
           metadataResponse: result.data.metadataResponse,
         };
-        
+        console.log("Received response:" + botMessage);
         // Remove temporary user message and add both with proper IDs
         setMessages((prev) => {
           const filtered = prev.filter(m => m.id !== userMessage.id);
@@ -155,6 +155,25 @@ export default function ChatBot() {
           
           setTimeout(() => {
             router.push(`/posts?id=${result.data.metadataResponse.postId}`);
+            // Remove the system message after navigation
+            setMessages(prev => prev.filter(m => m.id !== navMessageId));
+          }, 1000);
+        }
+
+        // If metadataResponse exists and is HUB, handle auto-navigation (if subdomain exists)
+        if (result.data.metadataResponse?.metadataType === "HUB" && result.data.metadataResponse.subdomain) {
+          const navMessageId = Date.now() + 1;
+          const navMessage = {
+            id: navMessageId,
+            type: "bot",
+            text: `Navigating user to hub: ${result.data.metadataResponse.hubName}...`,
+            isSystem: true
+          };
+          
+          setMessages(prev => [...prev, navMessage]);
+          
+          setTimeout(() => {
+            router.push(`/hub/${result.data.metadataResponse.subdomain}`);
             // Remove the system message after navigation
             setMessages(prev => prev.filter(m => m.id !== navMessageId));
           }, 1000);
@@ -185,7 +204,7 @@ export default function ChatBot() {
       {/* Chat Toggle Button */}
       <button className="chatbot-toggle-btn" onClick={toggleChat}>
         <img
-          src="/mambo.webp"
+          src="/VGuide.png"
           alt="Chat Bot"
           className="chatbot-toggle-icon"
         />
@@ -197,11 +216,11 @@ export default function ChatBot() {
           <div className="chatbot-header">
             <div className="chatbot-header-left">
               <img
-                src="/mambo.webp"
-                alt="Mambo Avatar"
+                src="/VGuide.png"
+                alt="V-Guide Avatar"
                 className="chatbot-avatar"
               />
-              <span className="chatbot-name">MatikanetannhauserAI</span>
+              <span className="chatbot-name">V-Guide</span>
             </div>
             <div className="chatbot-header-right">
               <button className="chatbot-settings-btn" title="Settings">
@@ -254,7 +273,7 @@ export default function ChatBot() {
               >
                 {message.type === "bot" && !message.isSystem && (
                   <img
-                    src="/mambo.webp"
+                    src="/VGuide.png"
                     alt="Bot Avatar"
                     className="message-avatar"
                   />
@@ -283,13 +302,37 @@ export default function ChatBot() {
                       </Link>
                     </div>
                   )}
+
+                  {message.metadataResponse && message.metadataResponse.metadataType === "HUB" && (
+                    <div className="hub-preview-container">
+                      <Link 
+                        href={message.metadataResponse.subdomain ? `/hub/${message.metadataResponse.subdomain}` : `/explore`}
+                        className="hub-preview-link"
+                      >
+                        <img 
+                          src={message.metadataResponse.bannerUrl || "/video-placeholder.png"} 
+                          alt="Hub Banner" 
+                          className="hub-preview-banner"
+                        />
+                        <div className="hub-preview-content">
+                          <img 
+                            src={message.metadataResponse.avatarUrl || "/profile-pic-undefined.jpg"} 
+                            alt="Hub Avatar" 
+                            className="hub-preview-avatar"
+                          />
+                          <div className="hub-preview-name">{message.metadataResponse.hubName}</div>
+                          <div className="hub-preview-type">Fan Hub</div>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             {isTyping && (
               <div className="message bot-message">
                 <img
-                  src="/mambo.webp"
+                  src="/VGuide.png"
                   alt="Bot Avatar"
                   className="message-avatar"
                 />
@@ -307,7 +350,7 @@ export default function ChatBot() {
             <input
               type="text"
               className="chatbot-input"
-              placeholder="Ask Mambo something..."
+              placeholder="Ask V-Guide something..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}

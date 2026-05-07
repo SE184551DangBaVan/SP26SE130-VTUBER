@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/functions/Auth/useAuth.jsx";
-import { banFanHubMember, getHubMembers, getPendingMembers, reviewMember, removeModerator, getMemberDetail, kickMember } from "@/services/MemberController.jsx";
+import { banFanHubMember, getHubMembers, getPendingMembers, reviewMember, removeModerator, getMemberDetail, kickMember, setModerator } from "@/services/MemberController.jsx";
 import MemberReportsTable from "./MemberReportsTable";
 import PendingMembersTable from "./PendingMembersTable";
 import { useHubModeration } from "@/contexts/HubModerationContext";
@@ -265,9 +265,10 @@ function MembersTable({ fanHubId, roleFilter }) {
     }
 
     try {
-      const result = await removeModerator(fanHubId, [member.id]);
+      const result = await removeModerator(fanHubId, [member.memberId || member.id]);
       if (result?.success) {
         showToast("Moderator demoted successfully!", "success");
+        setExpandedMemberId(null);
         await fetchMembers(true);
       } else {
         showToast(result?.message || "Failed to demote moderator", "error");
@@ -323,6 +324,26 @@ function MembersTable({ fanHubId, roleFilter }) {
     } catch (err) {
       console.error("Kick error:", err);
       showToast("Error kicking member", "error");
+    }
+  };
+
+  const handlePromote = async (member) => {
+    if (!window.confirm(`Are you sure you want to promote ${member.displayName || member.username} to moderator?`)) {
+      return;
+    }
+
+    try {
+      const result = await setModerator(fanHubId, [member.memberId || member.id]);
+      if (result?.success) {
+        showToast("Member promoted to moderator successfully!", "success");
+        setExpandedMemberId(null);
+        await fetchMembers(true);
+      } else {
+        showToast(result?.message || "Failed to promote member", "error");
+      }
+    } catch (err) {
+      console.error("Promote member error:", err);
+      showToast("Error promoting member", "error");
     }
   };
 
@@ -433,6 +454,28 @@ function MembersTable({ fanHubId, roleFilter }) {
                                   </div>
                                 </div>
                                 <div className="details-actions">
+                                  {isVtuber && memberDetail.roleInHub !== "MODERATOR" && (
+                                    <button 
+                                      className="promote-btn-small" 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePromote(memberDetail);
+                                      }}
+                                    >
+                                      PROMOTE
+                                    </button>
+                                  )}
+                                  {isVtuber && memberDetail.roleInHub === "MODERATOR" && (
+                                    <button 
+                                      className="demote-btn-small" 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDemote(memberDetail);
+                                      }}
+                                    >
+                                      DEMOTE
+                                    </button>
+                                  )}
                                   <button 
                                     className="restrict-btn-small" 
                                     onClick={(e) => {
