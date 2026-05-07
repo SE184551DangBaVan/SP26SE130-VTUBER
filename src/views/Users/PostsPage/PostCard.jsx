@@ -980,7 +980,7 @@ function VideoPostContent({ post, displayContent, displayTitle, isTranslated, is
       )}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
         <div className={styles.postMedia}>
-          <video controls>
+          <video controls muted autoPlay>
             <source src={post.mediaUrls[0]} type='video/mp4' />
             Your browser does not support the video tag.
           </video>

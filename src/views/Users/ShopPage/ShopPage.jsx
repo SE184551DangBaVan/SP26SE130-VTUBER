@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSideBar } from '@/contexts/SideBarContext';
 import { Search, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { getShopItems, getMyItems, purchaseShopItem } from '@/services/ShopController';
-import { getCurrentUserProfile } from '@/services/UserController';
+import useLiveUserPoints from '@/hooks/useLiveUserPoints';
 import PointsIco from '../../../assets/UI-Elements/Coin.png';
 import './ShopPage.css';
 
@@ -238,7 +238,7 @@ function PointsDeductionAnim({ amount, onFinish }) {
 export default function ShopPage() {
   const { sideBarRetractor } = useSideBar();
   const [allItems, setAllItems] = useState([]);
-  const [userPoints, setUserPoints] = useState(0);
+  const { userPoints, refreshUserPoints } = useLiveUserPoints();
   const [purchasedItemIds, setPurchasedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -287,12 +287,6 @@ export default function ShopPage() {
           }
         }
         setAllItems(collected);
-
-        // Fetch user profile for points
-        const profile = await getCurrentUserProfile();
-        if (profile) {
-          setUserPoints(profile.points || 0);
-        }
 
         // Fetch purchased items
         const myItems = await getMyItems();
@@ -402,15 +396,8 @@ export default function ShopPage() {
   // Called when the deduction animation finishes — refetch fresh profile data
   const handleDeductionDone = useCallback(async () => {
     setDeductionAmount(null);
-    try {
-      const profile = await getCurrentUserProfile();
-      if (profile) {
-        setUserPoints(profile.points || 0);
-      }
-    } catch (err) {
-      console.error('Error refreshing user points after purchase:', err);
-    }
-  }, []);
+    await refreshUserPoints();
+  }, [refreshUserPoints]);
 
   if (loading) {
     return (

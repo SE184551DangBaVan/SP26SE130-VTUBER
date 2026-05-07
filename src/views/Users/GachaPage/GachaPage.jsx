@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSideBar } from '@/contexts/SideBarContext';
-import { getCurrentUserProfile } from '@/services/UserController';
 import { getActiveBanners, doGachaPull } from '@/services/GachaBannerController';
+import useLiveUserPoints from '@/hooks/useLiveUserPoints';
 import PointsIco from '../../../assets/UI-Elements/Coin.png';
 import './GachaPage.css';
 
@@ -12,7 +12,7 @@ export default function GachaPage() {
 
   // Banners & user data
   const [banners, setBanners] = useState([]);
-  const [userPoints, setUserPoints] = useState(0);
+  const { userPoints, refreshUserPoints } = useLiveUserPoints();
   const [loading, setLoading] = useState(true);
 
   // Carousel state
@@ -39,13 +39,9 @@ export default function GachaPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bannerData, profile] = await Promise.all([
-          getActiveBanners(),
-          getCurrentUserProfile(),
-        ]);
+        const bannerData = await getActiveBanners();
 
         setBanners(bannerData);
-        if (profile) setUserPoints(profile.points || 0);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -128,13 +124,7 @@ export default function GachaPage() {
       setRevealedItems([]);
     }
 
-    // Refresh points
-    try {
-      const profile = await getCurrentUserProfile();
-      if (profile) setUserPoints(profile.points || 0);
-    } catch (err) {
-      console.error('Error refreshing points:', err);
-    }
+    await refreshUserPoints();
   };
 
   const handleCancelSummon = () => setShowSummonModal(false);

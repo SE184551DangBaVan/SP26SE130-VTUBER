@@ -99,30 +99,6 @@ const Navbar = () => {
     const profileDropdownRef = useRef(null);
     const languageDropdownRef = useRef(null);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dailyMissionRef.current && !dailyMissionRef.current.contains(event.target)) {
-        setDailyMissionOpen(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setNotificationOpen(false);
-      }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
-        setProfileDropdownOpen(false);
-      }
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target)) {
-        setLanguageDropdownOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowSearchDropdown(false);
-        setSearchTypeDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Handle search input change with debounce
   const handleSearchInputChange = useCallback(async (e) => {
     const value = e.target.value;
@@ -236,7 +212,13 @@ const Navbar = () => {
                 position: 'top-right',
                 autoClose: 3000,
             });
-            refreshUser();
+            const updatedProfile = await refreshUser();
+            window.dispatchEvent(new CustomEvent('userPointsUpdated', {
+                detail: {
+                    points: updatedProfile?.points,
+                    paidPoints: updatedProfile?.paidPoints
+                }
+            }));
             setConvertModalOpen(false);
             setConvertAmount(1);
         } else {

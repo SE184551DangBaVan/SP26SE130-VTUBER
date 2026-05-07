@@ -511,8 +511,9 @@ export default function CreatePostPage() {
                 value={title}
                 onChange={handleTitleChange}
                 maxLength={300}
+                style={{border: `1px solid ${titleLength > 50 ? 'red' : '#888'}`}}
               />
-              <span className='char-count'>{titleLength}/300</span>
+              <span className='char-count' style={{color: `${titleLength > 50 ? 'red' : '#888'}`}}>{titleLength}/50</span>
             </div>
 
             {/* Hashtags Input */}
