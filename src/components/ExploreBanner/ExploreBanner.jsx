@@ -22,7 +22,7 @@ const ExploreBanner = ({
     <div
       className="explore-banner-component"
       style={{
-        backgroundColor: '#555',
+        backgroundColor: '#ccc',
         backgroundImage: bannerUrl ? `url(${bannerUrl})` : 'none',
         color: themeColor,
         border: `3px solid ${themeColor}`
@@ -62,10 +62,10 @@ const ExploreBanner = ({
           [0, 1, 2, 3].map((i) => (
             <img
               key={i}
-              src={highlightImgUrls[i] || "/picture-not-available-photo.jpg"}
+              src={highlightImgUrls[i] || "/picture-not-available-photo.png"}
               alt=""
               onError={(e) => {
-                e.target.src = "/picture-not-available-photo.jpg";
+                e.target.src = "/picture-not-available-photo.png";
               }}
             />
           ))

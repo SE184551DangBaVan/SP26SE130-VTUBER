@@ -673,6 +673,14 @@ body:has(.create-hub-page-container) .modal-body::-webkit-scrollbar-thumb:hover 
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
+.preview-mockup .explore-visit-btn {
+  max-height: 40px;
+}
+
+.preview-explore-banner .hub-info:has(.hub-owner-info) h2 {
+  font-size: 30px;
+} 
+
 .mockup-browser-bar {
   display: flex;
   align-items: center;
@@ -768,9 +776,6 @@ body:has(.create-hub-page-container) .modal-body::-webkit-scrollbar-thumb:hover 
   border-radius: 12px;
 }
 
-.preview-info > *{
-  mix-blend-mode: difference;
-}
 
 .preview-info h2 {
   font-size: 24px;

@@ -1,5 +1,6 @@
 'use client';
 
+import './PostPage.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getPostsFeed } from '@/services/PostController';
@@ -181,7 +182,7 @@ export default function PostsPage() {
   return (
     <div className='posts-page-container'>
       <div className='posts-page-content'>
-        <div className='posts-sort-bar'>
+        <div className='posts-sort-bar' >
           <div className='sort-controls'>
             <label>Sort by:</label>
             <select value={sortDir} onChange={handleSortChange} className='sort-select'>
