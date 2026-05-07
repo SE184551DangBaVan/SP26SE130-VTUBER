@@ -235,7 +235,9 @@ export const uploadAvatarFrame = async (avatarFile, frameUrl = null) => {
     
     let url = `/user/upload-avatar-frame`;
     if (frameUrl) {
-      url += `?frame=${encodeURIComponent(frameUrl)}`;
+      // If frameUrl is 'remove', we send 'null' to the backend to clear the frame
+      const frameValue = frameUrl === 'remove' ? 'null' : frameUrl;
+      url += `?frame=${encodeURIComponent(frameValue)}`;
     }
 
     const res = await axiosInstance.post(

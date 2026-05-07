@@ -243,7 +243,7 @@
   gap: 0.75rem;
 }
 
-.restrict-btn-small, .kick-btn-small {
+.restrict-btn-small, .kick-btn-small, .promote-btn-small, .demote-btn-small {
   padding: 0.5rem 1rem;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -252,6 +252,22 @@
   transition: all 0.2s ease;
   border: none;
   color: #fff;
+}
+
+.promote-btn-small {
+  background: #22c55e;
+}
+
+.promote-btn-small:hover {
+  background: #16a34a;
+}
+
+.demote-btn-small {
+  background: #ff9800;
+}
+
+.demote-btn-small:hover {
+  background: #f57c00;
 }
 
 .restrict-btn-small {

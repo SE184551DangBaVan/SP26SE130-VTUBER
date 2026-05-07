@@ -367,6 +367,75 @@
   overflow: hidden;
 }
 
+/* Hub Preview */
+.hub-preview-container {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  min-width: 240px;
+}
+
+.hub-preview-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hub-preview-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.hub-preview-banner {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f0f0f0;
+}
+
+.hub-preview-content {
+  padding: 8px 12px 12px 64px;
+  position: relative;
+  min-height: 40px;
+}
+
+.hub-preview-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: absolute;
+  left: 12px;
+  top: -22px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.hub-preview-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #000;
+  margin-bottom: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hub-preview-type {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .chatbot-toggle-btn {

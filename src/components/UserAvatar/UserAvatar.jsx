@@ -16,7 +16,7 @@ const UserAvatar = ({
   const defaultAvatar = "/profile-pic-undefined.jpg";
   
   const isValidUrl = (url) => {
-    if (!url || typeof url !== 'string' || url.trim() === '') return false;
+    if (!url || typeof url !== 'string' || url.trim() === '' || url === 'null') return false;
     // Check if it starts with http, https, /, data:image, or blob:
     return (
       url.startsWith('http://') || 
