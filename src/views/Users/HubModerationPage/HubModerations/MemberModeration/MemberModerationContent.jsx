@@ -371,7 +371,6 @@ function MembersTable({ fanHubId, roleFilter }) {
           <table className="moderation-table">
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleSort("id")}>Member ID{getSortIcon("id")}</th>
                 <th>Member</th>
                 <th>Username</th>
                 <th className="sortable" onClick={() => handleSort("roleInHub")}>Role{getSortIcon("roleInHub")}</th>
@@ -386,7 +385,6 @@ function MembersTable({ fanHubId, roleFilter }) {
                     onClick={() => handleToggleExpand(member)}
                     className={`${roleFilter === "MEMBER" ? "clickable-row" : ""} ${expandedMemberId === member.id ? "expanded-row" : ""}`}
                   >
-                    <td className="member-id">#{member.id}</td>
                     <td className="member-cell">
                       <UserAvatar
                         avatarUrl={member.avatarUrl}
