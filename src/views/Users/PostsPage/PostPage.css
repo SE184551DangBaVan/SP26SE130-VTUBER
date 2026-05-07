@@ -1,0 +1,16 @@
+.posts-page-container {
+  padding-top: 60px;
+  padding-left: var(--sidebar-width);
+  transition: all 0.3s ease;
+}
+
+body:has(.rebound-animation) .posts-page-container {
+    padding-left: var(--sidebar-width-min);
+}
+
+.posts-page-container .posts-sort-bar {
+    margin-bottom: 20px;
+    padding-right: 80px;
+    display: flex;
+    justify-content: flex-end;
+}

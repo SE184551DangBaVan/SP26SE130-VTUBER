@@ -14,25 +14,59 @@ import AbstractArtifact3 from '@/assets/Decor/futuristic-style-warning-signs-fut
 import SecondPageModuleBg2 from '@/assets/Decor/Kobayashi-Newspaper.png'
 
 import SecondPageModuleIco from '@/assets/UI-Elements/announce-svgrepo-com.svg'
-import VirtualGremlin from '@/components/Gremlin_V-Pet/VirtualGremlin';
-import PetSelectionList from '@/components/Gremlin_V-Pet/PetSelectionList';
 
-import PetBGCanvas from '@/assets/UI-Elements/Summer5.png'
+import PetBGCanvas from '@/assets/Decor/Inventory.gif'
 
 import NoMediaIco from '@/assets/UI-Elements/no-image.svg'
 import NoNewsIco from '@/assets/UI-Elements/newspaper.svg'
 
-import { getUserById } from '@/services/UserController';
-import { getAnnouncementsAndEvents } from '@/services/PostController';
+import { getUserById, getUserByUsername } from '@/services/UserController';
+import { getAnnouncementsAndEvents, getPostsFeed } from '@/services/PostController';
 import { getBookmarkedPosts } from '@/services/BookedAgendaController';
+import { getMyItems } from '@/services/ShopController';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+
+function SystemTaskbar() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date) => {
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes} ${ampm}`;
+  };
+
+  const formatDate = (date) => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  return (
+    <div className="system-taskbar">
+      <div className="taskbar-content">
+        <div className="taskbar-time">{formatTime(time)}</div>
+        <div className="taskbar-date">{formatDate(time)}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function MainPage() {
   const { sideBarRetractor } = useSideBar();
   const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
-  const [time, setTime] = useState(new Date());
   
   // News carousel states
   const [loggedInUserId, setLoggedInUserId] = useState(null);
@@ -41,6 +75,14 @@ export default function MainPage() {
   const [bookedAgendaPosts, setBookedAgendaPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [myItems, setMyItems] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsFetched, setItemsFetched] = useState(false);
+  const [oshiProfile, setOshiProfile] = useState(null);
+  const [oshiPosts, setOshiPosts] = useState([]);
+  const [oshiLoading, setOshiLoading] = useState(false);
+  const [oshiFetched, setOshiFetched] = useState(false);
+  const [oshiError, setOshiError] = useState('');
 
   const containerRef = useRef(null);
 
@@ -49,14 +91,6 @@ export default function MainPage() {
     if (storedUserId) {
       setLoggedInUserId(parseInt(storedUserId, 10));
     }
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(timer);
   }, []);
 
   // Fetch bookmarked posts
@@ -143,20 +177,102 @@ export default function MainPage() {
     return () => clearInterval(scrollInterval);
   }, [allAnnouncements, isCarouselPaused]);
 
-  const formatTime = (date) => {
-    const hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes} ${ampm}`;
-  };
+  useEffect(() => {
+    if (selectedCard !== 3 || itemsFetched) return;
 
-  const formatDate = (date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
-  };
+    let cancelled = false;
+
+    const fetchMyItems = async () => {
+      setItemsLoading(true);
+      try {
+        const items = await getMyItems();
+        if (!cancelled) {
+          setMyItems([...items].sort((a, b) => new Date(b.obtainedAt || 0) - new Date(a.obtainedAt || 0)));
+          setItemsFetched(true);
+        }
+      } catch (error) {
+        console.error('Error fetching user items:', error);
+        if (!cancelled) {
+          setMyItems([]);
+          setItemsFetched(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setItemsLoading(false);
+        }
+      }
+    };
+
+    fetchMyItems();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCard, itemsFetched]);
+
+  useEffect(() => {
+    if (selectedCard !== 4 || oshiFetched) return;
+
+    let cancelled = false;
+
+    const fetchOshiActivity = async () => {
+      setOshiLoading(true);
+      setOshiError('');
+
+      try {
+        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+        const storedUserId = sessionStorage.getItem('userID') || localStorage.getItem('userID');
+        const fallbackUserId = loggedInUserId || (storedUserId ? parseInt(storedUserId, 10) : null);
+        let currentUser = storedUsername ? await getUserByUsername(storedUsername) : null;
+
+        if (!currentUser && fallbackUserId) {
+          currentUser = await getUserById(fallbackUserId);
+        }
+
+        const oshiSeed = currentUser?.oshi;
+        if (!oshiSeed?.username || !oshiSeed?.userId) {
+          if (!cancelled) {
+            setOshiProfile(null);
+            setOshiPosts([]);
+            setOshiError(fallbackUserId ? 'No favourite Oshi selected yet.' : 'Log in to see your favourite Oshi.');
+            setOshiFetched(true);
+          }
+          return;
+        }
+
+        const [oshiDetails, feedPosts] = await Promise.all([
+          getUserByUsername(oshiSeed.username),
+          getPostsFeed(0, 50, 'createdAt', 'desc')
+        ]);
+
+        if (!cancelled) {
+          const resolvedOshi = oshiDetails || oshiSeed;
+          const resolvedOshiId = resolvedOshi.userId || oshiSeed.userId;
+          setOshiProfile(resolvedOshi);
+          setOshiPosts(feedPosts.filter(post => Number(post.authorId) === Number(resolvedOshiId)));
+          setOshiFetched(true);
+        }
+      } catch (error) {
+        console.error('Error fetching Oshi activity:', error);
+        if (!cancelled) {
+          setOshiProfile(null);
+          setOshiPosts([]);
+          setOshiError('Unable to load Oshi activity right now.');
+          setOshiFetched(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setOshiLoading(false);
+        }
+      }
+    };
+
+    fetchOshiActivity();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCard, oshiFetched, loggedInUserId]);
 
   // Format date range for announcements
   const formatDateRange = (startTime, endTime) => {
@@ -198,6 +314,20 @@ export default function MainPage() {
   const handleCarouselControlClick = (e, handler) => {
     e.stopPropagation();
     handler();
+  };
+
+  const handleModuleClick = (event, moduleId) => {
+    event.stopPropagation();
+    setHoveredCard(moduleId);
+    setSelectedCard(moduleId);
+  };
+
+  const handlePageClick = (event) => {
+    if (!selectedCard) return;
+    if (event.target.closest('.page-module')) return;
+
+    setHoveredCard(null);
+    setSelectedCard(null);
   };
 
   // Get booked announcements for agenda
@@ -285,6 +415,15 @@ export default function MainPage() {
     return `${day} ${month} ${year}`;
   };
 
+  const formatActivityDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   const pageModules = [
     { id: 1, title: 'Agenda', textColor: '#000', color: '#FFF', gridColumn: '1 / 3', gridRow: '1 / 3', backgroundList: [FirstPageModuleBg, FirstPageModuleBg2, AbstractArtifact2]},
     { id: 2, title: 'News', textColor: '#FFF', color: '#efefef', gridColumn: '3 / 7', gridRow: '1' },
@@ -293,7 +432,10 @@ export default function MainPage() {
   ];
 
   return (
-    <div className={`page-main-content ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}>
+    <div
+      className={`page-main-content ${!sideBarRetractor ? 'sidebar-retracted' : 'sidebar-expanded'}`}
+      onClick={handlePageClick}
+    >
       {/* Random ahh blobs, dunno just though they looked cool */}
       <div className="blob"></div>
       <div className="blob-c">
@@ -311,10 +453,14 @@ export default function MainPage() {
             <div
               id={pageModule.id}
               key={pageModule.id}
-              className={`page-module pm-${selectedCard === pageModule.id && pageModule.id} ${hoveredCard === pageModule.id ? 'focused' : ''} ${hoveredCard && hoveredCard !== pageModule.id ? 'shrunk' : ''}`}
-              onMouseEnter={() => setHoveredCard(pageModule.id)}
-              onMouseLeave={() => {setHoveredCard(null); setSelectedCard(null);}}
-              onClick={() => setSelectedCard(pageModule.id)}
+              className={`page-module pm-${selectedCard === pageModule.id && pageModule.id} ${(selectedCard || hoveredCard) === pageModule.id ? 'focused' : ''} ${(selectedCard || hoveredCard) && (selectedCard || hoveredCard) !== pageModule.id ? 'shrunk' : ''}`}
+              onMouseEnter={() => {
+                if (!selectedCard) setHoveredCard(pageModule.id);
+              }}
+              onMouseLeave={() => {
+                if (!selectedCard) setHoveredCard(null);
+              }}
+              onClick={(event) => handleModuleClick(event, pageModule.id)}
               style={{ 
                 backgroundColor: pageModule.color,
                 gridColumn: pageModule.gridColumn,
@@ -491,10 +637,102 @@ export default function MainPage() {
                     </div>
                   }
                   {pageModule.id === 3 && selectedCard === pageModule.id &&
-                    <p>Favourite Oshis</p>
+                    <div className='inventory-module-panel'>
+                      {itemsLoading ? (
+                        <div className='module-loading-state'>Loading inventory...</div>
+                      ) : myItems.length > 0 ? (
+                        <div className='inventory-items-grid'>
+                          {myItems.map((item) => (
+                            <div key={item.userItemId || item.itemId} className='inventory-item-card'>
+                              <h4 className='inventory-item-name'>{item.itemName}</h4>
+                              <div className='inventory-item-image-shell'>
+                                <img
+                                  className='inventory-item-image'
+                                  src={item.imageUrl || NoMediaIco.src}
+                                  alt={item.itemName}
+                                  onError={(event) => {
+                                    event.currentTarget.src = NoMediaIco.src;
+                                  }}
+                                />
+                              </div>
+                              <p className='inventory-item-category'>Category: {item.category}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className='module-empty-state'>No items in your inventory yet.</div>
+                      )}
+                    </div>
                   }
-                  {pageModule.id === 4 && 
-                    <p>My Items</p>
+                  {pageModule.id === 4 && selectedCard === pageModule.id &&
+                    <div className='oshi-module-panel'>
+                      {oshiLoading ? (
+                        <div className='module-loading-state'>Loading Oshi activity...</div>
+                      ) : oshiProfile ? (
+                        <>
+                          <div className='oshi-profile-card'>
+                            <div className='oshi-avatar-shell'>
+                              <img
+                                className='oshi-avatar'
+                                src={oshiProfile.avatarUrl || NoMediaIco.src}
+                                alt={oshiProfile.displayName || oshiProfile.username}
+                                onError={(event) => {
+                                  event.currentTarget.src = NoMediaIco.src;
+                                }}
+                              />
+                            </div>
+                            <div className='oshi-profile-copy'>
+                              <h4>{oshiProfile.displayName || oshiProfile.username}</h4>
+                              <p>@{oshiProfile.username}</p>
+                            </div>
+                          </div>
+
+                          <div className='oshi-posts-section'>
+                            {oshiPosts.length > 0 ? (
+                              oshiPosts.map((post) => (
+                                <button
+                                  key={post.postId}
+                                  type='button'
+                                  className='oshi-post-card'
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handlePostClick(post);
+                                  }}
+                                >
+                                  <div className='oshi-post-media-shell'>
+                                    {post.mediaUrls?.length > 0 ? (
+                                      post.postType === 'VIDEO' ? (
+                                        <video className='oshi-post-media' muted>
+                                          <source src={post.mediaUrls[0]} type='video/mp4' />
+                                        </video>
+                                      ) : (
+                                        <img
+                                          className='oshi-post-media'
+                                          src={post.mediaUrls[0]}
+                                          alt={post.title}
+                                        />
+                                      )
+                                    ) : (
+                                      <img className='oshi-post-placeholder' src={NoMediaIco.src} alt='No media' />
+                                    )}
+                                  </div>
+                                  <div className='oshi-post-copy'>
+                                    <span className='oshi-post-hub'>{post.fanHubName || 'FanHub'}</span>
+                                    <h5>{post.title}</h5>
+                                    <p>{post.content}</p>
+                                    <span className='oshi-post-date'>{formatActivityDate(post.createdAt)}</span>
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className='module-empty-state'>No recent posts found for this Oshi.</div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className='module-empty-state'>{oshiError || 'No favourite Oshi selected yet.'}</div>
+                      )}
+                    </div>
                   }
                 </div>
               </div>
@@ -503,13 +741,7 @@ export default function MainPage() {
         </div>
       </div>
 
-      {/* System Taskbar with Clock */}
-      <div className="system-taskbar">
-        <div className="taskbar-content">
-          <div className="taskbar-time">{formatTime(time)}</div>
-          <div className="taskbar-date">{formatDate(time)}</div>
-        </div>
-      </div>
+      <SystemTaskbar />
     </div>
   )
 }

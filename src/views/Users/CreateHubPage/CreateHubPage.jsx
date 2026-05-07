@@ -272,7 +272,7 @@ export default function CreateHubPage() {
               src={randomLoadingImage.src}
               alt=""
               onError={(e) => {
-                e.target.src = "/picture-not-available-photo.jpg";
+                e.target.src = "/picture-not-available-photo.png";
               }}
             />
           )}
@@ -591,7 +591,7 @@ export default function CreateHubPage() {
                 <div
                   className="preview-banner"
                   style={{
-                    backgroundImage: bannerPreview ? `url(${bannerPreview})` : `linear-gradient(135deg, ${themeColor} 0%, ${themeColor}dd 100%)`,
+                    backgroundImage: bannerPreview ? `url(${bannerPreview})` : `linear-gradient(135deg, #fff 0%, #ccc 100%)`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

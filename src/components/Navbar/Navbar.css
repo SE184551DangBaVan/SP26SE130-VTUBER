@@ -1109,6 +1109,20 @@ body:has(.page-main-content) .nav-container .button-primary {
 }
 
 /* Convert Modal */
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
 .convert-modal {
   max-width: 500px;
   width: 90%;
@@ -1170,6 +1184,8 @@ body:has(.page-main-content) .nav-container .button-primary {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
+  background-color: #dadada;
+  color: #000;
   border-radius: 4px;
   text-align: center;
   font-size: 16px;

@@ -626,7 +626,7 @@ export default function HubPage({ ownedHub }) {
   };
 
   const filteredPosts = posts.filter(post =>
-    post.postType === 'IMAGE' || post.postType === 'VIDEO' || post.postType === 'TEXT'
+    post.postType === 'IMAGE' || post.postType === 'VIDEO' || post.postType === 'TEXT' || post.postType === 'POLL'
   );
 
   const handleSortChange = (e) => {
