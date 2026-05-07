@@ -417,7 +417,6 @@ export default function MemberReportsTable({ fanHubId, isOwner }) {
               <div className="post-info-section">
                 <h3>Member Information</h3>
                 <div className="report-info-grid">
-                  <div className="report-info-item"><span className="report-info-label">Member ID:</span><span className="report-info-value">#{selectedMember.memberId}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Username:</span><span className="report-info-value">{selectedMember.username}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Display Name:</span><span className="report-info-value">{selectedMember.displayName || "-"}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedMember.fanHubName}</span></div>

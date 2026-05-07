@@ -317,7 +317,6 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
                       <span>{selectedPost.authorDisplayName || selectedPost.authorUsername}</span>
                     </div>
                   </div>
-                  <div className="report-info-item"><span className="report-info-label">Member ID:</span><span className="report-info-value">#{selectedPost.authorMemberId || "N/A"}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Fan Hub:</span><span className="report-info-value">{selectedPost.fanHubName}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Post Type:</span><span className="report-info-value">{selectedPost.postType}</span></div>
                   <div className="report-info-item"><span className="report-info-label">Status:</span><span className={`post-status-badge ${getPostStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
@@ -360,7 +359,7 @@ export default function PostReportsTable({ fanHubId, isOwner }) {
                     <div key={report.reportId} className="report-card">
                       <div className="report-card-header"><span className="report-card-id">Report #{report.reportId}</span><span className={`report-status-badge ${getReportStatusClass(report.reportStatus)}`}>{report.reportStatus}</span></div>
                       <div className="report-card-body">
-                        <div className="report-row"><span className="report-label">Reported By:</span><span className="report-value">{report.reportedByDisplayName || report.reportedByUsername} (Member ID: #{report.reportedByMemberId || "N/A"})</span></div>
+                        <div className="report-row"><span className="report-label">Reported By:</span><span className="report-value">{report.reportedByDisplayName || report.reportedByUsername}</span></div>
                         <div className="report-row"><span className="report-label">Reason:</span><span className="report-value">{report.reason}</span></div>
                         <div className="report-row"><span className="report-label">Date:</span><span className="report-value">{formatDateTime(report.reportCreatedAt)}</span></div>
                         {report.reportStatus === "RESOLVED" && (

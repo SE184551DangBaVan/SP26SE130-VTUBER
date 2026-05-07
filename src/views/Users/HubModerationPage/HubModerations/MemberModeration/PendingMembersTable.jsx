@@ -126,7 +126,6 @@ export default function PendingMembersTable({ fanHubId }) {
           <table className="moderation-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Member</th>
                 <th>Has Answers</th>
                 <th>Actions</th>
@@ -135,7 +134,6 @@ export default function PendingMembersTable({ fanHubId }) {
             <tbody>
               {pendingMembers.map((m) => (
                 <tr key={m.id}>
-                  <td>#{m.id}</td>
                   <td>
                     <div className="member-cell">
                       <UserAvatar
@@ -201,7 +199,6 @@ export default function PendingMembersTable({ fanHubId }) {
                 />
                 <div>
                   <h3>{selectedPending.displayName || selectedPending.username}</h3>
-                  <p>ID: #{selectedPending.id}</p>
                 </div>
               </div>
 

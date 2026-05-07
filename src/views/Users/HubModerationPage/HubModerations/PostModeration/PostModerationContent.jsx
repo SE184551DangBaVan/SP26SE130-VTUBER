@@ -504,7 +504,6 @@ export default function PostModerationContent({ fanHubId, isOwner, initialStatus
                     <span>{selectedPost.authorDisplayName || selectedPost.authorUsername}</span>
                   </div>
                 </div>
-                <div className="pm-info-item"><span className="pm-info-label">Member ID:</span><span className="pm-info-value">#{selectedPost.authorMemberId || "N/A"}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Type:</span><span className="pm-info-value">{getPostTypeLabel(selectedPost.postType)}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">Approval Status:</span><span className={`status-badge ${getStatusClass(selectedPost.status)}`}>{selectedPost.status}</span></div>
                 <div className="pm-info-item"><span className="pm-info-label">AI Validation:</span><span className={`ai-validation-badge ${getAiValidationStatusClass(selectedPost.aiValidationStatus)}`}>{selectedPost.aiValidationStatus || "UNKNOWN"}</span></div>
