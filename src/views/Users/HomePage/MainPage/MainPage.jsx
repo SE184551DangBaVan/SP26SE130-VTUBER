@@ -80,6 +80,7 @@ export default function MainPage() {
   const [itemsFetched, setItemsFetched] = useState(false);
   const [oshiProfile, setOshiProfile] = useState(null);
   const [oshiPosts, setOshiPosts] = useState([]);
+  const [oshiProfileFetched, setOshiProfileFetched] = useState(false);
   const [oshiLoading, setOshiLoading] = useState(false);
   const [oshiFetched, setOshiFetched] = useState(false);
   const [oshiError, setOshiError] = useState('');
@@ -210,52 +211,85 @@ export default function MainPage() {
     };
   }, [selectedCard, itemsFetched]);
 
+  const fetchCurrentUserOshi = async () => {
+    const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
+    const storedUserId = sessionStorage.getItem('userID') || localStorage.getItem('userID');
+    const fallbackUserId = loggedInUserId || (storedUserId ? parseInt(storedUserId, 10) : null);
+    let currentUser = storedUsername ? await getUserByUsername(storedUsername) : null;
+
+    if (!currentUser && fallbackUserId) {
+      currentUser = await getUserById(fallbackUserId);
+    }
+
+    return { currentUser, fallbackUserId, oshiSeed: currentUser?.oshi };
+  };
+
   useEffect(() => {
-    if (selectedCard !== 4 || oshiFetched) return;
+    if (oshiProfileFetched) return;
+
+    let cancelled = false;
+
+    const fetchOshiProfile = async () => {
+      setOshiLoading(true);
+      setOshiError('');
+
+      try {
+        const { fallbackUserId, oshiSeed } = await fetchCurrentUserOshi();
+        if (!oshiSeed?.username || !oshiSeed?.userId) {
+          if (!cancelled) {
+            setOshiProfile(null);
+            setOshiError(fallbackUserId ? 'No favourite Oshi selected yet.' : 'Log in to see your favourite Oshi.');
+            setOshiProfileFetched(true);
+          }
+          return;
+        }
+
+        const oshiDetails = await getUserByUsername(oshiSeed.username);
+
+        if (!cancelled) {
+          const resolvedOshi = oshiDetails || oshiSeed;
+          setOshiProfile(resolvedOshi);
+          setOshiProfileFetched(true);
+        }
+      } catch (error) {
+        console.error('Error fetching Oshi profile:', error);
+        if (!cancelled) {
+          setOshiProfile(null);
+          setOshiError('Unable to load Oshi right now.');
+          setOshiProfileFetched(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setOshiLoading(false);
+        }
+      }
+    };
+
+    fetchOshiProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [oshiProfileFetched, loggedInUserId]);
+
+  useEffect(() => {
+    if (selectedCard !== 4 || oshiFetched || !oshiProfile?.userId) return;
 
     let cancelled = false;
 
     const fetchOshiActivity = async () => {
       setOshiLoading(true);
-      setOshiError('');
 
       try {
-        const storedUsername = sessionStorage.getItem('username') || localStorage.getItem('username');
-        const storedUserId = sessionStorage.getItem('userID') || localStorage.getItem('userID');
-        const fallbackUserId = loggedInUserId || (storedUserId ? parseInt(storedUserId, 10) : null);
-        let currentUser = storedUsername ? await getUserByUsername(storedUsername) : null;
-
-        if (!currentUser && fallbackUserId) {
-          currentUser = await getUserById(fallbackUserId);
-        }
-
-        const oshiSeed = currentUser?.oshi;
-        if (!oshiSeed?.username || !oshiSeed?.userId) {
-          if (!cancelled) {
-            setOshiProfile(null);
-            setOshiPosts([]);
-            setOshiError(fallbackUserId ? 'No favourite Oshi selected yet.' : 'Log in to see your favourite Oshi.');
-            setOshiFetched(true);
-          }
-          return;
-        }
-
-        const [oshiDetails, feedPosts] = await Promise.all([
-          getUserByUsername(oshiSeed.username),
-          getPostsFeed(0, 50, 'createdAt', 'desc')
-        ]);
+        const feedPosts = await getPostsFeed(0, 50, 'createdAt', 'desc');
 
         if (!cancelled) {
-          const resolvedOshi = oshiDetails || oshiSeed;
-          const resolvedOshiId = resolvedOshi.userId || oshiSeed.userId;
-          setOshiProfile(resolvedOshi);
-          setOshiPosts(feedPosts.filter(post => Number(post.authorId) === Number(resolvedOshiId)));
+          setOshiPosts(feedPosts.filter(post => Number(post.authorId) === Number(oshiProfile.userId)));
           setOshiFetched(true);
         }
       } catch (error) {
         console.error('Error fetching Oshi activity:', error);
         if (!cancelled) {
-          setOshiProfile(null);
           setOshiPosts([]);
           setOshiError('Unable to load Oshi activity right now.');
           setOshiFetched(true);
@@ -272,7 +306,7 @@ export default function MainPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCard, oshiFetched, loggedInUserId]);
+  }, [selectedCard, oshiFetched, oshiProfile?.userId]);
 
   // Format date range for announcements
   const formatDateRange = (startTime, endTime) => {
@@ -664,9 +698,9 @@ export default function MainPage() {
                       )}
                     </div>
                   }
-                  {pageModule.id === 4 && selectedCard === pageModule.id &&
-                    <div className='oshi-module-panel'>
-                      {oshiLoading ? (
+                  {pageModule.id === 4 &&
+                    <div className={`oshi-module-panel ${selectedCard === pageModule.id ? 'selected' : 'preview'}`}>
+                      {oshiLoading && !oshiProfile ? (
                         <div className='module-loading-state'>Loading Oshi activity...</div>
                       ) : oshiProfile ? (
                         <>
@@ -687,47 +721,51 @@ export default function MainPage() {
                             </div>
                           </div>
 
-                          <div className='oshi-posts-section'>
-                            {oshiPosts.length > 0 ? (
-                              oshiPosts.map((post) => (
-                                <button
-                                  key={post.postId}
-                                  type='button'
-                                  className='oshi-post-card'
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    handlePostClick(post);
-                                  }}
-                                >
-                                  <div className='oshi-post-media-shell'>
-                                    {post.mediaUrls?.length > 0 ? (
-                                      post.postType === 'VIDEO' ? (
-                                        <video className='oshi-post-media' muted>
-                                          <source src={post.mediaUrls[0]} type='video/mp4' />
-                                        </video>
+                          {selectedCard === pageModule.id && (
+                            <div className='oshi-posts-section'>
+                              {oshiLoading && !oshiFetched ? (
+                                <div className='module-loading-state'>Loading Oshi activity...</div>
+                              ) : oshiPosts.length > 0 ? (
+                                oshiPosts.map((post) => (
+                                  <button
+                                    key={post.postId}
+                                    type='button'
+                                    className='oshi-post-card'
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handlePostClick(post);
+                                    }}
+                                  >
+                                    <div className='oshi-post-media-shell'>
+                                      {post.mediaUrls?.length > 0 ? (
+                                        post.postType === 'VIDEO' ? (
+                                          <video className='oshi-post-media' muted>
+                                            <source src={post.mediaUrls[0]} type='video/mp4' />
+                                          </video>
+                                        ) : (
+                                          <img
+                                            className='oshi-post-media'
+                                            src={post.mediaUrls[0]}
+                                            alt={post.title}
+                                          />
+                                        )
                                       ) : (
-                                        <img
-                                          className='oshi-post-media'
-                                          src={post.mediaUrls[0]}
-                                          alt={post.title}
-                                        />
-                                      )
-                                    ) : (
-                                      <img className='oshi-post-placeholder' src={NoMediaIco.src} alt='No media' />
-                                    )}
-                                  </div>
-                                  <div className='oshi-post-copy'>
-                                    <span className='oshi-post-hub'>{post.fanHubName || 'FanHub'}</span>
-                                    <h5>{post.title}</h5>
-                                    <p>{post.content}</p>
-                                    <span className='oshi-post-date'>{formatActivityDate(post.createdAt)}</span>
-                                  </div>
-                                </button>
-                              ))
-                            ) : (
-                              <div className='module-empty-state'>No recent posts found for this Oshi.</div>
-                            )}
-                          </div>
+                                        <img className='oshi-post-placeholder' src={NoMediaIco.src} alt='No media' />
+                                      )}
+                                    </div>
+                                    <div className='oshi-post-copy'>
+                                      <span className='oshi-post-hub'>{post.fanHubName || 'FanHub'}</span>
+                                      <h5>{post.title}</h5>
+                                      <p>{post.content}</p>
+                                      <span className='oshi-post-date'>{formatActivityDate(post.createdAt)}</span>
+                                    </div>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className='module-empty-state'>No recent posts found for this Oshi.</div>
+                              )}
+                            </div>
+                          )}
                         </>
                       ) : (
                         <div className='module-empty-state'>{oshiError || 'No favourite Oshi selected yet.'}</div>

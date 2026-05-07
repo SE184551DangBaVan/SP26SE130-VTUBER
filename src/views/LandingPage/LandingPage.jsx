@@ -7,6 +7,7 @@ import FumoOntoSomeShenanigans from '../../assets/Decor/epips-zvyalka-.jpg'
 import ForwardButtonIco from '../../assets/UI-Elements/Forward.svg'
 import BackwardButtonIco from '../../assets/UI-Elements/Backward.svg'
 import PlayButtonIco from '../../assets/UI-Elements/Play.svg'
+import ContentMockup from '../../assets/Decor/Content_Mockup.png'
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'
@@ -78,13 +79,13 @@ export default function LandingPage() {
                 )}
             />
             <RetroWindow
-                windowWidth="500px" 
-                windowHeight="250px"
+                windowWidth="480px" 
+                windowHeight="280px"
                 windowColor="red" //there is only red, blue, yellow
-                windowTitle={<>Demonstration</>}
+                windowTitle={<>YouTube</>}
                 windowContent={(
                     <div className='retro-window-content' >
-                        
+                        <img src={ContentMockup.src} alt='Content' style={{objectFit: 'contain', width: '100%', height: '100%', transform: 'translateY(-10px)'}}/>
                     </div>
                 )}
             />

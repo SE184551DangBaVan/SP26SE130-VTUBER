@@ -314,6 +314,12 @@
   font-family: "Orbitron", system-ui;
 }
 
+.page-module:nth-child(4) .module-title {
+  position: relative;
+  top: 20px;
+  font-family: "Supermercado One", system-ui;
+}
+
 /* System Taskbar - Windows Style */
 .system-taskbar {
   position: fixed;
@@ -745,6 +751,21 @@
   cursor: default;
 }
 
+.oshi-module-panel.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 46px 16px 16px;
+  overflow: hidden;
+}
+
+.oshi-module-panel.preview .module-loading-state,
+.oshi-module-panel.preview .module-empty-state {
+  min-height: 0;
+  padding: 10px;
+  font-size: 13px;
+}
+
 .inventory-module-panel::-webkit-scrollbar,
 .oshi-module-panel::-webkit-scrollbar {
   width: 6px;
@@ -846,6 +867,15 @@
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.35);
 }
 
+.oshi-module-panel.preview .oshi-profile-card {
+  width: min(88%, 280px);
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  margin: 0;
+  text-align: center;
+}
+
 .module-main-content .oshi-avatar-shell {
   width: 86px;
   height: 86px;
@@ -854,6 +884,12 @@
   border-radius: 50%;
   overflow: hidden;
   background: #f4f4f4;
+}
+
+.oshi-module-panel.preview .oshi-avatar-shell {
+  width: 72px;
+  height: 72px;
+  flex-basis: 72px;
 }
 
 .module-main-content .oshi-avatar {
@@ -867,12 +903,20 @@
   text-align: left;
 }
 
+.oshi-module-panel.preview .oshi-profile-copy {
+  text-align: center;
+}
+
 .oshi-profile-copy h4 {
   margin: 0 0 6px;
   color: #111;
   font-size: 22px;
   line-height: 1.2;
   overflow-wrap: anywhere;
+}
+
+.oshi-module-panel.preview .oshi-profile-copy h4 {
+  font-size: 16px;
 }
 
 .oshi-profile-copy p {

@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCurrentUserProfile } from '@/services/UserController';
 
 export default function useLiveUserPoints(refreshIntervalMs = 30000) {
   const [userPoints, setUserPoints] = useState(0);
+  const mountedRef = useRef(false);
 
   const refreshUserPoints = useCallback(async () => {
     try {
       const profile = await getCurrentUserProfile();
-      if (profile) {
+      if (profile && mountedRef.current) {
         setUserPoints(profile.points || 0);
       }
       return profile;
@@ -18,6 +19,7 @@ export default function useLiveUserPoints(refreshIntervalMs = 30000) {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     let cancelled = false;
 
     const refreshSafely = async () => {
@@ -40,6 +42,7 @@ export default function useLiveUserPoints(refreshIntervalMs = 30000) {
 
     return () => {
       cancelled = true;
+      mountedRef.current = false;
       window.clearInterval(interval);
       window.removeEventListener('userPointsUpdated', handlePointsUpdated);
     };
