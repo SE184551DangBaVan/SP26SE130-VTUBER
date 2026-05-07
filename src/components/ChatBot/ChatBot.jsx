@@ -204,8 +204,8 @@ export default function ChatBot() {
       {/* Chat Toggle Button */}
       <button className="chatbot-toggle-btn" onClick={toggleChat}>
         <img
-          src="/VGuide.png"
-          alt="Chat Bot"
+          src="/mambo.webp"
+          alt="MatikanetannHauserAI"
           className="chatbot-toggle-icon"
         />
       </button>
@@ -216,11 +216,11 @@ export default function ChatBot() {
           <div className="chatbot-header">
             <div className="chatbot-header-left">
               <img
-                src="/VGuide.png"
-                alt="V-Guide Avatar"
+                src="/mambo.webp"
+                alt="MatikanetannHauserAI Avatar"
                 className="chatbot-avatar"
               />
-              <span className="chatbot-name">V-Guide</span>
+              <span className="chatbot-name">MatikanetannHauserAI</span>
             </div>
             <div className="chatbot-header-right">
               <button className="chatbot-settings-btn" title="Settings">
@@ -273,7 +273,7 @@ export default function ChatBot() {
               >
                 {message.type === "bot" && !message.isSystem && (
                   <img
-                    src="/VGuide.png"
+                    src="/mambo.webp"
                     alt="Bot Avatar"
                     className="message-avatar"
                   />
@@ -332,7 +332,7 @@ export default function ChatBot() {
             {isTyping && (
               <div className="message bot-message">
                 <img
-                  src="/VGuide.png"
+                  src="/mambo.webp"
                   alt="Bot Avatar"
                   className="message-avatar"
                 />
@@ -350,7 +350,7 @@ export default function ChatBot() {
             <input
               type="text"
               className="chatbot-input"
-              placeholder="Ask V-Guide something..."
+              placeholder="Ask MatikanetannHauserAI something..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
